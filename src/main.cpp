@@ -5,14 +5,26 @@
 #include "subzerolib/api/chassis/x-chassis-controller.hpp"
 #include <memory>
 
-#ifdef MARTY
-asdfasdf
-asdfa
-sdfasdf
-asdf
-#endif
+std::unique_ptr<pros::AbstractMotor> fl(
+    new pros::Motor(1, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg));
+std::unique_ptr<pros::AbstractMotor>
+    fr(new pros::Motor(10, pros::v5::MotorGears::green,
+                       pros::v5::MotorUnits::deg));
+std::unique_ptr<pros::AbstractMotor>
+    br(new pros::Motor(20, pros::v5::MotorGears::green,
+                       pros::v5::MotorUnits::deg));
+std::unique_ptr<pros::AbstractMotor>
+    bl(new pros::Motor(11, pros::v5::MotorGears::green,
+                       pros::v5::MotorUnits::deg));
+std::shared_ptr<XChassisController> chassis = nullptr;
+pros::Imu imu(8);
 
-void initialize() {}
+void initialize() {
+  chassis = XChassisController::XChassisControllerBuilder()
+                .with_motors(std::move(fl), std::move(fr), std::move(br),
+                             std::move(bl))
+                .build();
+}
 
 void disabled() {}
 
@@ -21,25 +33,6 @@ void competition_initialize() {}
 void autonomous() {}
 
 void opcontrol() {
-  std::unique_ptr<pros::AbstractMotor> fl(new pros::Motor(
-      1, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg));
-  std::unique_ptr<pros::AbstractMotor> fr(new pros::Motor(
-      10, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg));
-  std::unique_ptr<pros::AbstractMotor> br(new pros::Motor(
-      20, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg));
-  std::unique_ptr<pros::AbstractMotor> bl(new pros::Motor(
-      11, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg));
-
-  fl->set_reversed(true);
-  bl->set_reversed(true);
-
-  auto chassis = XChassisController::XChassisControllerBuilder()
-                     .with_motors(std::move(fl), std::move(fr), std::move(br),
-                                  std::move(bl))
-                     .build();
-
-  pros::Imu imu(8);
-
   pros::Controller master(pros::E_CONTROLLER_MASTER);
 
   while (true) {

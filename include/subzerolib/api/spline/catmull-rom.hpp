@@ -22,7 +22,9 @@ public:
                                            point_s v0, point_s vf);
 
 private:
-  // [1 t t^2 t^3][characteristic_matrix][c1 c2 c3 c4]
+  // x = [1 t t^2  t^3][characteristic_matrix][c1 c2 c3 c4]
+  // v = [0 1  2t 3t^2][characteristic_matrix][c1 c2 c3 c4]
+  // a = [0 0   2   6t][characteristic_matrix][c1 c2 c3 c4]
   const Eigen::Matrix<double, 4, 4> characteristic_matrix{
       {0, 1, 0, 0},
       {-0.5, 0, 0.5, 0},

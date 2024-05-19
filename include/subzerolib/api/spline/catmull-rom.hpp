@@ -35,7 +35,7 @@ private:
       {1, -2.5, 2, -0.5},
       {-0.5, 1.5, -1.5, 0.5}};
 
-  std::vector<Eigen::Matrix<double, 4, 2>> polynomial_forms;
+  std::vector<Eigen::Matrix<double, 4, 2>> bernstein_coeffs;
 
   std::vector<point_s> control_points;
 };

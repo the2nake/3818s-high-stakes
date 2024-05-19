@@ -8,7 +8,7 @@ CatmullRomSpline::CatmullRomSpline(std::vector<point_s> icontrol_points)
 }
 
 void CatmullRomSpline::calculate_bernstein_coeffs() {
-  polynomial_forms.clear();
+  bernstein_coeffs.clear();
   if (control_points.size() >= 4) {
     for (int end_i = 3; end_i < control_points.size(); ++end_i) {
       Eigen::Matrix<double, 4, 2> ctrl_matrix;
@@ -16,11 +16,11 @@ void CatmullRomSpline::calculate_bernstein_coeffs() {
         ctrl_matrix.row(3 - inc)[0] = control_points[end_i - inc].x;
         ctrl_matrix.row(3 - inc)[1] = control_points[end_i - inc].y;
       }
-      polynomial_forms.push_back(characteristic_matrix * ctrl_matrix);
+      bernstein_coeffs.push_back(characteristic_matrix * ctrl_matrix);
     };
   }
 
-  std::cout << polynomial_forms.size();
+  std::cout << bernstein_coeffs.size();
 }
 
 std::vector<point_s> CatmullRomSpline::sample(int count) {
@@ -42,13 +42,13 @@ std::vector<point_s> CatmullRomSpline::sample(int count) {
 point_s CatmullRomSpline::get_val(Eigen::Matrix<double, 1, 4> t_row, double u) {
   point_s out{0, 0};
   if (u < 0.0 || u > control_points.size() - 3 + 0.001 ||
-      polynomial_forms.size() == 0) {
+      bernstein_coeffs.size() == 0) {
     return out;
   }
 
-  int whole = (int)std::floor(u) - (whole == polynomial_forms.size());
+  int whole = (int)std::floor(u) - (whole == bernstein_coeffs.size());
 
-  Eigen::Matrix<double, 1, 2> product = t_row * polynomial_forms[whole];
+  Eigen::Matrix<double, 1, 2> product = t_row * bernstein_coeffs[whole];
   out = product;
 
   return out;

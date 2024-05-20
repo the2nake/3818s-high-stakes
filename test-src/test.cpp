@@ -32,3 +32,11 @@ int main() {
 
   return 0;
 }
+
+// working through x drive motion limits
+// ω_max = (wheel_max) / radius radians per second
+// v_max = (wheel_max) * (sin(move_h - robor_h) + cos(move_h - robor_h))
+// allowance after ω
+// v_max = (wheel_max - ω * radius) * (sin(move_h - robor_h) + cos(move_h - robor_h))
+
+// TODO: pure pursuit

@@ -1,15 +1,15 @@
 #pragma once
 
-#include "chassis-controller.hpp"
+#include "chassis.hpp"
 #include "pros/abstract_motor.hpp"
 #include <memory>
 
-class XChassisController : public ChassisController {
+class XChassis : public Chassis {
 public:
   void move(double x, double y, double r) override;
 
 private:
-  XChassisController() {}
+  XChassis() {}
 
   std::unique_ptr<pros::AbstractMotor> front_left;
   std::unique_ptr<pros::AbstractMotor> front_right;
@@ -17,15 +17,15 @@ private:
   std::unique_ptr<pros::AbstractMotor> back_left;
 
 public:
-  class XChassisControllerBuilder {
+  class XChassisBuilder {
   public:
-    XChassisControllerBuilder &
+    XChassisBuilder &
     with_motors(std::unique_ptr<pros::AbstractMotor> ifront_left,
                 std::unique_ptr<pros::AbstractMotor> ifront_right,
                 std::unique_ptr<pros::AbstractMotor> iback_right,
                 std::unique_ptr<pros::AbstractMotor> iback_left);
 
-    std::shared_ptr<XChassisController> build();
+    std::shared_ptr<XChassis> build();
 
   private:
     bool failed = false;

@@ -2,7 +2,6 @@
 #include "pros/abstract_motor.hpp"
 #include "pros/misc.hpp"
 #include "subzerolib/api.hpp"
-#include "subzerolib/api/chassis/x-chassis-controller.hpp"
 #include <memory>
 
 std::unique_ptr<pros::AbstractMotor> fl(
@@ -16,11 +15,11 @@ std::unique_ptr<pros::AbstractMotor>
 std::unique_ptr<pros::AbstractMotor>
     bl(new pros::Motor(11, pros::v5::MotorGears::green,
                        pros::v5::MotorUnits::deg));
-std::shared_ptr<XChassisController> chassis = nullptr;
+std::shared_ptr<XChassis> chassis = nullptr;
 pros::Imu imu(8);
 
 void initialize() {
-  chassis = XChassisController::XChassisControllerBuilder()
+  chassis = XChassis::XChassisBuilder()
                 .with_motors(std::move(fl), std::move(fr), std::move(br),
                              std::move(bl))
                 .build();

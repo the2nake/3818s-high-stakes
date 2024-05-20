@@ -1,9 +1,9 @@
 #pragma once
 
-class ChassisController {
+class Chassis {
 public:
   virtual void move(double x, double y, double r) = 0;
 
 protected:
-  ChassisController() {}
+  Chassis() {}
 };

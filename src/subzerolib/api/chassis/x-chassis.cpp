@@ -1,7 +1,7 @@
-#include "subzerolib/api/chassis/x-chassis-controller.hpp"
+#include "subzerolib/api/chassis/x-chassis.hpp"
 #include <cmath>
 
-void XChassisController::move(double x, double y, double r) {
+void XChassis::move(double x, double y, double r) {
 
   double d = std::hypot(x, y);
   if (std::abs(d) > 1) {
@@ -33,8 +33,8 @@ void XChassisController::move(double x, double y, double r) {
   back_left->move_voltage(12000 * (vs[3]));
 }
 
-XChassisController::XChassisControllerBuilder &
-XChassisController::XChassisControllerBuilder::with_motors(
+XChassis::XChassisBuilder &
+XChassis::XChassisBuilder::with_motors(
     std::unique_ptr<pros::AbstractMotor> ifront_left,
     std::unique_ptr<pros::AbstractMotor> ifront_right,
     std::unique_ptr<pros::AbstractMotor> iback_right,
@@ -46,9 +46,9 @@ XChassisController::XChassisControllerBuilder::with_motors(
   return *this;
 }
 
-std::shared_ptr<XChassisController>
-XChassisController::XChassisControllerBuilder::build() {
-  std::shared_ptr<XChassisController> chassis(new XChassisController());
+std::shared_ptr<XChassis>
+XChassis::XChassisBuilder::build() {
+  std::shared_ptr<XChassis> chassis(new XChassis());
 
   chassis->front_left = std::move(bfront_left);
   chassis->front_right = std::move(bfront_right);

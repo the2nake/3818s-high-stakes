@@ -7,6 +7,8 @@
 
 class CubicSpline {
 public:
+  virtual ~CubicSpline() {}
+
   /// @brief generate points on a spline
   /// @param count number of points to sample
   /// @return a vector of evenly spaced points (in parameter space)

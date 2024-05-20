@@ -13,10 +13,9 @@ int main() {
   file.open("test-output/output.txt", std::fstream::out);
   file.clear();
 
-
-  std::vector<point_s> ctrl = {{1.5, 0}, {2.4, 2.4}, {0, 2.4}, {0, 0.5}, {2, 1}, {0.5, 1.5}};
-  CatmullRomSpline spline(ctrl);
-  spline.pad_velocity({0, 2},  {-2, 0});
+  CatmullRomSpline spline(
+      {{1.5, 0}, {2.4, 2.4}, {0, 2.4}, {0, 0.5}, {2, 1}, {0.5, 1.5}});
+  spline.pad_velocity({0, 2}, {-2, 0});
   std::vector<point_s> points = spline.sample(100);
 
   for (auto &control : spline.get_control_points()) {

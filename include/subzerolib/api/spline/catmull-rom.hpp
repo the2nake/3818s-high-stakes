@@ -7,6 +7,7 @@
 class CatmullRomSpline : public CubicSpline {
 public:
   CatmullRomSpline(std::vector<point_s> control_points);
+  ~CatmullRomSpline() {}
 
   std::vector<point_s> sample(int count) override;
 

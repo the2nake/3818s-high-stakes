@@ -3,8 +3,9 @@
 #include "eigen/Dense"
 
 struct point_s {
-  double x = 0;
-  double y = 0;
+  point_s(double ix = 0, double iy = 0) : x(ix), y(iy) {}
+  double x;
+  double y;
 
   void operator=(const point_s &b) {
     x = b.x;
@@ -15,6 +16,8 @@ struct point_s {
     x = b[0];
     y = b[1];
   }
+
+  double dist(const point_s &b) const;
 };
 
 point_s operator+(point_s a, point_s b);

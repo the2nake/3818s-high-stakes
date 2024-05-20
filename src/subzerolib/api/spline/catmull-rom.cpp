@@ -1,5 +1,4 @@
 #include "subzerolib/api/spline/catmull-rom.hpp"
-#include <iostream>
 
 CatmullRomSpline::CatmullRomSpline(std::vector<point_s> icontrol_points)
     : control_points(icontrol_points) {
@@ -19,8 +18,6 @@ void CatmullRomSpline::calculate_bernstein_coeffs() {
       bernstein_coeffs.push_back(characteristic_matrix * ctrl_matrix);
     };
   }
-
-  std::cout << bernstein_coeffs.size();
 }
 
 std::vector<point_s> CatmullRomSpline::sample(int count) {

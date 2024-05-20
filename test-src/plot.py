@@ -28,6 +28,9 @@ for item in ctrl_parsed:
 
 fig, ax = plt.subplots()
 ax.plot(spline_xs, spline_ys)
-ax.scatter(ctrl_xs, ctrl_ys)
+# ax.scatter(ctrl_xs, ctrl_ys)
+
+# ax.plot([0.0, 1], [0.0, 1])
+# ax.plot([0.5, 1], [0.25, 2])
 ax.grid()
 plt.show()

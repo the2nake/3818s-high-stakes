@@ -17,19 +17,75 @@ int main() {
   file.open("test-output/output.txt", std::fstream::out);
   file.clear();
 
-  CatmullRomSpline spline({{-1.5, 0.6}, {-0.6, 0.6}, {-0.2, 1.2}, {-0.6, 1.2}, {-1.5, 0}});
+  // generate the spline
+  CatmullRomSpline spline(
+      {{-1.5, 0.6}, {-0.6, 0.6}, {-0.2, 1.2}, {-0.6, 1.2}, {-1.5, 0}});
   spline.pad_velocity({1, 0}, {0, -1});
-  std::vector<point_s> spline_points = spline.sample(100);
+  std::vector<point_s> spline_points = spline.sample(200);
 
   for (auto &control : spline.get_control_points()) {
     file << "ctrl " << control.x << " " << control.y << std::endl;
   }
 
   for (auto &point : spline_points) {
-    file << point.x << " " << point.y << std::endl;
+    file << "spline " << point.x << " " << point.y << std::endl;
   }
 
-  std::cout << "Point count:" << spline_points.size() << std::endl;
+  std::cout << "Point count: " << spline_points.size() << std::endl;
+
+  // generate coords for pure pursuit output
+  // feedforward pure pursuit
+
+  double pursuit_duration = 25;                 // s
+  double pursuit_timestep = 0.05;               // s
+  double v = 0.1;                               // m/s
+  point_s pos = spline.get_control_points()[1]; // start of spline
+  double lookahead = 0.1;                       // m
+  point_s carrot = spline_points[0];            // start of spline curves
+  std::vector<point_s> past_points = {pos};
+
+  for (double t = 0.0; t < pursuit_duration; t += pursuit_timestep) {
+    circle_s seek_circle{pos, lookahead};
+    // potential error: if the robot moves too fast with small enough lookahead,
+    // points may skip. interpolate?
+    while (spline_points.size() > 1 && seek_circle.contains(spline_points[1])) {
+      spline_points.erase(spline_points.begin());
+    }
+
+    if (spline_points.size() == 1) {
+      carrot = spline_points[0];
+      if (seek_circle.contains(spline_points[0])) {
+        break;
+      }
+    } else {
+      segment_s segment{spline_points[0], spline_points[1]};
+      auto potentials = seek_circle.intersections(segment);
+      if (potentials.size() == 2) {
+        // get the one closer ot the end of the segment
+        if (segment.end.dist(potentials[0]) < segment.end.dist(potentials[1])) {
+          carrot = potentials[0];
+        } else {
+          carrot = potentials[1];
+        }
+      } else if (potentials.size() == 1) {
+        carrot = potentials[0];
+      } else {
+        // keep the old carrot
+      }
+    }
+
+    // move towards carrot
+    auto delta = carrot - pos;
+    delta = v * delta / hypot(delta.x, delta.y);
+    delta = delta * pursuit_timestep;
+
+    past_points.push_back(pos);
+    pos = pos + delta;
+  }
+
+  for (auto &point : past_points) {
+    file << "pursuit " << point.x << " " << point.y << std::endl;
+  }
 
   file.close();
 
@@ -91,8 +147,8 @@ else {
   segment_s segment{spline_points[0], spline_points[1]};
   auto potentials = seek_circle.intersections(segment);
   if (potentials.size() == 2) {
-    // get the one closer ot the start of the segment
-    if (segment.start.dist(potentials[0]) < segment.start.dist(potentials[1])) {
+    // get the one closer ot the end of the segment
+    if (segment.end.dist(potentials[0]) < segment.end.dist(potentials[1])) {
       carrot = potentials[0];
     } else {
       carrot = potentials[1];

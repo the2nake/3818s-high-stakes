@@ -25,10 +25,9 @@ std::vector<point_s> CatmullRomSpline::sample(int count) {
   if (count < 1) {
     return output;
   }
-  int segments = control_points.size() - 3;
-  double step = (double)(segments) / (count - 1);
+  double step = (control_points.size() - 3) / (count - 1.0);
   double u = 0.0;
-  while (u < segments + 0.0001) {
+  for (int i = 0; i < count; ++i) {
     output.emplace_back(get_pos(u));
     u += step;
   }
@@ -38,31 +37,31 @@ std::vector<point_s> CatmullRomSpline::sample(int count) {
 
 point_s CatmullRomSpline::get_val(Eigen::Matrix<double, 1, 4> t_row, double u) {
   point_s out{0, 0};
-  if (u < 0.0 || u > control_points.size() - 3 + 0.001 ||
-      bernstein_coeffs.size() == 0) {
+  if (u < 0.0 || bernstein_coeffs.size() == 0) {
     return out;
   }
-
-  int whole = (int)std::floor(u) - (whole == bernstein_coeffs.size());
-
+  int whole = (int)std::floor(u) - (u >= bernstein_coeffs.size());
   Eigen::Matrix<double, 1, 2> product = t_row * bernstein_coeffs[whole];
-  out = product;
 
+  out = product;
   return out;
 }
 
 point_s CatmullRomSpline::get_pos(double u) {
   double t = u - std::floor(u);
+  t += (u >= bernstein_coeffs.size());
   return get_val(Eigen::Matrix<double, 1, 4>{1, t, t * t, t * t * t}, u);
 }
 
 point_s CatmullRomSpline::get_vel(double u) {
   double t = u - std::floor(u);
+  t += (u >= bernstein_coeffs.size());
   return get_val(Eigen::Matrix<double, 1, 4>{0, 1, 2 * t, 3 * t * t}, u);
 }
 
 point_s CatmullRomSpline::get_accel(double u) {
   double t = u - std::floor(u);
+  t += (u >= bernstein_coeffs.size());
   return get_val(Eigen::Matrix<double, 1, 4>{0, 0, 2, 6 * t}, u);
 }
 

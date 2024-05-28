@@ -36,13 +36,15 @@ int main() {
   // generate coords for pure pursuit output
   // feedforward pure pursuit
 
-  double pursuit_duration = 25;                 // s
-  double pursuit_timestep = 0.05;               // s
-  double v = 0.1;                               // m/s
+  double pursuit_duration = 5;                  // s
+  double pursuit_timestep = 0.01;               // s
+  double v = 1;                                 // m/s
   point_s pos = spline.get_control_points()[1]; // start of spline
-  double lookahead = 0.1;                       // m
+  double lookahead = 0.2;                       // m
   point_s carrot = spline_points[0];            // start of spline curves
   std::vector<point_s> past_points = {pos};
+  std::vector<point_s> past_carrots = {pos};
+  double pos_tolerance = 0.005;
 
   for (double t = 0.0; t < pursuit_duration; t += pursuit_timestep) {
     circle_s seek_circle{pos, lookahead};
@@ -54,7 +56,9 @@ int main() {
 
     if (spline_points.size() == 1) {
       carrot = spline_points[0];
-      if (seek_circle.contains(spline_points[0])) {
+      if (pos.dist(carrot) < pos_tolerance) {
+        past_points.push_back(carrot);
+        past_carrots.push_back(carrot);
         break;
       }
     } else {
@@ -78,13 +82,15 @@ int main() {
     auto delta = carrot - pos;
     delta = v * delta / hypot(delta.x, delta.y);
     delta = delta * pursuit_timestep;
-
     past_points.push_back(pos);
+    past_carrots.push_back(carrot);
     pos = pos + delta;
   }
 
-  for (auto &point : past_points) {
-    file << "pursuit " << point.x << " " << point.y << std::endl;
+  for (int i = 0; i < past_points.size(); ++i) {
+    file << "pursuit " << past_points[i].x << " " << past_points[i].y << " "
+         << lookahead << " " << past_carrots[i].x << " " << past_carrots[i].y
+         << std::endl;
   }
 
   file.close();

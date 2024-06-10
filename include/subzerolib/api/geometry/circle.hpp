@@ -5,6 +5,11 @@
 #include <vector>
 
 struct circle_s {
+  circle_s(point_s icentre, double iradius)
+      : centre(icentre), radius(iradius) {}
+  circle_s(double ix, double iy, double iradius)
+      : centre(point_s{ix, iy}), radius(iradius) {}
+
   point_s centre;
   double radius = 1;
 

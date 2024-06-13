@@ -31,7 +31,7 @@ std::shared_ptr<ImuOdometry> ImuOdometry::ImuOdometryBuilder::build() {
     return nullptr;
   }
 
-  std::shared_ptr<ImuOdometry> odom = std::make_shared<ImuOdometry>();
+  std::shared_ptr<ImuOdometry> odom(new ImuOdometry());
   odom->prev_timestamp = pros::millis();
   odom->gyro = gyro;
   odom->x_enc = x_enc;

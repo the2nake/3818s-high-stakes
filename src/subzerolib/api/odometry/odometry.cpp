@@ -5,9 +5,10 @@
 /// @param iconfig the configuration. must be dynamically allocated
 void update_odometry_callback_loop(void *iconfig) {
   auto config = (odom_update_conf_s *)iconfig;
+  uint32_t prev_time = pros::millis();
   while (true) {
     config->odom->update();
-    pros::delay(config->delay);
+    pros::Task::delay_until(&prev_time, config->delay);
   }
 }
 

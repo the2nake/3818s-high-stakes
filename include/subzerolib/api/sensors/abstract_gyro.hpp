@@ -9,8 +9,7 @@ public:
 };
 
 // class to forward function calls
-class AbstactImuGyro : public AbstractGyro, public pros::Imu {
-public:
+struct AbstactImuGyro : public AbstractGyro, public pros::Imu {
   AbstactImuGyro(std::uint8_t iport) : Imu(iport) {
     pros::Imu::set_data_rate(5);
   }

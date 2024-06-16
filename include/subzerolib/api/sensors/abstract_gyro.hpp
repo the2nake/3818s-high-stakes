@@ -3,8 +3,7 @@
 #include "pros/imu.hpp"
 #include <cstdint>
 
-class AbstractGyro {
-public:
+struct AbstractGyro {
   virtual double get_heading() = 0;
 };
 

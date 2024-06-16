@@ -2,9 +2,10 @@
 
 #include "subzerolib/api/geometry/point.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
+#include <memory>
 
 struct encoder_conf_s {
-  double offset;
+  double offset; // right is +x, up is +y
   double travel_per_deg;
 };
 
@@ -18,6 +19,15 @@ public:
 
   virtual void update() = 0;
 
+  virtual void set_enabled(bool) = 0;
 protected:
   Odometry() {}
 };
+
+struct odom_update_conf_s {
+  std::shared_ptr<Odometry> odom;
+  int delay;
+};
+
+void update_odometry_callback_loop(void *params);
+void automatic_update(std::shared_ptr<Odometry> odom, int ms_delay);

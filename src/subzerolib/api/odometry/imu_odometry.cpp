@@ -1,4 +1,56 @@
 #include "subzerolib/api/odometry/imu_odometry.hpp"
+#include "subzerolib/api/util/math.hpp"
+
+void ImuOdometry::update() {
+  if (!enabled) {
+    return;
+  }
+  double dh = shorter_turn(prev_heading, gyro->get_heading());
+
+  // NOTE: the following code updates prev encoder values right away
+  double x_impact_lx = 0.0;
+  double x_impact_ly = 0.0;
+  for (auto &x_enc : x_encs) {
+    int i = &x_enc - &x_encs[0];
+    auto curr = x_enc.first->get_deg();
+    double d_raw = x_enc.second.travel_per_deg * (curr - prev_x_enc_vals[i]);
+    prev_x_enc_vals[i] = curr;
+    double tmp = (d_raw / in_rad(dh) - x_enc.second.offset);
+    x_impact_lx += std::sin(in_rad(dh)) * tmp;
+    x_impact_ly += std::cos(in_rad(dh) - 1) * tmp;
+  }
+  x_impact_lx /= x_encs.size();
+  x_impact_ly /= x_encs.size();
+
+  double y_impact_lx = 0.0;
+  double y_impact_ly = 0.0;
+  for (auto &y_enc : y_encs) {
+    int i = &y_enc - &y_encs[0];
+    auto curr = y_enc.first->get_deg();
+    double d_raw = y_enc.second.travel_per_deg * (curr - prev_y_enc_vals[i]);
+    prev_y_enc_vals[i] = curr;
+    double tmp = (d_raw / in_rad(dh) - y_enc.second.offset);
+    y_impact_lx += (1 - std::cos(in_rad(dh))) * tmp;
+    y_impact_ly += std::sin(in_rad(dh)) * tmp;
+  }
+  y_impact_lx /= y_encs.size();
+  y_impact_ly /= y_encs.size();
+
+  auto dx_l = x_impact_lx + y_impact_lx;
+  auto dy_l = x_impact_ly + y_impact_ly;
+  auto dx_g = dx_l * std::cos(in_rad(prev_heading)) +
+              dy_l * std::sin(in_rad(prev_heading));
+  auto dy_g = -dx_l * std::sin(in_rad(prev_heading)) +
+              dy_l * std::cos(in_rad(prev_heading));
+
+  prev_heading = pose.heading();
+
+  lock();
+  pose.x += dx_g;
+  pose.y += dy_g;
+  pose.h += dh;
+  unlock();
+}
 
 ImuOdometry::ImuOdometryBuilder &
 ImuOdometry::ImuOdometryBuilder::with_gyro(AbstractGyro *igyro) {
@@ -8,15 +60,13 @@ ImuOdometry::ImuOdometryBuilder::with_gyro(AbstractGyro *igyro) {
 ImuOdometry::ImuOdometryBuilder &
 ImuOdometry::ImuOdometryBuilder::with_x_enc(AbstractEncoder *encoder,
                                             encoder_conf_s conf) {
-  x_enc = encoder;
-  x_conf = conf;
+  x_encs.emplace_back(encoder, conf);
   return *this;
 }
 ImuOdometry::ImuOdometryBuilder &
 ImuOdometry::ImuOdometryBuilder::with_y_enc(AbstractEncoder *encoder,
                                             encoder_conf_s conf) {
-  y_enc = encoder;
-  y_conf = conf;
+  y_encs.emplace_back(encoder, conf);
   return *this;
 }
 
@@ -24,20 +74,24 @@ std::shared_ptr<ImuOdometry> ImuOdometry::ImuOdometryBuilder::build() {
   if (gyro == nullptr) {
     return nullptr;
   }
-  if (x_enc == nullptr) {
-    return nullptr;
+  for (auto pair : x_encs) {
+    if (pair.first == nullptr) {
+      return nullptr;
+    }
   }
-  if (y_enc == nullptr) {
-    return nullptr;
+  for (auto pair : y_encs) {
+    if (pair.first == nullptr) {
+      return nullptr;
+    }
   }
 
   std::shared_ptr<ImuOdometry> odom(new ImuOdometry());
   odom->prev_timestamp = pros::millis();
   odom->gyro = gyro;
-  odom->x_enc = x_enc;
-  odom->x_conf = x_conf;
-  odom->y_enc = y_enc;
-  odom->y_conf = y_conf;
+  odom->x_encs = x_encs;
+  odom->y_encs = y_encs;
+  odom->prev_x_enc_vals = std::vector<double>(x_encs.size());
+  odom->prev_y_enc_vals = std::vector<double>(y_encs.size());
   odom->pose = pose_s{0, 0, 0};
 
   return odom;

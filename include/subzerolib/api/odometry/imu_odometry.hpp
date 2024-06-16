@@ -9,27 +9,41 @@
 
 class ImuOdometry : public Odometry {
 public:
-  void set_heading(double h) override;
-  void set_position(double x, double y) override;
+  void set_heading(double ih) override {
+    lock();
+    this->pose.h = ih;
+    unlock();
+  }
+  void set_position(double ix, double iy) override {
+    lock();
+    this->pose.x = ix;
+    this->pose.y = iy;
+    unlock();
+  }
 
-  pose_s get_pose() override;
+  pose_s get_pose() override {
+    lock();
+    auto temp = pose;
+    unlock();
+    return temp;
+  }
   point_s get_vel() override;
 
   void update() override;
+  void set_enabled(bool v) override { enabled = v; }
 
 private:
   pros::Mutex state_mutex;
+  bool enabled = true;
 
   AbstractGyro *gyro;
-  AbstractEncoder *x_enc;
-  AbstractEncoder *y_enc;
-  encoder_conf_s x_conf;
-  encoder_conf_s y_conf;
+  std::vector<std::pair<AbstractEncoder *, encoder_conf_s>> x_encs;
+  std::vector<std::pair<AbstractEncoder *, encoder_conf_s>> y_encs;
 
   uint32_t prev_timestamp = 0;
   double prev_heading = 0.0;
-  double prev_x_enc_val = 0.0;
-  double prev_y_enc_val = 0.0;
+  std::vector<double> prev_x_enc_vals;
+  std::vector<double> prev_y_enc_vals;
 
   pose_s pose;
 
@@ -39,6 +53,7 @@ private:
       pros::delay(1);
     }
   }
+  void unlock() { this->state_mutex.give(); }
 
 public:
   class ImuOdometryBuilder {
@@ -53,9 +68,7 @@ public:
 
   private:
     AbstractGyro *gyro;
-    AbstractEncoder *x_enc;
-    AbstractEncoder *y_enc;
-    encoder_conf_s x_conf;
-    encoder_conf_s y_conf;
+    std::vector<std::pair<AbstractEncoder *, encoder_conf_s>> x_encs;
+    std::vector<std::pair<AbstractEncoder *, encoder_conf_s>> y_encs;
   };
 };

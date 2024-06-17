@@ -9,5 +9,6 @@ struct segment_s {
 
   bool may_contain(point_s point) const;
   double slope() const;
+  double length() const;
   point_s intersection(const segment_s &other) const;
 };

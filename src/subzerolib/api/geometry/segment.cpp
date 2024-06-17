@@ -13,6 +13,10 @@ double segment_s::slope() const {
   return (end.y - start.y) / (end.x - start.x);
 }
 
+double segment_s::length() const {
+  return start.dist(end);
+}
+
 point_s segment_s::intersection(const segment_s &other) const {
   point_s inf_intersection;
   auto d1 = end - start;

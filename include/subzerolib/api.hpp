@@ -7,6 +7,7 @@
 #include "subzerolib/api/geometry/point.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
 #include "subzerolib/api/geometry/segment.hpp"
+#include "subzerolib/api/logic/state-machine.hpp"
 #include "subzerolib/api/spline/catmull-rom.hpp"
 #include "subzerolib/api/spline/cubic-spline.hpp"
 #include "subzerolib/api/sensors/abstract_gyro.hpp"

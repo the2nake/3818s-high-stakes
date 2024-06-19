@@ -1,20 +1,18 @@
 #pragma once
+#include <functional>
 #include <map>
 #include <string>
-
-typedef void (*state_behaviour_fn_t)(void);
-typedef bool (*state_condition_fn_t)(void);
 
 class StateMachine {
 public:
   struct State {
-    State(std::string iname = "", state_behaviour_fn_t ibehaviour = nullptr,
-          std::map<std::string, state_condition_fn_t> iexit_map = {})
+    State(std::string iname = "", std::function<void()> ibehaviour = nullptr,
+          std::map<std::string, std::function<bool()>> iexit_map = {})
         : name(iname), behaviour(ibehaviour), exit_map(iexit_map) {}
 
     std::string name;
-    state_behaviour_fn_t behaviour;
-    std::map<std::string, state_condition_fn_t> exit_map;
+    std::function<void()> behaviour;
+    std::map<std::string, std::function<bool()>> exit_map;
   };
 
   State get_curr_state() { return curr_state; }
@@ -22,7 +20,7 @@ public:
     bool exit = false;
     do {
       exit = false;
-      for (std::pair<const std::string, state_condition_fn_t> exit_pair :
+      for (std::pair<const std::string, std::function<bool()>> exit_pair :
            curr_state.exit_map) {
         if (exit_pair.second()) {
           curr_state = name_state_lookup.at(exit_pair.first);

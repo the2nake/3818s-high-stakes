@@ -20,8 +20,7 @@ public:
     bool exit = false;
     do {
       exit = false;
-      for (std::pair<const std::string, std::function<bool()>> exit_pair :
-           curr_state.exit_map) {
+      for (auto &exit_pair : curr_state.exit_map) {
         if (exit_pair.second()) {
           curr_state = name_state_lookup.at(exit_pair.first);
         }

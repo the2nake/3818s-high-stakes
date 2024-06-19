@@ -9,10 +9,10 @@ public:
   };
 
   struct state_data_s {
-    state_data_s(state_e icurr = state_e::null,
+    state_data_s(state_e istate = state_e::null,
                  std::function<void()> ibehaviour = nullptr,
                  std::map<state_e, std::function<bool()>> iexit_map = {})
-        : state(icurr), behaviour(ibehaviour), exit_map(iexit_map) {}
+        : state(istate), behaviour(ibehaviour), exit_map(iexit_map) {}
 
     state_e state;
     std::function<void()> behaviour;

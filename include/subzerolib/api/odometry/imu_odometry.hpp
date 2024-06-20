@@ -27,7 +27,7 @@ public:
     unlock();
     return temp;
   }
-  point_s get_vel() override;
+  point_s get_vel() override { return point_s{0, 0}; }
 
   void update() override;
   void set_enabled(bool v) override { enabled = v; }
@@ -36,9 +36,11 @@ private:
   pros::Mutex state_mutex;
   bool enabled = true;
 
-  AbstractGyro *gyro;
-  std::vector<std::pair<AbstractEncoder *, encoder_conf_s>> x_encs;
-  std::vector<std::pair<AbstractEncoder *, encoder_conf_s>> y_encs;
+  std::shared_ptr<AbstractGyro> gyro;
+  std::vector<std::pair<std::shared_ptr<AbstractEncoder>, encoder_conf_s>>
+      x_encs;
+  std::vector<std::pair<std::shared_ptr<AbstractEncoder>, encoder_conf_s>>
+      y_encs;
 
   uint32_t prev_timestamp = 0;
   double prev_heading = 0.0;
@@ -58,17 +60,19 @@ private:
 public:
   class ImuOdometryBuilder {
   public:
-    ImuOdometryBuilder &with_gyro(AbstractGyro *igyro);
-    ImuOdometryBuilder &with_x_enc(AbstractEncoder *encoder,
+    ImuOdometryBuilder &with_gyro(std::shared_ptr<AbstractGyro> igyro);
+    ImuOdometryBuilder &with_x_enc(std::shared_ptr<AbstractEncoder> encoder,
                                    encoder_conf_s conf);
-    ImuOdometryBuilder &with_y_enc(AbstractEncoder *encoder,
+    ImuOdometryBuilder &with_y_enc(std::shared_ptr<AbstractEncoder> encoder,
                                    encoder_conf_s conf);
 
     std::shared_ptr<ImuOdometry> build();
 
   private:
-    AbstractGyro *gyro;
-    std::vector<std::pair<AbstractEncoder *, encoder_conf_s>> x_encs;
-    std::vector<std::pair<AbstractEncoder *, encoder_conf_s>> y_encs;
+    std::shared_ptr<AbstractGyro> gyro;
+    std::vector<std::pair<std::shared_ptr<AbstractEncoder>, encoder_conf_s>>
+        x_encs;
+    std::vector<std::pair<std::shared_ptr<AbstractEncoder>, encoder_conf_s>>
+        y_encs;
   };
 };

@@ -52,21 +52,19 @@ void ImuOdometry::update() {
   unlock();
 }
 
-ImuOdometry::ImuOdometryBuilder &
-ImuOdometry::ImuOdometryBuilder::with_gyro(AbstractGyro *igyro) {
-  gyro = igyro;
+ImuOdometry::ImuOdometryBuilder &ImuOdometry::ImuOdometryBuilder::with_gyro(
+    std::shared_ptr<AbstractGyro> igyro) {
+  gyro = std::move(igyro);
   return *this;
 }
-ImuOdometry::ImuOdometryBuilder &
-ImuOdometry::ImuOdometryBuilder::with_x_enc(AbstractEncoder *encoder,
-                                            encoder_conf_s conf) {
-  x_encs.emplace_back(encoder, conf);
+ImuOdometry::ImuOdometryBuilder &ImuOdometry::ImuOdometryBuilder::with_x_enc(
+    std::shared_ptr<AbstractEncoder> encoder, encoder_conf_s conf) {
+  x_encs.emplace_back(std::move(encoder), conf);
   return *this;
 }
-ImuOdometry::ImuOdometryBuilder &
-ImuOdometry::ImuOdometryBuilder::with_y_enc(AbstractEncoder *encoder,
-                                            encoder_conf_s conf) {
-  y_encs.emplace_back(encoder, conf);
+ImuOdometry::ImuOdometryBuilder &ImuOdometry::ImuOdometryBuilder::with_y_enc(
+    std::shared_ptr<AbstractEncoder> encoder, encoder_conf_s conf) {
+  y_encs.emplace_back(std::move(encoder), conf);
   return *this;
 }
 

@@ -8,8 +8,8 @@ struct AbstractGyro {
 };
 
 // class to forward function calls
-struct AbstactImuGyro : public AbstractGyro, public pros::Imu {
-  AbstactImuGyro(std::uint8_t iport) : Imu(iport) {
+struct AbstractImuGyro : public AbstractGyro, public pros::Imu {
+  AbstractImuGyro(std::uint8_t iport) : pros::Imu(iport) {
     pros::Imu::set_data_rate(5);
   }
 

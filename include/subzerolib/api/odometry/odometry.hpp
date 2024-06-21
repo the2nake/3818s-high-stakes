@@ -8,7 +8,7 @@ class Odometry {
 public:
   ~Odometry() {
     if (update_task != nullptr) {
-      stop_update();
+      stop_updating();
       pros::delay(20);
       delete update_task;
       update_task = nullptr;
@@ -38,7 +38,7 @@ public:
     update_task = new pros::Task([=, this] { this->auto_update_loop(); },
                                  "subzerolib: odometry update task");
   }
-  void stop_update() { this->update_task->notify(); }
+  void stop_updating() { this->update_task->notify(); }
 
 protected:
   Odometry() {}

@@ -87,6 +87,6 @@ void opcontrol() {
   //   no need for imu, it's a smart pointer
   //   no need in ImuOdometry, everything is a smart pointer
   // notify to delete the odometry update task
-  odom->stop_update();
+  odom->stop_updating();
   // delete pointers
 }

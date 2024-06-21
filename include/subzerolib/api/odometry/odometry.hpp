@@ -3,11 +3,18 @@
 #include "pros/rtos.hpp"
 #include "subzerolib/api/geometry/point.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
-#include <atomic>
-#include <memory>
 
 class Odometry {
 public:
+  ~Odometry() {
+    if (update_task != nullptr) {
+      stop_update();
+      pros::delay(20);
+      delete update_task;
+      update_task = nullptr;
+    }
+  }
+
   struct encoder_conf_s {
     encoder_conf_s(double ioffset, double itravel)
         : offset(ioffset), travel_per_deg(itravel) {}
@@ -24,40 +31,26 @@ public:
   virtual void update() = 0;
 
   virtual void set_enabled(bool) = 0;
+  virtual bool is_enabled() = 0;
+
+  void auto_update(int every_ms = 10) {
+    update_delay = every_ms;
+    update_task = new pros::Task([=, this] { this->auto_update_loop(); },
+                                 "subzerolib: odometry update task");
+  }
+  void stop_update() { this->update_task->notify(); }
 
 protected:
   Odometry() {}
-};
-
-struct odom_update_conf_s {
-  ~odom_update_conf_s() { delete signal; }
-  // signals:
-  // 0 = running
-  // 1 = paused
-  // -1 = stopped
-  std::atomic<int> *signal;
-  std::shared_ptr<Odometry> odom;
-  int delay;
-};
-
-struct task_updater_conf_s {
-public:
-  task_updater_conf_s(pros::Task *itask = nullptr,
-                      std::atomic<int> *isignal = nullptr)
-      : task(itask), signal(isignal) {}
-  pros::Task *task;
-
-  void notify(int new_signal = 0) {
-    *signal = new_signal;
-    task->notify();
-  }
-
-  int get_signal() { return signal->load(); }
 
 private:
-  std::atomic<int> *signal;
+  int update_delay = 10;
+  pros::Task *update_task = nullptr;
+  void auto_update_loop() {
+    uint32_t prev_time = pros::millis();
+    while (pros::Task::notify_take(true, 0)) {
+      this->update();
+      pros::Task::delay_until(&prev_time, update_delay);
+    }
+  }
 };
-
-void update_odometry_callback_loop(void *params);
-task_updater_conf_s automatic_update(std::shared_ptr<Odometry> odom,
-                                     int ms_delay);

@@ -30,11 +30,12 @@ public:
   point_s get_vel() override { return point_s{0, 0}; }
 
   void update() override;
+  bool is_enabled() override { return enabled.load(); }
   void set_enabled(bool v) override { enabled = v; }
 
 private:
   pros::Mutex state_mutex;
-  bool enabled = true;
+  std::atomic<bool> enabled = true;
 
   std::shared_ptr<AbstractGyro> gyro;
   std::vector<std::pair<std::shared_ptr<AbstractEncoder>, encoder_conf_s>>

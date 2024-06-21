@@ -1,13 +1,11 @@
 #include "main.h"
-#include "pros/abstract_motor.hpp"
-#include "pros/misc.h"
-#include "pros/misc.hpp"
-#include "subzerolib/api.hpp"
+#include "subzerolib/api/chassis/x-chassis.hpp"
 #include "subzerolib/api/odometry/imu_odometry.hpp"
 #include "subzerolib/api/odometry/odometry.hpp"
 #include "subzerolib/api/sensors/abstract_encoder.hpp"
 #include "subzerolib/api/sensors/abstract_gyro.hpp"
 #include <memory>
+#include <pros/abstract_motor.hpp>
 
 namespace restless {
 bool running = true;
@@ -31,7 +29,6 @@ std::shared_ptr<AbstractGyro> imu(new AbstractImuGyro(8));
 std::shared_ptr<AbstractEncoder> odom_x(new AbstractRotationEncoder(9, false));
 std::shared_ptr<AbstractEncoder> odom_y(new AbstractRotationEncoder(10, false));
 std::shared_ptr<Odometry> odom = nullptr;
-task_updater_conf_s odom_updater;
 
 void initialize() {
   chassis = XChassis::XChassisBuilder()
@@ -44,7 +41,7 @@ void initialize() {
              .with_x_enc(odom_x, Odometry::encoder_conf_s(0, 0))
              .with_y_enc(odom_y, Odometry::encoder_conf_s(0, 0))
              .build();
-  odom_updater = automatic_update(odom, 10);
+  odom->auto_update(10);
 }
 
 void disabled() {}
@@ -70,10 +67,10 @@ void opcontrol() {
 
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
       // test pausing/starting odometry
-      if (odom_updater.get_signal() == 1) {
-        odom_updater.notify(0);
+      if (odom->is_enabled()) {
+        odom->set_enabled(false);
       } else {
-        odom_updater.notify(1);
+        odom->set_enabled(true);
       }
     }
     // print odometry output
@@ -90,6 +87,6 @@ void opcontrol() {
   //   no need for imu, it's a smart pointer
   //   no need in ImuOdometry, everything is a smart pointer
   // notify to delete the odometry update task
-  odom_updater.notify(-1);
+  odom->stop_update();
   // delete pointers
 }

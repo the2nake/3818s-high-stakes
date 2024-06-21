@@ -2,9 +2,6 @@
 #include "subzerolib/api/util/math.hpp"
 
 void ImuOdometry::update() {
-  if (!enabled) {
-    return;
-  }
   double dh = shorter_turn(prev_heading, gyro->get_heading());
 
   // NOTE: the following code updates prev encoder values right away
@@ -45,11 +42,13 @@ void ImuOdometry::update() {
 
   prev_heading = pose.heading();
 
-  lock();
-  pose.x += dx_g;
-  pose.y += dy_g;
-  pose.h += dh;
-  unlock();
+  if (enabled) {
+    lock();
+    pose.x += dx_g;
+    pose.y += dy_g;
+    pose.h += dh;
+    unlock();
+  }
 }
 
 ImuOdometry::ImuOdometryBuilder &ImuOdometry::ImuOdometryBuilder::with_gyro(

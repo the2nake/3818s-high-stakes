@@ -99,7 +99,7 @@ int main() {
   // TODO: write unit tests for circle/segment intersection
 
   segment_s segment{{-1, -1}, {1, 1}};
-  circle_s circle{{0, 0}, 1};
+  circle_s circle{0, 0, 1};
   // should intersect at (-0.71, -0.71) and (0.71, 0.71)
   std::cout << "--- inputs ----------\n";
   print(segment);

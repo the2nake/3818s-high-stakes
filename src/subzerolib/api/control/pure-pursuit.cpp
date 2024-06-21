@@ -29,7 +29,7 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
 
   pose_s prev_pose = odom->get_pose();
   pose_s curr_pose = odom->get_pose();
-  circle_s seek_circle(curr_pose.point(), lookahead);
+  circle_s seek_circle(curr_pose, lookahead);
 
   uint32_t start = pros::millis();
 
@@ -38,7 +38,7 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
     curr_pose = odom->get_pose();
     for (int i = 0; i < resolution; ++i) {
       auto check_pose = lerp(prev_pose, curr_pose, i * 1.0 / resolution);
-      seek_circle = circle_s(check_pose.point(), lookahead);
+      seek_circle = circle_s(check_pose, lookahead);
       while (waypoints.size() > 1 &&
              seek_circle.contains(waypoints[1].point())) {
         waypoints.erase(waypoints.begin());
@@ -73,7 +73,7 @@ void PurePursuitController::select_carrot(pose_s pose, double lookahead,
     carrot = waypoints[0];
   } else {
     segment_s segment{waypoints[0].point(), waypoints[1].point()};
-    circle_s seek_circle = circle_s(pose.x, pose.y, lookahead);
+    circle_s seek_circle = circle_s(pose, lookahead);
     auto intersections = seek_circle.intersections(segment);
     if (intersections.size() == 0) {
       carrot = waypoints[0];

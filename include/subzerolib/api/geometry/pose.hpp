@@ -19,3 +19,5 @@ struct pose_s {
   double dist(const point_s &other) const;
   double dist(const pose_s &other) const;
 };
+
+pose_s lerp(pose_s a, pose_s b, double t);

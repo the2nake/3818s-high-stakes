@@ -24,13 +24,18 @@ public:
   /// @param waypoints a vector of waypoints
   /// @param lookahead range for pure-pursuit smoothening
   /// @param ms_timeout maximum controller run time
-  void follow(std::vector<pose_s> waypoints, double lookahead,
-              int ms_timeout = 5000);
+  /// @param resolution number of physics steps per iteration, min 1
+  void follow(std::vector<pose_s> iwaypoints, double lookahead,
+              int ms_timeout = 5000, int iresolution = 1);
   void stop();
 
   bool is_complete() { return motion_complete.load(); }
 
 private:
+  void select_carrot(pose_s pose, double lookahead, pose_s &carrot);
+  std::vector<pose_s> waypoints;
+  int resolution = 1;
+
   std::shared_ptr<ChassisController> chassis;
   std::shared_ptr<Odometry> odom;
   std::unique_ptr<ExitCondition> exit_condition;

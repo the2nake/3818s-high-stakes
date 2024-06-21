@@ -2,17 +2,23 @@
 #include "subzerolib/api/geometry/circle.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
 #include <memory>
+#include <sys/select.h>
+
+// TODO: pure pursuit untested
 
 PurePursuitController::PurePursuitController(
-    std::shared_ptr<ChassisController> ichassis, std::shared_ptr<Odometry> iodom,
+    std::shared_ptr<ChassisController> ichassis,
+    std::shared_ptr<Odometry> iodom,
     std::unique_ptr<ExitCondition> iexit_condition)
     : chassis(std::move(ichassis)), odom(std::move(iodom)),
       exit_condition(std::move(iexit_condition)) {}
 
-void PurePursuitController::follow(std::vector<pose_s> waypoints,
-                                   double lookahead, int ms_timeout) {
+void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
+                                   double lookahead, int ms_timeout,
+                                   int iresolution) {
+  waypoints = iwaypoints;
+  resolution = std::max(1, iresolution);
 
-  // TODO: impl resolution
   while (!mutex.take(5)) {
     pros::delay(1);
   }
@@ -23,40 +29,23 @@ void PurePursuitController::follow(std::vector<pose_s> waypoints,
 
   pose_s prev_pose = odom->get_pose();
   pose_s curr_pose = odom->get_pose();
-  circle_s seek_circle(curr_pose.x, curr_pose.y, lookahead);
+  circle_s seek_circle(curr_pose.point(), lookahead);
 
   uint32_t start = pros::millis();
 
   for (uint32_t duration = 0; duration < ms_timeout;
        duration = pros::millis() - start) {
     curr_pose = odom->get_pose();
-    seek_circle = circle_s(curr_pose.x, curr_pose.y, lookahead);
-
-    while (waypoints.size() > 1 && seek_circle.contains(waypoints[1].point())) {
-      waypoints.erase(waypoints.begin());
-    }
-
-    // select carrot pose, heading is lerped if intersection is used
-    if (waypoints.size() == 1) {
-      carrot = waypoints[0];
-    } else {
-      segment_s segment{waypoints[0].point(), waypoints[1].point()};
-      auto intersections = seek_circle.intersections(segment);
-      if (intersections.size() == 0) {
-        carrot = waypoints[0];
-      } else {
-        carrot = pose_s{
-            intersections[0],
-            lerp(waypoints[0].heading(), waypoints[1].heading(),
-                 intersections[0].dist(segment.start) / segment.length())};
-        if (carrot.dist(segment.end) > intersections.back().dist(segment.end)) {
-          carrot = pose_s{intersections.back(),
-                          lerp(waypoints[0].heading(), waypoints[1].heading(),
-                               intersections.back().dist(segment.start) /
-                                   segment.length())};
-        }
+    for (int i = 0; i < resolution; ++i) {
+      auto check_pose = lerp(prev_pose, curr_pose, i * 1.0 / resolution);
+      seek_circle = circle_s(check_pose.point(), lookahead);
+      while (waypoints.size() > 1 &&
+             seek_circle.contains(waypoints[1].point())) {
+        waypoints.erase(waypoints.begin());
       }
     }
+
+    select_carrot(curr_pose, lookahead, carrot);
 
     // use chassis controller implementation
     chassis->approach_pose(carrot);
@@ -75,4 +64,29 @@ void PurePursuitController::follow(std::vector<pose_s> waypoints,
   }
   motion_complete = true;
   mutex.give();
+}
+
+void PurePursuitController::select_carrot(pose_s pose, double lookahead,
+                                          pose_s &carrot) {
+  // select carrot pose, heading is lerped if intersection is used
+  if (waypoints.size() == 1) {
+    carrot = waypoints[0];
+  } else {
+    segment_s segment{waypoints[0].point(), waypoints[1].point()};
+    circle_s seek_circle = circle_s(pose.x, pose.y, lookahead);
+    auto intersections = seek_circle.intersections(segment);
+    if (intersections.size() == 0) {
+      carrot = waypoints[0];
+    } else {
+      if (carrot.dist(segment.end) > intersections.back().dist(segment.end)) {
+        auto prop = intersections.back().dist(segment.start) / segment.length();
+        carrot = lerp(waypoints[0], waypoints[1], prop);
+        // assert intersections.back() rougheq lerp result
+      } else {
+        auto prop = intersections[0].dist(segment.start) / segment.length();
+        carrot = lerp(waypoints[0], waypoints[1], prop);
+        // assert intersections[0] rougheq lerp result
+      }
+    }
+  }
 }

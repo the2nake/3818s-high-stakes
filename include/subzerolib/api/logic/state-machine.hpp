@@ -5,11 +5,11 @@
 class StateMachine {
 public:
   enum class state_e {
-    null,
+    none,
   };
 
   struct state_data_s {
-    state_data_s(state_e istate = state_e::null,
+    state_data_s(state_e istate = state_e::none,
                  std::function<void()> ibehaviour = nullptr,
                  std::map<state_e, std::function<bool()>> iexit_map = {})
         : state(istate), behaviour(ibehaviour), exit_map(iexit_map) {}
@@ -49,7 +49,7 @@ public:
     StateMachine *build();
 
   private:
-    state_e init_state = state_e::null;
+    state_e init_state = state_e::none;
     std::map<state_e, state_data_s> blookup;
   };
 };

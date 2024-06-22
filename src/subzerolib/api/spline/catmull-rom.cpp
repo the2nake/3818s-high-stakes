@@ -1,8 +1,18 @@
 #include "subzerolib/api/spline/catmull-rom.hpp"
+#include <algorithm>
 
 CatmullRomSpline::CatmullRomSpline(std::vector<point_s> icontrol_points)
     : control_points(icontrol_points) {
   // calculate cache for control points (every set of 4)
+  calculate_bernstein_coeffs();
+}
+
+CatmullRomSpline::CatmullRomSpline(std::vector<pose_s> icontrol_points) {
+  // calculate cache for control points (every set of 4)
+  control_points.resize(icontrol_points.size());
+  transform(icontrol_points.begin(), icontrol_points.end(),
+            control_points.begin(),
+            [](pose_s pose) -> point_s { return pose.point(); });
   calculate_bernstein_coeffs();
 }
 

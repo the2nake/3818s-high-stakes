@@ -9,9 +9,9 @@
 PurePursuitController::PurePursuitController(
     std::shared_ptr<ChassisController> ichassis,
     std::shared_ptr<Odometry> iodom,
-    std::unique_ptr<ExitCondition> iexit_condition)
+    std::unique_ptr<ExitCondition<double>> ipos_exit_condition)
     : chassis(std::move(ichassis)), odom(std::move(iodom)),
-      exit_condition(std::move(iexit_condition)) {}
+      pos_exit_condition(std::move(ipos_exit_condition)) {}
 
 void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
                                    double lookahead, int ms_timeout,
@@ -32,6 +32,8 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
   circle_s seek_circle(curr_pose, lookahead);
 
   uint32_t start = pros::millis();
+  pos_exit_condition->auto_update(
+      [&]() -> double { return odom->get_pose().dist(waypoints.back()); }, 10);
 
   for (uint32_t duration = 0; duration < ms_timeout;
        duration = pros::millis() - start) {
@@ -49,9 +51,7 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
 
     // use chassis controller implementation
     chassis->approach_pose(carrot);
-
-    // check if settled
-    if (exit_condition->is_met()) {
+    if (pos_exit_condition->is_met()) {
       break;
     }
 
@@ -89,4 +89,8 @@ void PurePursuitController::select_carrot(pose_s pose, double lookahead,
       }
     }
   }
+}
+
+void PurePursuitController::stop() {
+  pos_exit_condition->stop_update();
 }

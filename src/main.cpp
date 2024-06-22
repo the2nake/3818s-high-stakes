@@ -1,9 +1,13 @@
 #include "main.h"
 #include "subzerolib/api/chassis/x-chassis.hpp"
+#include "subzerolib/api/control/chassis-controller.hpp"
+#include "subzerolib/api/control/pure-pursuit.hpp"
 #include "subzerolib/api/odometry/imu_odometry.hpp"
 #include "subzerolib/api/odometry/odometry.hpp"
 #include "subzerolib/api/sensors/abstract_encoder.hpp"
 #include "subzerolib/api/sensors/abstract_gyro.hpp"
+#include "subzerolib/api/spline/catmull-rom.hpp"
+#include <cstdlib>
 #include <memory>
 #include <pros/abstract_motor.hpp>
 
@@ -48,7 +52,18 @@ void disabled() {}
 
 void competition_initialize() {}
 
-void autonomous() {}
+class PIDXController : public ChassisController {}
+;
+
+void autonomous() {
+  std::unique_ptr<ExitCondition<double>> cond(new ExitCondition<double>({0, 10}, 400));
+  std::shared_ptr<PIDXController> controller = nullptr;
+  PurePursuitController pp(controller, odom, std::move(cond));
+  std::vector<pose_s> control_points = {};
+  CatmullRomSpline spline(control_points);
+  // TODO: map heading throughout motion
+  // pp.follow(std::vector<pose_s> iwaypoints, double lookahead);
+}
 
 void opcontrol() {
   pros::Controller master(pros::E_CONTROLLER_MASTER);

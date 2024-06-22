@@ -18,8 +18,8 @@ int main() {
   file.clear();
 
   // generate the spline
-  CatmullRomSpline spline(
-      {{-1.5, 0.6}, {-0.6, 0.6}, {-0.2, 1.2}, {-0.6, 1.2}, {-1.5, 0}});
+  CatmullRomSpline spline(std::vector<point_s>{
+      {-1.5, 0.6}, {-0.6, 0.6}, {-0.2, 1.2}, {-0.6, 1.2}, {-1.5, 0}});
   spline.pad_velocity({1, 0}, {0, -1});
   std::vector<point_s> spline_points = spline.sample(200);
 

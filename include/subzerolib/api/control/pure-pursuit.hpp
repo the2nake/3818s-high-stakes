@@ -13,11 +13,7 @@ class PurePursuitController {
 public:
   PurePursuitController(std::shared_ptr<ChassisController> ichassis,
                         std::shared_ptr<Odometry> iodom,
-                        std::unique_ptr<ExitCondition> iexit_condition);
-
-  // TODO: redo exit condition abstraction. need to have some way to pass
-  // target position. lemlib?
-
+                        std::unique_ptr<ExitCondition<double>> ipos_exit_condition);
   /// @brief follows the path described by the linear spline connecting the
   /// waypoints
   ///
@@ -38,7 +34,7 @@ private:
 
   std::shared_ptr<ChassisController> chassis;
   std::shared_ptr<Odometry> odom;
-  std::unique_ptr<ExitCondition> exit_condition;
+  std::unique_ptr<ExitCondition<double>> pos_exit_condition;
 
   std::atomic<bool> motion_complete = true;
   pros::Mutex mutex;

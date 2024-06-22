@@ -39,7 +39,8 @@ public:
   }
 
   ~ExitCondition() {
-    stop_update();
+    stop_updating();
+    pros::delay(20);
     delete this->update_task;
     update_task = nullptr;
   }
@@ -69,7 +70,7 @@ public:
     });
   }
 
-  void stop_update() {
+  void stop_updating() {
     if (this->update_task != nullptr) {
       this->update_task->notify();
     }

@@ -48,7 +48,7 @@ public:
   void update(T input) {
     uint32_t now = pros::millis();
     if (range.contains(input)) {
-      met_duration = met_duration + now - last_update;
+      met_duration += now - last_update;
     } else {
       met_duration = 0;
     }

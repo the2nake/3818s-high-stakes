@@ -39,6 +39,7 @@ public:
   }
 
   ~ExitCondition() {
+    stop_update();
     delete this->update_task;
     update_task = nullptr;
   }

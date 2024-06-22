@@ -29,7 +29,7 @@ std::unique_ptr<pros::AbstractMotor>
 std::shared_ptr<XChassis> chassis = nullptr;
 std::shared_ptr<AbstractGyro> imu(new AbstractImuGyro(8));
 
-// TODO: configure ports
+// TODO: configure ports.h
 std::shared_ptr<AbstractEncoder> odom_x(new AbstractRotationEncoder(9, false));
 std::shared_ptr<AbstractEncoder> odom_y(new AbstractRotationEncoder(10, false));
 std::shared_ptr<Odometry> odom = nullptr;
@@ -55,13 +55,18 @@ void competition_initialize() {}
 class PIDXController : public ChassisController {}
 ;
 
+// TODO: create full trajectory generation
+// TODO: write PIDXController
+// TODO: write StarChassis
+// TODO: write PIDStarController
+// tODO: write the rest of the test code
+
 void autonomous() {
   std::unique_ptr<ExitCondition<double>> cond(new ExitCondition<double>({0, 10}, 400));
   std::shared_ptr<PIDXController> controller = nullptr;
   PurePursuitController pp(controller, odom, std::move(cond));
   std::vector<pose_s> control_points = {};
   CatmullRomSpline spline(control_points);
-  // TODO: map heading throughout motion
   // pp.follow(std::vector<pose_s> iwaypoints, double lookahead);
 }
 

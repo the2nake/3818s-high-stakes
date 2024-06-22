@@ -14,3 +14,11 @@ pose_s lerp(pose_s a, pose_s b, double t) {
   double heading = lerp(a.heading(), b.heading(), t);
   return pose_s{point, heading};
 }
+
+pose_s operator+(pose_s a, pose_s b) {
+  return {a.x + b.x, a.y + b.y, fmod(a.h + b.h, 360.0)};
+}
+
+pose_s operator-(pose_s a, pose_s b) {
+  return {a.x - b.x, a.y - b.y, shorter_turn<double>(b.h, a.h, 360.0)};
+}

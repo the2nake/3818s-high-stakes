@@ -1,13 +1,12 @@
 #include "main.h"
 #include "subzerolib/api/chassis/x-chassis.hpp"
-#include "subzerolib/api/control/chassis-controller.hpp"
 #include "subzerolib/api/control/pure-pursuit.hpp"
+#include "subzerolib/api/control/x-chassis-pid.hpp"
 #include "subzerolib/api/odometry/imu_odometry.hpp"
 #include "subzerolib/api/odometry/odometry.hpp"
 #include "subzerolib/api/sensors/abstract_encoder.hpp"
 #include "subzerolib/api/sensors/abstract_gyro.hpp"
 #include "subzerolib/api/spline/catmull-rom.hpp"
-#include <cstdlib>
 #include <memory>
 #include <pros/abstract_motor.hpp>
 
@@ -52,22 +51,27 @@ void disabled() {}
 
 void competition_initialize() {}
 
-class PIDXController : public ChassisController {}
-;
-
-// TODO: create full trajectory generation
-// TODO: write PIDXController
 // TODO: write StarChassis
 // TODO: write PIDStarController
-// tODO: write the rest of the test code
+// TODO: write the rest of the test code
 
 void autonomous() {
-  std::unique_ptr<ExitCondition<double>> cond(new ExitCondition<double>({0, 10}, 400));
-  std::shared_ptr<PIDXController> controller = nullptr;
+  std::unique_ptr<ExitCondition<double>> cond(
+      new ExitCondition<double>({0, 10}, 400));
+  // TODO: tune
+  std::shared_ptr<XChassisPID> controller =
+      XChassisPID::XChassisPIDBuilder()
+          .with_chassis(chassis)
+          .with_odom(odom)
+          .with_pid(XChassisPID::pid_dimension_e::x, 0.0, 0.0, 0.0)
+          .with_pid(XChassisPID::pid_dimension_e::y, 0.0, 0.0, 0.0)
+          .with_pid(XChassisPID::pid_dimension_e::r, 0.0, 0.0, 0.0)
+          .build();
   PurePursuitController pp(controller, odom, std::move(cond));
-  std::vector<pose_s> control_points = {};
+  std::vector<pose_s> control_points = {}; // TODO: invent
   CatmullRomSpline spline(control_points);
-  // pp.follow(std::vector<pose_s> iwaypoints, double lookahead);
+  // TODO: create full trajectory generation
+  // test: pp.follow(std::vector<pose_s> iwaypoints, double lookahead);
 }
 
 void opcontrol() {

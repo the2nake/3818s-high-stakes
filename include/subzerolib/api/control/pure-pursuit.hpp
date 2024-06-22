@@ -23,6 +23,7 @@ public:
   /// @param resolution number of physics steps per iteration, min 1
   void follow(std::vector<pose_s> iwaypoints, double lookahead,
               int ms_timeout = 5000, int iresolution = 1);
+  // TODO: PurePursuitController::follow_async
   void stop();
 
   bool is_complete() { return motion_complete.load(); }

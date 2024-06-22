@@ -21,3 +21,5 @@ struct pose_s {
 };
 
 pose_s lerp(pose_s a, pose_s b, double t);
+pose_s operator+(pose_s a, pose_s b);
+pose_s operator-(pose_s a, pose_s b);

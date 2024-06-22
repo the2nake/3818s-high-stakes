@@ -9,6 +9,6 @@
 /// roughly aligned with the direction of the drive
 class ChassisController {
 public:
-  virtual void approach_pose(pose_s pose, double linv = std::nan("")) = 0;
+  virtual void approach_pose(pose_s target, double linv = std::nan("")) = 0;
   virtual void brake() = 0;
 };

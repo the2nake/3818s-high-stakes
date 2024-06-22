@@ -33,9 +33,10 @@ public:
   virtual void set_enabled(bool) = 0;
   virtual bool is_enabled() = 0;
 
+  // TODO: combine this with exit_condition's auto_update
   void auto_update(int every_ms = 10) {
     update_delay = every_ms;
-    update_task = new pros::Task([=, this] { this->auto_update_loop(); },
+    update_task = new pros::Task([&, this] { this->auto_update_loop(); },
                                  "subzerolib: odometry update task");
   }
   void stop_updating() { this->update_task->notify(); }

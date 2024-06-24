@@ -7,3 +7,7 @@ double in_rad(double deg) {
 double in_deg(double rad) {
   return 180.0 * rad / K_PI;
 }
+
+double rougheq(double a, double b) {
+  return std::abs(a - b) < K_EPSILON;
+}

@@ -1,5 +1,7 @@
 #include "main.h"
+#include "subzerolib/api/chassis/star-chassis.hpp"
 #include "subzerolib/api/chassis/x-chassis.hpp"
+#include "subzerolib/api/control/chassis-controller.hpp"
 #include "subzerolib/api/control/pure-pursuit.hpp"
 #include "subzerolib/api/control/x-chassis-pid.hpp"
 #include "subzerolib/api/odometry/imu_odometry.hpp"
@@ -19,13 +21,18 @@ std::unique_ptr<pros::AbstractMotor> fl(
 std::unique_ptr<pros::AbstractMotor>
     fr(new pros::Motor(10, pros::v5::MotorGears::green,
                        pros::v5::MotorUnits::deg));
+// TODO: configure boost ports
+std::unique_ptr<pros::AbstractMotor> ml(
+    new pros::Motor(0, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg));
+std::unique_ptr<pros::AbstractMotor> mr(
+    new pros::Motor(0, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg));
 std::unique_ptr<pros::AbstractMotor>
     br(new pros::Motor(20, pros::v5::MotorGears::green,
                        pros::v5::MotorUnits::deg));
 std::unique_ptr<pros::AbstractMotor>
     bl(new pros::Motor(11, pros::v5::MotorGears::green,
                        pros::v5::MotorUnits::deg));
-std::shared_ptr<XChassis> chassis = nullptr;
+std::shared_ptr<StarChassis> chassis = nullptr;
 std::shared_ptr<AbstractGyro> imu(new AbstractImuGyro(8));
 
 // TODO: configure ports.h
@@ -34,15 +41,24 @@ std::shared_ptr<AbstractEncoder> odom_y(new AbstractRotationEncoder(10, false));
 std::shared_ptr<Odometry> odom = nullptr;
 
 void initialize() {
-  chassis = XChassis::XChassisBuilder()
-                .with_motors(std::move(fl), std::move(fr), std::move(br),
-                             std::move(bl))
-                .build();
+  chassis =
+      StarChassis::StarChassisBuilder()
+          .with_motors(StarChassis::motor_position_e::front_left, std::move(fl))
+          .with_motors(StarChassis::motor_position_e::front_right,
+                       std::move(fr))
+          .with_motors(StarChassis::motor_position_e::boost_left, std::move(ml))
+          .with_motors(StarChassis::motor_position_e::boost_right,
+                       std::move(mr))
+          .with_motors(StarChassis::motor_position_e::back_left, std::move(bl))
+          .with_motors(StarChassis::motor_position_e::back_right, std::move(br))
+          .with_geometry(1, 1) // TODO: configure geometry
+          .with_rot_pref(0.3)
+          .build();
   // TODO: configure odometry
   odom = ImuOdometry::ImuOdometryBuilder()
              .with_gyro(imu)
-             .with_x_enc(odom_x, Odometry::encoder_conf_s(0, 0))
-             .with_y_enc(odom_y, Odometry::encoder_conf_s(0, 0))
+             .with_x_enc(odom_x, Odometry::encoder_conf_s(0, 160.0 / 360.0))
+             .with_y_enc(odom_y, Odometry::encoder_conf_s(0, 160.0 / 360.0))
              .build();
   odom->auto_update(10);
 }
@@ -51,14 +67,13 @@ void disabled() {}
 
 void competition_initialize() {}
 
-// TODO: write StarChassis
-// TODO: write PIDStarController
 // TODO: write the rest of the test code
 
 void autonomous() {
   std::unique_ptr<ExitCondition<double>> cond(
       new ExitCondition<double>({0, 10}, 400));
   // TODO: tune
+  /* FIXME
   std::shared_ptr<XChassisPID> controller =
       XChassisPID::XChassisPIDBuilder()
           .with_chassis(chassis)
@@ -66,7 +81,9 @@ void autonomous() {
           .with_pid(XChassisPID::pid_dimension_e::x, 0.0, 0.0, 0.0)
           .with_pid(XChassisPID::pid_dimension_e::y, 0.0, 0.0, 0.0)
           .with_pid(XChassisPID::pid_dimension_e::r, 0.0, 0.0, 0.0)
-          .build();
+          .build();*/
+  std::shared_ptr<ChassisController>
+      controller; // TODO: implement StarChassisPID
   PurePursuitController pp(controller, odom, std::move(cond));
   std::vector<pose_s> control_points = {}; // TODO: invent
   CatmullRomSpline spline(control_points);

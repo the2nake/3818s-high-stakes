@@ -1,6 +1,7 @@
 #pragma once
 
 #include "subzerolib/api/chassis/chassis.hpp"
+#include "subzerolib/api/chassis/star-chassis.hpp"
 #include "subzerolib/api/chassis/x-chassis.hpp"
 #include "subzerolib/api/control/chassis-controller.hpp"
 #include "subzerolib/api/control/exit-condition.hpp"
@@ -19,3 +20,5 @@
 #include "subzerolib/api/spline/catmull-rom.hpp"
 #include "subzerolib/api/spline/cubic-spline.hpp"
 #include "subzerolib/api/util/helper.hpp"
+#include "subzerolib/api/util/math.hpp"
+#include "subzerolib/api/util/controls.hpp"

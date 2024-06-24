@@ -7,6 +7,8 @@
 class XChassis : public Chassis {
 public:
   void move(double x, double y, double r) override;
+  // TODO: implement this
+  void set_rot_pref(double rot_pref) override {}
 
 private:
   XChassis() {}
@@ -29,7 +31,7 @@ public:
 
   private:
     bool failed = false;
-    
+
     std::unique_ptr<pros::AbstractMotor> bfront_left = nullptr;
     std::unique_ptr<pros::AbstractMotor> bfront_right = nullptr;
     std::unique_ptr<pros::AbstractMotor> bback_right = nullptr;

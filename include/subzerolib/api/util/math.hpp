@@ -3,7 +3,10 @@
 #include <cmath>
 
 const double K_PI = 3.141592654;
+const double K_EPSILON = 0.00001;
+const double K_SQRT_2 = 1.414213562;
 
+double rougheq(double a, double b);
 double in_rad(double deg);
 double in_deg(double rad);
 
@@ -31,4 +34,26 @@ auto shorter_turn(T h0, T hf, T circle_size = 360.0) -> decltype(hf - h0) {
 template <typename T, typename T2>
 auto lerp(T a, T b, T2 t) -> decltype(a * t) {
   return a + (b - a) * t;
+}
+
+template <typename T> void clamp(T &val, T min, T max) {
+  if (max < min) {
+    std::swap(max, min);
+  }
+  if (max < val) {
+    val = max;
+  } else if (min > val) {
+    val = min;
+  }
+}
+
+template <typename T> void clamp_distance(T dist, T &x, T &y) {
+  double d = std::hypot(x, y);
+  if (std::abs(d) > dist) {
+    double sin = y / d;
+    double cos = x / d;
+    d = std::min(dist, d);
+    y = sin * d;
+    x = cos * d;
+  }
 }

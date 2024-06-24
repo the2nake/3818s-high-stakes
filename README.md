@@ -6,6 +6,8 @@ A very work-in-progress codebase. `main` branch will stay nonfunctional until at
 
 ## Dependencies
 
+`ffmpeg`
+
 ### Python (via pip)
 
 `pros-cli matplotlib PyQt6`

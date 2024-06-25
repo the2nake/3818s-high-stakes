@@ -1,8 +1,6 @@
 #include "subzerolib/api/chassis/x-chassis.hpp"
-#include "subzerolib/api/chassis/chassis.hpp"
 #include "subzerolib/api/util/controls.hpp"
 #include "subzerolib/api/util/math.hpp"
-#include <cmath>
 
 void XChassis::move(double x, double y, double r) {
   clamp_distance(1.0, x, y);

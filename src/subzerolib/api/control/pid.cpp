@@ -17,7 +17,7 @@ void PIDF::update(double error) {
   double p = kp * error;
   double i = ki * total_err;
   double d = 0.0;
-  if (!std::isnan(prev_err)) {
+  if ((!std::isnan(prev_err)) && (dt != 0.0)) {
     d = kd * (error - prev_err) / dt;
   }
   output = ff + p + i + d;

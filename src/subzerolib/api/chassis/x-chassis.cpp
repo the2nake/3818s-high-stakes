@@ -1,40 +1,24 @@
 #include "subzerolib/api/chassis/x-chassis.hpp"
+#include "subzerolib/api/chassis/chassis.hpp"
+#include "subzerolib/api/util/controls.hpp"
+#include "subzerolib/api/util/math.hpp"
 #include <cmath>
 
 void XChassis::move(double x, double y, double r) {
+  clamp_distance(1.0, x, y);
 
-  double d = std::hypot(x, y);
-  if (std::abs(d) > 1) {
-    double sin = y / d;
-    double cos = x / d;
-    d = std::min(1.0, d);
-    y = sin * d;
-    x = cos * d;
-  }
+  std::vector<control_components_s> vs = {
+      {x + y, r}, {-x + y, -r}, {x + y, -r}, {-x + y, r}};
 
-  double vs[4] = {y + x + r, y - x - r, y + x - r, y - x + r};
-  double max = std::abs(vs[0]);
-  for (int i = 1; i < 4; i++) {
-    if (std::abs(vs[i]) > max) {
-      max = std::abs(vs[i]);
-    }
-  }
+  balance_vels(vs, 1.0, rot_pref);
 
-  if (max > 1) {
-    vs[0] = vs[0] / max;
-    vs[1] = vs[1] / max;
-    vs[2] = vs[2] / max;
-    vs[3] = vs[3] / max;
-  }
-
-  front_left->move_voltage(12000 * (vs[0]));
-  front_right->move_voltage(12000 * (vs[1]));
-  back_right->move_voltage(12000 * (vs[2]));
-  back_left->move_voltage(12000 * (vs[3]));
+  front_left->move_voltage(12000 * (vs[0].sum()));
+  front_right->move_voltage(12000 * (vs[1].sum()));
+  back_right->move_voltage(12000 * (vs[2].sum()));
+  back_left->move_voltage(12000 * (vs[3].sum()));
 }
 
-XChassis::XChassisBuilder &
-XChassis::XChassisBuilder::with_motors(
+XChassis::XChassisBuilder &XChassis::XChassisBuilder::with_motors(
     std::unique_ptr<pros::AbstractMotor> ifront_left,
     std::unique_ptr<pros::AbstractMotor> ifront_right,
     std::unique_ptr<pros::AbstractMotor> iback_right,
@@ -46,10 +30,10 @@ XChassis::XChassisBuilder::with_motors(
   return *this;
 }
 
-std::shared_ptr<XChassis>
-XChassis::XChassisBuilder::build() {
+std::shared_ptr<XChassis> XChassis::XChassisBuilder::build() {
   std::shared_ptr<XChassis> chassis(new XChassis());
 
+  chassis->rot_pref = brot_pref;
   chassis->front_left = std::move(bfront_left);
   chassis->front_right = std::move(bfront_right);
   chassis->back_right = std::move(bback_right);

@@ -29,12 +29,14 @@ private:
 public:
   class XChassisPIDBuilder {
   public:
+    // TODO: move builder impl
     XChassisPIDBuilder &with_chassis(std::shared_ptr<XChassis> ichassis) {
       if (ichassis != nullptr) {
         bchassis = std::move(ichassis);
       }
       return *this;
     }
+
     XChassisPIDBuilder &with_odom(std::shared_ptr<Odometry> iodom) {
       if (iodom != nullptr) {
         bodom = std::move(iodom);

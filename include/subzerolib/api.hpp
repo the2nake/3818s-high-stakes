@@ -4,7 +4,7 @@
 #include "subzerolib/api/chassis/star-chassis.hpp"
 #include "subzerolib/api/chassis/x-chassis.hpp"
 #include "subzerolib/api/control/chassis-controller.hpp"
-#include "subzerolib/api/control/exit-condition.hpp"
+#include "subzerolib/api/logic/exit-condition.hpp"
 #include "subzerolib/api/control/pid.hpp"
 #include "subzerolib/api/control/pure-pursuit.hpp"
 #include "subzerolib/api/control/x-chassis-pid.hpp"

@@ -1,6 +1,7 @@
 #include "main.h"
 #include "subzerolib/api/chassis/star-chassis.hpp"
 #include "subzerolib/api/control/chassis-controller.hpp"
+#include "subzerolib/api/control/holo-chassis-pid.hpp"
 #include "subzerolib/api/control/pure-pursuit.hpp"
 #include "subzerolib/api/odometry/imu_odometry.hpp"
 #include "subzerolib/api/odometry/odometry.hpp"
@@ -71,17 +72,14 @@ void autonomous() {
   std::unique_ptr<ExitCondition<double>> cond(
       new ExitCondition<double>({0, 10}, 400));
   // TODO: tune
-  /* FIXME
-  std::shared_ptr<XChassisPID> controller =
-      XChassisPID::XChassisPIDBuilder()
+  std::shared_ptr<HoloChassisPID> controller =
+      HoloChassisPID::HoloChassisPIDBuilder()
           .with_chassis(chassis)
           .with_odom(odom)
-          .with_pid(XChassisPID::pid_dimension_e::x, 0.0, 0.0, 0.0)
-          .with_pid(XChassisPID::pid_dimension_e::y, 0.0, 0.0, 0.0)
-          .with_pid(XChassisPID::pid_dimension_e::r, 0.0, 0.0, 0.0)
-          .build();*/
-  std::shared_ptr<ChassisController>
-      controller; // TODO: implement StarChassisPID
+          .with_pid(HoloChassisPID::pid_dimension_e::x, 100.0, 0.0, 0.0)
+          .with_pid(HoloChassisPID::pid_dimension_e::y, 100.0, 0.0, 0.0)
+          .with_pid(HoloChassisPID::pid_dimension_e::r, 100.0, 0.0, 0.0)
+          .build();
   PurePursuitController pp(controller, odom, std::move(cond));
   std::vector<pose_s> control_points = {}; // TODO: invent
   CatmullRomSpline spline(control_points);

@@ -39,13 +39,13 @@ private:
   std::unique_ptr<pros::AbstractMotor> boost_right = nullptr;
 
 public:
-  class StarChassisBuilder {
+  class Builder {
   public:
-    StarChassisBuilder &with_motors(motor_position_e dimension,
+    Builder &with_motors(motor_position_e dimension,
                                     std::unique_ptr<pros::AbstractMotor> motor);
-    StarChassisBuilder &with_geometry(double iboost_radius,
+    Builder &with_geometry(double iboost_radius,
                                       double icorner_radius);
-    StarChassisBuilder &with_rot_pref(double rot_pref = 0.5);
+    Builder &with_rot_pref(double rot_pref = 0.5);
 
     std::shared_ptr<StarChassis> build();
 

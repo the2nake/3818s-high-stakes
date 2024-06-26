@@ -59,12 +59,12 @@ private:
   void unlock() { this->state_mutex.give(); }
 
 public:
-  class ImuOdometryBuilder {
+  class Builder {
   public:
-    ImuOdometryBuilder &with_gyro(std::shared_ptr<AbstractGyro> igyro);
-    ImuOdometryBuilder &with_x_enc(std::shared_ptr<AbstractEncoder> encoder,
+    Builder &with_gyro(std::shared_ptr<AbstractGyro> igyro);
+    Builder &with_x_enc(std::shared_ptr<AbstractEncoder> encoder,
                                    encoder_conf_s conf);
-    ImuOdometryBuilder &with_y_enc(std::shared_ptr<AbstractEncoder> encoder,
+    Builder &with_y_enc(std::shared_ptr<AbstractEncoder> encoder,
                                    encoder_conf_s conf);
 
     std::shared_ptr<ImuOdometry> build();

@@ -34,7 +34,7 @@ void StarChassis::set_rot_pref(double irot_pref) {
   clamp(rot_pref, 0.0, 1.0);
 }
 
-StarChassis::StarChassisBuilder &StarChassis::StarChassisBuilder::with_motors(
+StarChassis::Builder &StarChassis::Builder::with_motors(
     StarChassis::motor_position_e position,
     std::unique_ptr<pros::AbstractMotor> motor) {
   if (motor == nullptr) {
@@ -63,7 +63,7 @@ StarChassis::StarChassisBuilder &StarChassis::StarChassisBuilder::with_motors(
   return *this;
 }
 
-bool StarChassis::StarChassisBuilder::try_copy(
+bool StarChassis::Builder::try_copy(
     std::unique_ptr<pros::AbstractMotor> &target,
     std::unique_ptr<pros::AbstractMotor> &origin) {
   if (origin == nullptr) {
@@ -74,8 +74,8 @@ bool StarChassis::StarChassisBuilder::try_copy(
   }
 }
 
-StarChassis::StarChassisBuilder &
-StarChassis::StarChassisBuilder::with_geometry(double iboost_radius,
+StarChassis::Builder &
+StarChassis::Builder::with_geometry(double iboost_radius,
                                                double icorner_radius) {
   bboost_radius = std::abs(iboost_radius);
   bcorner_radius = std::abs(icorner_radius);
@@ -86,15 +86,15 @@ StarChassis::StarChassisBuilder::with_geometry(double iboost_radius,
   return *this;
 }
 
-StarChassis::StarChassisBuilder &
-StarChassis::StarChassisBuilder::with_rot_pref(double rot_pref) {
+StarChassis::Builder &
+StarChassis::Builder::with_rot_pref(double rot_pref) {
   rot_pref = std::abs(rot_pref);
   clamp(rot_pref, 0.0, 1.0);
   this->brot_pref = rot_pref;
   return *this;
 }
 
-std::shared_ptr<StarChassis> StarChassis::StarChassisBuilder::build() {
+std::shared_ptr<StarChassis> StarChassis::Builder::build() {
   auto chassis = new StarChassis();
   std::vector<bool> results;
   results.push_back(!try_copy(chassis->front_left, bfront_left));

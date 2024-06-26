@@ -16,7 +16,7 @@ void XChassis::move(double x, double y, double r) {
   back_left->move_voltage(12000 * (vs[3].sum()));
 }
 
-XChassis::XChassisBuilder &XChassis::XChassisBuilder::with_motors(
+XChassis::Builder &XChassis::Builder::with_motors(
     std::unique_ptr<pros::AbstractMotor> ifront_left,
     std::unique_ptr<pros::AbstractMotor> ifront_right,
     std::unique_ptr<pros::AbstractMotor> iback_right,
@@ -28,7 +28,7 @@ XChassis::XChassisBuilder &XChassis::XChassisBuilder::with_motors(
   return *this;
 }
 
-std::shared_ptr<XChassis> XChassis::XChassisBuilder::build() {
+std::shared_ptr<XChassis> XChassis::Builder::build() {
   std::shared_ptr<XChassis> chassis(new XChassis());
 
   chassis->rot_pref = brot_pref;

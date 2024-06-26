@@ -9,8 +9,8 @@ void HoloChassisPID::approach_pose(pose_s target, double linv) {
   chassis->move(x_pid->get_output(), y_pid->get_output(), r_pid->get_output());
 }
 
-HoloChassisPID::HoloChassisPIDBuilder &
-HoloChassisPID::HoloChassisPIDBuilder::with_chassis(
+HoloChassisPID::Builder &
+HoloChassisPID::Builder::with_chassis(
     std::shared_ptr<Chassis> ichassis) {
   if (ichassis != nullptr) {
     bchassis = std::move(ichassis);
@@ -18,8 +18,8 @@ HoloChassisPID::HoloChassisPIDBuilder::with_chassis(
   return *this;
 }
 
-HoloChassisPID::HoloChassisPIDBuilder &
-HoloChassisPID::HoloChassisPIDBuilder::with_odom(
+HoloChassisPID::Builder &
+HoloChassisPID::Builder::with_odom(
     std::shared_ptr<Odometry> iodom) {
   if (iodom != nullptr) {
     bodom = std::move(iodom);
@@ -27,8 +27,8 @@ HoloChassisPID::HoloChassisPIDBuilder::with_odom(
   return *this;
 }
 
-HoloChassisPID::HoloChassisPIDBuilder &
-HoloChassisPID::HoloChassisPIDBuilder::with_pid(
+HoloChassisPID::Builder &
+HoloChassisPID::Builder::with_pid(
     HoloChassisPID::pid_dimension_e dimension, double kp, double ki,
     double kd) {
   PIDF *pid = new PIDF(kp, ki, kd, 0.0);
@@ -48,7 +48,7 @@ HoloChassisPID::HoloChassisPIDBuilder::with_pid(
   return *this;
 }
 
-std::shared_ptr<HoloChassisPID> HoloChassisPID::HoloChassisPIDBuilder::build() {
+std::shared_ptr<HoloChassisPID> HoloChassisPID::Builder::build() {
   HoloChassisPID *controller = new HoloChassisPID();
   if (bchassis == nullptr || bodom == nullptr || bx_pid == nullptr ||
       by_pid == nullptr || br_pid == nullptr) {

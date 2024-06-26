@@ -27,13 +27,13 @@ private:
   HoloChassisPID() {}
 
 public:
-  class HoloChassisPIDBuilder {
+  class Builder {
   public:
-    HoloChassisPIDBuilder &with_chassis(std::shared_ptr<Chassis> ichassis);
+    Builder &with_chassis(std::shared_ptr<Chassis> ichassis);
 
-    HoloChassisPIDBuilder &with_odom(std::shared_ptr<Odometry> iodom);
+    Builder &with_odom(std::shared_ptr<Odometry> iodom);
 
-    HoloChassisPIDBuilder &with_pid(pid_dimension_e dimension, double kp,
+    Builder &with_pid(pid_dimension_e dimension, double kp,
                                     double ki, double kd);
 
     std::shared_ptr<HoloChassisPID> build();

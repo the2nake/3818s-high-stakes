@@ -42,10 +42,10 @@ private:
   std::map<state_e, state_data_s> name_state_lookup;
 
 public:
-  class StateMachineBuilder {
+  class Builder {
   public:
-    StateMachineBuilder &with_init(state_e state_name);
-    StateMachineBuilder &with_state(state_data_s);
+    Builder &with_init(state_e state_name);
+    Builder &with_state(state_data_s);
     StateMachine *build();
 
   private:

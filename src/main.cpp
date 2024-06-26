@@ -41,7 +41,7 @@ std::shared_ptr<Odometry> odom = nullptr;
 
 void initialize() {
   chassis =
-      StarChassis::StarChassisBuilder()
+      StarChassis::Builder()
           .with_motors(StarChassis::motor_position_e::front_left, std::move(fl))
           .with_motors(StarChassis::motor_position_e::front_right,
                        std::move(fr))
@@ -54,7 +54,7 @@ void initialize() {
           .with_rot_pref(0.3)
           .build();
   // TODO: configure odometry
-  odom = ImuOdometry::ImuOdometryBuilder()
+  odom = ImuOdometry::Builder()
              .with_gyro(imu)
              .with_x_enc(odom_x, Odometry::encoder_conf_s(0, 160.0 / 360.0))
              .with_y_enc(odom_y, Odometry::encoder_conf_s(0, 160.0 / 360.0))
@@ -73,7 +73,7 @@ void autonomous() {
       new ExitCondition<double>({0, 10}, 400));
   // TODO: tune
   std::shared_ptr<HoloChassisPID> controller =
-      HoloChassisPID::HoloChassisPIDBuilder()
+      HoloChassisPID::Builder()
           .with_chassis(chassis)
           .with_odom(odom)
           .with_pid(HoloChassisPID::pid_dimension_e::x, 100.0, 0.0, 0.0)

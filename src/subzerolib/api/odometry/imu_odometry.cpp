@@ -51,23 +51,23 @@ void ImuOdometry::update() {
   }
 }
 
-ImuOdometry::ImuOdometryBuilder &ImuOdometry::ImuOdometryBuilder::with_gyro(
+ImuOdometry::Builder &ImuOdometry::Builder::with_gyro(
     std::shared_ptr<AbstractGyro> igyro) {
   gyro = std::move(igyro);
   return *this;
 }
-ImuOdometry::ImuOdometryBuilder &ImuOdometry::ImuOdometryBuilder::with_x_enc(
+ImuOdometry::Builder &ImuOdometry::Builder::with_x_enc(
     std::shared_ptr<AbstractEncoder> encoder, encoder_conf_s conf) {
   x_encs.emplace_back(std::move(encoder), conf);
   return *this;
 }
-ImuOdometry::ImuOdometryBuilder &ImuOdometry::ImuOdometryBuilder::with_y_enc(
+ImuOdometry::Builder &ImuOdometry::Builder::with_y_enc(
     std::shared_ptr<AbstractEncoder> encoder, encoder_conf_s conf) {
   y_encs.emplace_back(std::move(encoder), conf);
   return *this;
 }
 
-std::shared_ptr<ImuOdometry> ImuOdometry::ImuOdometryBuilder::build() {
+std::shared_ptr<ImuOdometry> ImuOdometry::Builder::build() {
   if (gyro == nullptr) {
     return nullptr;
   }

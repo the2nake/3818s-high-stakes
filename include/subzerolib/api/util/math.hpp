@@ -59,7 +59,7 @@ template <typename T> void clamp_distance(T dist, T &x, T &y) {
   }
 }
 
-template <typename T> point_s rotate_aw(T x, T y, T h) {
+template <typename T> point_s rotate_acw(T x, T y, T h) {
   double rad = in_rad(-h);
   return {x * cos(rad) + y * sin(rad), y * cos(rad) - x * sin(rad)};
 }

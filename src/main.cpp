@@ -97,7 +97,7 @@ void opcontrol() {
     double r = master.get_analog(ANALOG_LEFT_X) / 127.0;
     auto pose = odom->get_pose();
 
-    auto vec = rotate_aw(x, y, pose.h);
+    auto vec = rotate_acw(x, y, pose.h);
     chassis->move(vec.x, vec.y, 0.75 * r);
     // chassis->move(x, y, r);
 

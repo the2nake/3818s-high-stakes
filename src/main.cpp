@@ -1,6 +1,5 @@
 #include "main.h"
 #include "subzerolib/api/chassis/star-chassis.hpp"
-#include "subzerolib/api/control/chassis-controller.hpp"
 #include "subzerolib/api/control/holo-chassis-pid.hpp"
 #include "subzerolib/api/control/pure-pursuit.hpp"
 #include "subzerolib/api/odometry/imu_odometry.hpp"
@@ -8,6 +7,7 @@
 #include "subzerolib/api/sensors/abstract_encoder.hpp"
 #include "subzerolib/api/sensors/abstract_gyro.hpp"
 #include "subzerolib/api/spline/catmull-rom.hpp"
+#include "subzerolib/api/util/math.hpp"
 #include <memory>
 #include <pros/abstract_motor.hpp>
 
@@ -95,11 +95,10 @@ void opcontrol() {
     double x = master.get_analog(ANALOG_RIGHT_X) / 127.0;
     double y = master.get_analog(ANALOG_RIGHT_Y) / 127.0;
     double r = master.get_analog(ANALOG_LEFT_X) / 127.0;
+    auto pose = odom->get_pose();
 
-    double h = imu->get_heading();
-    double rad = -0.01745329251 * h;
-    chassis->move(x * cos(rad) + y * sin(rad), y * cos(rad) - x * sin(rad),
-                  0.75 * r);
+    auto vec = rotate_aw(x, y, pose.h);
+    chassis->move(vec.x, vec.y, 0.75 * r);
     // chassis->move(x, y, r);
 
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
@@ -111,7 +110,6 @@ void opcontrol() {
       }
     }
     // print odometry output
-    auto pose = odom->get_pose();
     pros::screen::print(pros::E_TEXT_MEDIUM, 0, "x: %f, y: %f, h: %f", pose.x,
                         pose.y, pose.heading());
 

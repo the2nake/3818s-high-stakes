@@ -1,5 +1,6 @@
 #pragma once
 
+#include "subzerolib/api/geometry/point.hpp"
 #include <cmath>
 
 const double K_PI = 3.141592654;
@@ -56,4 +57,9 @@ template <typename T> void clamp_distance(T dist, T &x, T &y) {
     y = sin * d;
     x = cos * d;
   }
+}
+
+template <typename T> point_s rotate_aw(T x, T y, T h) {
+  double rad = in_rad(-h);
+  return {x * cos(rad) + y * sin(rad), y * cos(rad) - x * sin(rad)};
 }

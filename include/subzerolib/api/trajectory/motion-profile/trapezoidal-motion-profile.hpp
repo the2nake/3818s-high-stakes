@@ -1,5 +1,6 @@
 #include "subzerolib/api/trajectory/motion-profile/linear-motion-profile.hpp"
 #include <stdio.h>
+#include <vector>
 
 class TrapezoidalMotionProfile : LinearMotionProfile {
 public:

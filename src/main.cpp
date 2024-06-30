@@ -92,6 +92,7 @@ void opcontrol() {
 
   while (restless::running) {
     // Arcade control scheme
+    // FIXME: may need adjustments to increase accuracy along diagonals
     double x = master.get_analog(ANALOG_RIGHT_X) / 127.0;
     double y = master.get_analog(ANALOG_RIGHT_Y) / 127.0;
     double r = master.get_analog(ANALOG_LEFT_X) / 127.0;

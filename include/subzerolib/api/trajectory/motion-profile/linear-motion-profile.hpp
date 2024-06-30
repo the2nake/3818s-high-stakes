@@ -1,8 +1,5 @@
 #pragma once
 
-#include <map>
-#include <vector>
-
 struct profile_point_s {
   profile_point_s(double it, double ix, double iv) : t(it), x(ix), v(iv) {}
 

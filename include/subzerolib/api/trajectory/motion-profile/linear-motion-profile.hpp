@@ -13,7 +13,7 @@ struct profile_point_s {
 
 class LinearMotionProfile {
 public:
-  virtual void set_time_resolution(double ms) = 0;
+  virtual void set_resolution(double dist) = 0;
   virtual void generate(double distance) = 0;
 
   virtual profile_point_s get_point_at_time(double time) = 0;

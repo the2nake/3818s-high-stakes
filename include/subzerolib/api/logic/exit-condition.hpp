@@ -61,11 +61,12 @@ public:
     getter = igetter;
     update_delay = iupdate_delay;
     uint32_t prev_ts = pros::millis();
+    const auto ptr = &prev_ts;
 
     update_task = new pros::Task([&, this] {
       while (!pros::Task::notify_take(true, 0)) {
         this->update(getter());
-        pros::Task::delay_until(&prev_ts, update_delay);
+        pros::Task::delay_until(ptr, update_delay);
       }
     });
   }

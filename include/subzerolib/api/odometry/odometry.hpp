@@ -1,6 +1,7 @@
 #pragma once
 
-#include "pros/rtos.hpp"
+#include <pros/rtos.hpp>
+#include <pros/screen.hpp>
 #include "subzerolib/api/geometry/point.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
 
@@ -48,9 +49,10 @@ private:
   pros::Task *update_task = nullptr;
   void auto_update_loop() {
     uint32_t prev_time = pros::millis();
-    while (pros::Task::notify_take(true, 0)) {
+    const auto ptr = &prev_time;
+    while (!pros::Task::notify_take(true, 0)) {
       this->update();
-      pros::Task::delay_until(&prev_time, update_delay);
+      pros::Task::delay_until(ptr, update_delay);
     }
   }
 };

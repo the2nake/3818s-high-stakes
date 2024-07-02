@@ -8,6 +8,7 @@
 #include "subzerolib/api/sensors/abstract_gyro.hpp"
 #include "subzerolib/api/spline/catmull-rom.hpp"
 #include "subzerolib/api/util/math.hpp"
+#include "subzerolib/api.hpp"
 #include <memory>
 #include <pros/abstract_motor.hpp>
 
@@ -16,27 +17,28 @@ bool running = true;
 };
 
 std::unique_ptr<pros::AbstractMotor> fl(
-    new pros::Motor(1, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg));
+    new pros::Motor(-1, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg));
 std::unique_ptr<pros::AbstractMotor>
     fr(new pros::Motor(10, pros::v5::MotorGears::green,
                        pros::v5::MotorUnits::deg));
-// TODO: configure boost ports
-std::unique_ptr<pros::AbstractMotor> ml(
-    new pros::Motor(0, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg));
-std::unique_ptr<pros::AbstractMotor> mr(
-    new pros::Motor(0, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg));
+std::unique_ptr<pros::AbstractMotor>
+    ml(new pros::Motor(-12, pros::v5::MotorGears::green,
+                       pros::v5::MotorUnits::deg));
+std::unique_ptr<pros::AbstractMotor>
+    mr(new pros::Motor(19, pros::v5::MotorGears::green,
+                       pros::v5::MotorUnits::deg));
 std::unique_ptr<pros::AbstractMotor>
     br(new pros::Motor(20, pros::v5::MotorGears::green,
                        pros::v5::MotorUnits::deg));
 std::unique_ptr<pros::AbstractMotor>
-    bl(new pros::Motor(11, pros::v5::MotorGears::green,
+    bl(new pros::Motor(-11, pros::v5::MotorGears::green,
                        pros::v5::MotorUnits::deg));
 std::shared_ptr<StarChassis> chassis = nullptr;
 std::shared_ptr<AbstractGyro> imu(new AbstractImuGyro(8));
 
-// TODO: configure ports.h
-std::shared_ptr<AbstractEncoder> odom_x(new AbstractRotationEncoder(9, false));
-std::shared_ptr<AbstractEncoder> odom_y(new AbstractRotationEncoder(10, false));
+// TODO: make ports.h
+std::shared_ptr<AbstractEncoder> odom_x(new AbstractRotationEncoder(6, true));
+std::shared_ptr<AbstractEncoder> odom_y(new AbstractRotationEncoder(7, true));
 std::shared_ptr<Odometry> odom = nullptr;
 
 void initialize() {
@@ -50,15 +52,15 @@ void initialize() {
                        std::move(mr))
           .with_motors(StarChassis::motor_position_e::back_left, std::move(bl))
           .with_motors(StarChassis::motor_position_e::back_right, std::move(br))
-          .with_geometry(1, 1) // TODO: configure geometry
+          .with_geometry(0.35, 0.37)
           .with_rot_pref(0.3)
           .build();
-  // TODO: configure odometry
-  odom = ImuOdometry::Builder()
-             .with_gyro(imu)
-             .with_x_enc(odom_x, Odometry::encoder_conf_s(0, 160.0 / 360.0))
-             .with_y_enc(odom_y, Odometry::encoder_conf_s(0, 160.0 / 360.0))
-             .build();
+  odom =
+      ImuOdometry::Builder()
+          .with_gyro(imu)
+          .with_x_enc(odom_x, Odometry::encoder_conf_s(-0.045, 160.0 / 360.0))
+          .with_y_enc(odom_y, Odometry::encoder_conf_s(0.09, 160.0 / 360.0))
+          .build();
   odom->auto_update(10);
 }
 

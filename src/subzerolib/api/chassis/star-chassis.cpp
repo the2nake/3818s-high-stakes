@@ -15,9 +15,10 @@ void StarChassis::move(double x, double y, double r) {
                    {y, r * K_SQRT_2 * boost_radius / corner_radius});
   insert_or_modify(vels, StarChassis::motor_position_e::boost_right,
                    {y, -r * K_SQRT_2 * boost_radius / corner_radius});
-  insert_or_modify(vels, StarChassis::motor_position_e::back_left, {x + y, -r});
-  insert_or_modify(vels, StarChassis::motor_position_e::back_right,
+  insert_or_modify(vels, StarChassis::motor_position_e::back_left,
                    {-x + y, r});
+  insert_or_modify(vels, StarChassis::motor_position_e::back_right,
+                   {x + y, -r});
 
   balance_mapped_vels(vels, 1.0, rot_pref);
   move_with_map();
@@ -34,9 +35,9 @@ void StarChassis::set_rot_pref(double irot_pref) {
   clamp(rot_pref, 0.0, 1.0);
 }
 
-StarChassis::Builder &StarChassis::Builder::with_motors(
-    StarChassis::motor_position_e position,
-    std::unique_ptr<pros::AbstractMotor> motor) {
+StarChassis::Builder &
+StarChassis::Builder::with_motors(StarChassis::motor_position_e position,
+                                  std::unique_ptr<pros::AbstractMotor> motor) {
   if (motor == nullptr) {
     return *this;
   }
@@ -76,7 +77,7 @@ bool StarChassis::Builder::try_copy(
 
 StarChassis::Builder &
 StarChassis::Builder::with_geometry(double iboost_radius,
-                                               double icorner_radius) {
+                                    double icorner_radius) {
   bboost_radius = std::abs(iboost_radius);
   bcorner_radius = std::abs(icorner_radius);
   if (std::isnan(bboost_radius / bcorner_radius) || bboost_radius == 0) {
@@ -86,8 +87,7 @@ StarChassis::Builder::with_geometry(double iboost_radius,
   return *this;
 }
 
-StarChassis::Builder &
-StarChassis::Builder::with_rot_pref(double rot_pref) {
+StarChassis::Builder &StarChassis::Builder::with_rot_pref(double rot_pref) {
   rot_pref = std::abs(rot_pref);
   clamp(rot_pref, 0.0, 1.0);
   this->brot_pref = rot_pref;

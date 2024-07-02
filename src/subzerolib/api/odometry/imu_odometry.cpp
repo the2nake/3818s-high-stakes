@@ -12,6 +12,10 @@ void ImuOdometry::update() {
     auto curr = x_enc.first->get_deg();
     double d_raw = x_enc.second.travel_per_deg * (curr - prev_x_enc_vals[i]);
     prev_x_enc_vals[i] = curr;
+    if (rougheq(0, dh)) {
+      x_impact_lx += d_raw;
+      continue;
+    }
     double tmp = (d_raw / in_rad(dh) - x_enc.second.offset);
     x_impact_lx += std::sin(in_rad(dh)) * tmp;
     x_impact_ly += std::cos(in_rad(dh) - 1) * tmp;
@@ -26,6 +30,10 @@ void ImuOdometry::update() {
     auto curr = y_enc.first->get_deg();
     double d_raw = y_enc.second.travel_per_deg * (curr - prev_y_enc_vals[i]);
     prev_y_enc_vals[i] = curr;
+    if (rougheq(0, dh)) {
+      y_impact_ly += d_raw;
+      continue;
+    }
     double tmp = (d_raw / in_rad(dh) - y_enc.second.offset);
     y_impact_lx += (1 - std::cos(in_rad(dh))) * tmp;
     y_impact_ly += std::sin(in_rad(dh)) * tmp;
@@ -51,18 +59,20 @@ void ImuOdometry::update() {
   }
 }
 
-ImuOdometry::Builder &ImuOdometry::Builder::with_gyro(
-    std::shared_ptr<AbstractGyro> igyro) {
+ImuOdometry::Builder &
+ImuOdometry::Builder::with_gyro(std::shared_ptr<AbstractGyro> igyro) {
   gyro = std::move(igyro);
   return *this;
 }
-ImuOdometry::Builder &ImuOdometry::Builder::with_x_enc(
-    std::shared_ptr<AbstractEncoder> encoder, encoder_conf_s conf) {
+ImuOdometry::Builder &
+ImuOdometry::Builder::with_x_enc(std::shared_ptr<AbstractEncoder> encoder,
+                                 encoder_conf_s conf) {
   x_encs.emplace_back(std::move(encoder), conf);
   return *this;
 }
-ImuOdometry::Builder &ImuOdometry::Builder::with_y_enc(
-    std::shared_ptr<AbstractEncoder> encoder, encoder_conf_s conf) {
+ImuOdometry::Builder &
+ImuOdometry::Builder::with_y_enc(std::shared_ptr<AbstractEncoder> encoder,
+                                 encoder_conf_s conf) {
   y_encs.emplace_back(std::move(encoder), conf);
   return *this;
 }

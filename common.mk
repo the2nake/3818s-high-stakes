@@ -25,7 +25,7 @@ CXX_STANDARD?=gnu++20
 
 DEPDIR := .d
 $(shell mkdir -p $(DEPDIR))
-DEPFLAGS = -MT $$@ -MMD -MP -MF $(DEPDIR)/$$*.Td
+DEPFLAGS = -MT $$@ -MD -MP -MF $(DEPDIR)/$$*.Td
 MAKEDEPFOLDER = -$(VV)mkdir -p $(DEPDIR)/$$(dir $$(patsubst $(BINDIR)/%, %, $(ROOT)/$$@))
 RENAMEDEPENDENCYFILE = -$(VV)mv -f $(DEPDIR)/$$*.Td $$(patsubst $(SRCDIR)/%, $(DEPDIR)/%.d, $(ROOT)/$$<) && touch $$@
 

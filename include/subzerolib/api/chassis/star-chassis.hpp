@@ -1,10 +1,10 @@
 #pragma once
 
+#include "pros/abstract_motor.hpp"
 #include "subzerolib/api/chassis/chassis.hpp"
 #include "subzerolib/api/util/controls.hpp"
 #include <map>
 #include <memory>
-#include <pros/abstract_motor.hpp>
 
 class StarChassis : public Chassis {
 public:
@@ -42,9 +42,8 @@ public:
   class Builder {
   public:
     Builder &with_motors(motor_position_e dimension,
-                                    std::unique_ptr<pros::AbstractMotor> motor);
-    Builder &with_geometry(double iboost_radius,
-                                      double icorner_radius);
+                         std::unique_ptr<pros::AbstractMotor> motor);
+    Builder &with_geometry(double iboost_radius, double icorner_radius);
     Builder &with_rot_pref(double rot_pref = 0.5);
 
     std::shared_ptr<StarChassis> build();

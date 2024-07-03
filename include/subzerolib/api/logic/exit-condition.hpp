@@ -1,8 +1,8 @@
 #pragma once
 
+#include "pros/rtos.hpp"
 #include <atomic>
 #include <functional>
-#include <pros/rtos.hpp>
 
 // concept kinda sorta stolen from lemlib
 // TODO: test ExitCondition auto update

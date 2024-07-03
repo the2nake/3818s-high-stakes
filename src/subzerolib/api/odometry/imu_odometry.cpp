@@ -1,7 +1,9 @@
 #include "subzerolib/api/odometry/imu_odometry.hpp"
 #include "subzerolib/api/util/math.hpp"
+#include <stdio.h>
 
 void ImuOdometry::update() {
+  // FIXME: locks up the program
   double dh = shorter_turn(prev_heading, gyro->get_heading());
 
   // NOTE: the following code updates prev encoder values right away
@@ -20,8 +22,10 @@ void ImuOdometry::update() {
     x_impact_lx += std::sin(in_rad(dh)) * tmp;
     x_impact_ly += std::cos(in_rad(dh) - 1) * tmp;
   }
-  x_impact_lx /= x_encs.size();
-  x_impact_ly /= x_encs.size();
+  if (x_encs.size() > 0) {
+    x_impact_lx /= x_encs.size();
+    x_impact_ly /= x_encs.size();
+  }
 
   double y_impact_lx = 0.0;
   double y_impact_ly = 0.0;
@@ -38,8 +42,10 @@ void ImuOdometry::update() {
     y_impact_lx += (1 - std::cos(in_rad(dh))) * tmp;
     y_impact_ly += std::sin(in_rad(dh)) * tmp;
   }
-  y_impact_lx /= y_encs.size();
-  y_impact_ly /= y_encs.size();
+  if (y_encs.size() > 0) {
+    y_impact_lx /= y_encs.size();
+    y_impact_ly /= y_encs.size();
+  }
 
   auto dx_l = x_impact_lx + y_impact_lx;
   auto dy_l = x_impact_ly + y_impact_ly;
@@ -49,6 +55,7 @@ void ImuOdometry::update() {
               dy_l * std::cos(in_rad(prev_heading));
 
   prev_heading = pose.heading();
+  printf("%d, %d", x_encs.size(), y_encs.size());
 
   if (enabled) {
     lock();
@@ -97,8 +104,8 @@ std::shared_ptr<ImuOdometry> ImuOdometry::Builder::build() {
   odom->gyro = gyro;
   odom->x_encs = x_encs;
   odom->y_encs = y_encs;
-  odom->prev_x_enc_vals = std::vector<double>(x_encs.size());
-  odom->prev_y_enc_vals = std::vector<double>(y_encs.size());
+  odom->prev_x_enc_vals = std::vector<double>(x_encs.size(), 0.0);
+  odom->prev_y_enc_vals = std::vector<double>(y_encs.size(), 0.0);
   odom->pose = pose_s{0, 0, 0};
 
   return odom;

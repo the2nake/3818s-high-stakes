@@ -2,8 +2,8 @@
 
 #include "subzerolib/api/geometry/point.hpp"
 
-#include <vector>
 #include "eigen/Dense"
+#include <vector>
 
 class CubicSpline {
 public:

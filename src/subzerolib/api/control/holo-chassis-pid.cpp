@@ -10,8 +10,7 @@ void HoloChassisPID::approach_pose(pose_s target, double linv) {
 }
 
 HoloChassisPID::Builder &
-HoloChassisPID::Builder::with_chassis(
-    std::shared_ptr<Chassis> ichassis) {
+HoloChassisPID::Builder::with_chassis(std::shared_ptr<Chassis> ichassis) {
   if (ichassis != nullptr) {
     bchassis = std::move(ichassis);
   }
@@ -19,8 +18,7 @@ HoloChassisPID::Builder::with_chassis(
 }
 
 HoloChassisPID::Builder &
-HoloChassisPID::Builder::with_odom(
-    std::shared_ptr<Odometry> iodom) {
+HoloChassisPID::Builder::with_odom(std::shared_ptr<Odometry> iodom) {
   if (iodom != nullptr) {
     bodom = std::move(iodom);
   }
@@ -28,9 +26,8 @@ HoloChassisPID::Builder::with_odom(
 }
 
 HoloChassisPID::Builder &
-HoloChassisPID::Builder::with_pid(
-    HoloChassisPID::pid_dimension_e dimension, double kp, double ki,
-    double kd) {
+HoloChassisPID::Builder::with_pid(HoloChassisPID::pid_dimension_e dimension,
+                                  double kp, double ki, double kd) {
   PIDF *pid = new PIDF(kp, ki, kd, 0.0);
   // if the dimension has been set before, it *should* disappear and memory
   // deallocated easily

@@ -1,7 +1,6 @@
 #include "subzerolib/api/logic/state-machine.hpp"
 
-StateMachine::Builder &
-StateMachine::Builder::with_init(state_e state_name) {
+StateMachine::Builder &StateMachine::Builder::with_init(state_e state_name) {
   init_state = state_name;
 
   return *this;

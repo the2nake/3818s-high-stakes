@@ -51,7 +51,8 @@ void TrapezoidalMotionProfile::generate(double distance) {
     points_from_back.back().t =
         2 * resolution / (points_from_back.back().v + points.back().v);
   }
-  points.insert(points.end(), std::make_move_iterator(points_from_back.crbegin()),
+  points.insert(points.end(),
+                std::make_move_iterator(points_from_back.crbegin()),
                 std::make_move_iterator(points_from_back.crend()));
   points_from_back.clear();
 }

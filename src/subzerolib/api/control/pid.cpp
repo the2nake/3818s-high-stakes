@@ -1,4 +1,5 @@
 #include "subzerolib/api/control/pid.hpp"
+#include "pros/rtos.hpp"
 
 void PIDF::reset() {
   last_update = pros::millis();

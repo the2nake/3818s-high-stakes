@@ -25,11 +25,10 @@ private:
 public:
   class Builder {
   public:
-    Builder &
-    with_motors(std::unique_ptr<pros::AbstractMotor> ifront_left,
-                std::unique_ptr<pros::AbstractMotor> ifront_right,
-                std::unique_ptr<pros::AbstractMotor> iback_right,
-                std::unique_ptr<pros::AbstractMotor> iback_left);
+    Builder &with_motors(std::unique_ptr<pros::AbstractMotor> ifront_left,
+                         std::unique_ptr<pros::AbstractMotor> ifront_right,
+                         std::unique_ptr<pros::AbstractMotor> iback_right,
+                         std::unique_ptr<pros::AbstractMotor> iback_left);
     Builder &with_rot_pref(double irot_pref) {
       brot_pref = std::abs(irot_pref);
       clamp(brot_pref, 0.0, 1.0);

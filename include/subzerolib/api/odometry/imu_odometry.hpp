@@ -48,7 +48,7 @@ private:
   std::vector<double> prev_x_enc_vals;
   std::vector<double> prev_y_enc_vals;
 
-  pose_s pose;
+  pose_s pose{0, 0, 0};
 
   ImuOdometry() {}
   void lock() {
@@ -63,9 +63,9 @@ public:
   public:
     Builder &with_gyro(std::shared_ptr<AbstractGyro> igyro);
     Builder &with_x_enc(std::shared_ptr<AbstractEncoder> encoder,
-                                   encoder_conf_s conf);
+                        encoder_conf_s conf);
     Builder &with_y_enc(std::shared_ptr<AbstractEncoder> encoder,
-                                   encoder_conf_s conf);
+                        encoder_conf_s conf);
 
     std::shared_ptr<ImuOdometry> build();
 

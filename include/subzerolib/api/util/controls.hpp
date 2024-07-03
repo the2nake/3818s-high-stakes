@@ -16,8 +16,8 @@ void balance_vels(std::vector<control_components_s> &vels, double max_v = 1.0,
                   double rot_pref = 0.5);
 
 template <typename T>
-void balance_mapped_vels(std::map<T, control_components_s> &vel_map, double max_v,
-                  double rot_pref) {
+void balance_mapped_vels(std::map<T, control_components_s> &vel_map,
+                         double max_v, double rot_pref) {
   std::vector<T> keys;
   std::vector<control_components_s> components;
   for (auto &pair : vel_map) {

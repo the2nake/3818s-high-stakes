@@ -1,10 +1,10 @@
 #include "subzerolib/api/chassis/star-chassis.hpp"
+#include "pros/abstract_motor.hpp"
 #include "subzerolib/api/util/controls.hpp"
 #include "subzerolib/api/util/helper.hpp"
 #include "subzerolib/api/util/math.hpp"
 #include <cmath>
 #include <memory>
-#include <pros/abstract_motor.hpp>
 
 void StarChassis::move(double x, double y, double r) {
   clamp_distance<double>(1.0, x, y);
@@ -12,11 +12,10 @@ void StarChassis::move(double x, double y, double r) {
   insert_or_modify(vels, StarChassis::motor_position_e::front_right,
                    {-x + y, -r});
   insert_or_modify(vels, StarChassis::motor_position_e::boost_left,
-                   {y, r * K_SQRT_2 * boost_radius / corner_radius});
+                   {y, r * boost_radius / (K_SQRT_2 * corner_radius)});
   insert_or_modify(vels, StarChassis::motor_position_e::boost_right,
-                   {y, -r * K_SQRT_2 * boost_radius / corner_radius});
-  insert_or_modify(vels, StarChassis::motor_position_e::back_left,
-                   {-x + y, r});
+                   {y, -r * boost_radius / (K_SQRT_2 * corner_radius)});
+  insert_or_modify(vels, StarChassis::motor_position_e::back_left, {-x + y, r});
   insert_or_modify(vels, StarChassis::motor_position_e::back_right,
                    {x + y, -r});
 

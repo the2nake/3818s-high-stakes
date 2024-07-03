@@ -91,6 +91,4 @@ void PurePursuitController::select_carrot(pose_s pose, double lookahead,
   }
 }
 
-void PurePursuitController::stop() {
-  pos_exit_condition->stop_updating();
-}
+void PurePursuitController::stop() { pos_exit_condition->stop_updating(); }

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <pros/rtos.hpp>
-#include <pros/screen.hpp>
+#include "pros/rtos.hpp"
+#include "pros/screen.hpp"
 #include "subzerolib/api/geometry/point.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
 

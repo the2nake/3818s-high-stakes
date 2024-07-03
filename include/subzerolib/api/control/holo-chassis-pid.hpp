@@ -33,8 +33,8 @@ public:
 
     Builder &with_odom(std::shared_ptr<Odometry> iodom);
 
-    Builder &with_pid(pid_dimension_e dimension, double kp,
-                                    double ki, double kd);
+    Builder &with_pid(pid_dimension_e dimension, double kp, double ki,
+                      double kd);
 
     std::shared_ptr<HoloChassisPID> build();
 

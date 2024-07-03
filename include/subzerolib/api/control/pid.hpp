@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <cmath>
-#include <pros/rtos.hpp>
 
 class PIDF {
 public:

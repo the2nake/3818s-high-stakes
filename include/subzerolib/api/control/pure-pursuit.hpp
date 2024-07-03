@@ -2,8 +2,8 @@
 
 #include "pros/rtos.hpp"
 #include "subzerolib/api/control/chassis-controller.hpp"
-#include "subzerolib/api/logic/exit-condition.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
+#include "subzerolib/api/logic/exit-condition.hpp"
 #include "subzerolib/api/odometry/odometry.hpp"
 #include <atomic>
 #include <memory>
@@ -11,9 +11,10 @@
 
 class PurePursuitController {
 public:
-  PurePursuitController(std::shared_ptr<ChassisController> ichassis,
-                        std::shared_ptr<Odometry> iodom,
-                        std::unique_ptr<ExitCondition<double>> ipos_exit_condition);
+  PurePursuitController(
+      std::shared_ptr<ChassisController> ichassis,
+      std::shared_ptr<Odometry> iodom,
+      std::unique_ptr<ExitCondition<double>> ipos_exit_condition);
   /// @brief follows the path described by the linear spline connecting the
   /// waypoints
   ///

@@ -1,4 +1,6 @@
 #include "main.h"
+#include "pros/abstract_motor.hpp"
+#include "subzerolib/api.hpp"
 #include "subzerolib/api/chassis/star-chassis.hpp"
 #include "subzerolib/api/control/holo-chassis-pid.hpp"
 #include "subzerolib/api/control/pure-pursuit.hpp"
@@ -8,16 +10,15 @@
 #include "subzerolib/api/sensors/abstract_gyro.hpp"
 #include "subzerolib/api/spline/catmull-rom.hpp"
 #include "subzerolib/api/util/math.hpp"
-#include "subzerolib/api.hpp"
 #include <memory>
-#include <pros/abstract_motor.hpp>
 
 namespace restless {
 bool running = true;
 };
 
-std::unique_ptr<pros::AbstractMotor> fl(
-    new pros::Motor(-1, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg));
+std::unique_ptr<pros::AbstractMotor>
+    fl(new pros::Motor(-1, pros::v5::MotorGears::green,
+                       pros::v5::MotorUnits::deg));
 std::unique_ptr<pros::AbstractMotor>
     fr(new pros::Motor(10, pros::v5::MotorGears::green,
                        pros::v5::MotorUnits::deg));
@@ -99,6 +100,10 @@ void opcontrol() {
     double y = master.get_analog(ANALOG_RIGHT_Y) / 127.0;
     double r = master.get_analog(ANALOG_LEFT_X) / 127.0;
     auto pose = odom->get_pose();
+
+    if (std::isnan(pose.h)) {
+      pose.h = 0.0;
+    }
 
     auto vec = rotate_acw(x, y, pose.h);
     chassis->move(vec.x, vec.y, 0.75 * r);

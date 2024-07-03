@@ -7,3 +7,13 @@ double in_deg(double rad) { return 180.0 * rad / K_PI; }
 double rougheq(double a, double b) {
   return !std::isnan(a) && !std::isnan(b) && std::abs(a - b) < K_EPSILON;
 }
+
+double mod(double a, double circ) {
+  while (a >= circ) {
+    a -= circ;
+  }
+  while (a < 0) {
+    a += circ;
+  }
+  return a;
+}

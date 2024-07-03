@@ -5,6 +5,9 @@
 void ImuOdometry::update() {
   // FIXME: locks up the program
   double dh = shorter_turn(prev_heading, gyro->get_heading());
+  if (std::isnan(dh)) {
+    dh = 0;
+  }
 
   // NOTE: the following code updates prev encoder values right away
   double x_impact_lx = 0.0;
@@ -20,7 +23,7 @@ void ImuOdometry::update() {
     }
     double tmp = (d_raw / in_rad(dh) - x_enc.second.offset);
     x_impact_lx += std::sin(in_rad(dh)) * tmp;
-    x_impact_ly += std::cos(in_rad(dh) - 1) * tmp;
+    x_impact_ly += (std::cos(in_rad(dh)) - 1) * tmp;
   }
   if (x_encs.size() > 0) {
     x_impact_lx /= x_encs.size();
@@ -61,7 +64,7 @@ void ImuOdometry::update() {
     lock();
     pose.x += dx_g;
     pose.y += dy_g;
-    pose.h += dh;
+    pose.h = mod(pose.h + dh, 360.0);
     unlock();
   }
 }

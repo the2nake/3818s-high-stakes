@@ -11,6 +11,12 @@ double rougheq(double a, double b);
 double in_rad(double deg);
 double in_deg(double rad);
 
+/// @brief calculates a solely positive modulus
+/// @param a the first argument
+/// @param circ the cycle amount
+/// @returns 0 <= x < circ
+double mod(double a, double circ);
+
 /// @brief finds the shortest turn from h0 to hf.
 /// @param h0 initial angle
 /// @param hf final angle
@@ -19,7 +25,7 @@ double in_deg(double rad);
 template <typename T>
 auto shorter_turn(T h0, T hf, T circle_size = 360.0) -> decltype(hf - h0) {
   circle_size = std::abs(circle_size);
-  auto cw = std::fmod(hf - h0, circle_size);
+  auto cw = mod(hf - h0, circle_size);
   if (std::abs(cw) < circle_size / 2.0) {
     return cw;
   } else {

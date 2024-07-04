@@ -5,9 +5,9 @@
 #include "eigen/Dense"
 #include <vector>
 
-class CubicSpline {
+class Spline {
 public:
-  virtual ~CubicSpline() {}
+  virtual ~Spline() {}
 
   /// @brief generate points on a spline
   /// @param count number of points to sample

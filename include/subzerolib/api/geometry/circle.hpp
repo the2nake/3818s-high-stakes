@@ -3,6 +3,7 @@
 #include "subzerolib/api/geometry/point.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
 #include "subzerolib/api/geometry/segment.hpp"
+
 #include <vector>
 
 struct circle_s {

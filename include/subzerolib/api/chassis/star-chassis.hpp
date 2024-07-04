@@ -1,8 +1,10 @@
 #pragma once
 
-#include "pros/abstract_motor.hpp"
 #include "subzerolib/api/chassis/chassis.hpp"
 #include "subzerolib/api/util/controls.hpp"
+
+#include "pros/motors.hpp"
+#include "pros/abstract_motor.hpp"
 #include <map>
 #include <memory>
 

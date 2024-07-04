@@ -1,10 +1,11 @@
 #pragma once
 
-#include "pros/rtos.hpp"
 #include "subzerolib/api/control/chassis-controller.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
 #include "subzerolib/api/logic/exit-condition.hpp"
 #include "subzerolib/api/odometry/odometry.hpp"
+
+#include "pros/rtos.hpp"
 #include <atomic>
 #include <memory>
 #include <vector>

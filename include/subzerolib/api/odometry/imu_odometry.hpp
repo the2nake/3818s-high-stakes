@@ -1,10 +1,10 @@
 #pragma once
 
-#include "pros/rtos.hpp"
 #include "subzerolib/api/odometry/odometry.hpp"
 #include "subzerolib/api/sensors/abstract_encoder.hpp"
 #include "subzerolib/api/sensors/abstract_gyro.hpp"
 
+#include "pros/rtos.hpp"
 #include <memory>
 
 class ImuOdometry : public Odometry {

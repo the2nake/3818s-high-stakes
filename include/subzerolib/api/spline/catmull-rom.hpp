@@ -3,9 +3,10 @@
 #include "subzerolib/api/geometry/point.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
 #include "subzerolib/api/spline/cubic-spline.hpp"
+
 #include <vector>
 
-class CatmullRomSpline : public CubicSpline {
+class CatmullRomSpline : public Spline {
 public:
   CatmullRomSpline(std::vector<point_s> control_points);
   CatmullRomSpline(std::vector<pose_s> control_points);

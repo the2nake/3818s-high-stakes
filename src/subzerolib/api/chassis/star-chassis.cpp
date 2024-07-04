@@ -63,6 +63,13 @@ StarChassis::Builder::with_motors(StarChassis::motor_position_e position,
   return *this;
 }
 
+StarChassis::Builder &
+StarChassis::Builder::with_motors(StarChassis::motor_position_e position,
+                                  std::unique_ptr<pros::Motor> motor) {
+  std::unique_ptr<pros::AbstractMotor> ptr(std::move(motor));
+  return with_motors(position, std::move(ptr));
+}
+
 bool StarChassis::Builder::try_copy(
     std::unique_ptr<pros::AbstractMotor> &target,
     std::unique_ptr<pros::AbstractMotor> &origin) {

@@ -44,6 +44,8 @@ public:
   class Builder {
   public:
     Builder &with_motors(motor_position_e dimension,
+                         std::unique_ptr<pros::Motor> motor);
+    Builder &with_motors(motor_position_e dimension,
                          std::unique_ptr<pros::AbstractMotor> motor);
     Builder &with_geometry(double iboost_radius, double icorner_radius);
     Builder &with_rot_pref(double rot_pref = 0.5);

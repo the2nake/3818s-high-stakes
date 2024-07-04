@@ -19,19 +19,19 @@ bool running = true;
 // TODO: test PID on the arm
 
 std::unique_ptr<pros::Motor> fl(new pros::Motor(-1, pros::v5::MotorGears::green,
-                       pros::v5::MotorUnits::deg));
+                                                pros::v5::MotorUnits::deg));
 std::unique_ptr<pros::Motor> fr(new pros::Motor(10, pros::v5::MotorGears::green,
-                       pros::v5::MotorUnits::deg));
+                                                pros::v5::MotorUnits::deg));
 std::unique_ptr<pros::Motor> ml(new pros::Motor(-12,
                                                 pros::v5::MotorGears::green,
-                       pros::v5::MotorUnits::deg));
+                                                pros::v5::MotorUnits::deg));
 std::unique_ptr<pros::Motor> mr(new pros::Motor(19, pros::v5::MotorGears::green,
-                       pros::v5::MotorUnits::deg));
+                                                pros::v5::MotorUnits::deg));
 std::unique_ptr<pros::Motor> br(new pros::Motor(20, pros::v5::MotorGears::green,
-                       pros::v5::MotorUnits::deg));
+                                                pros::v5::MotorUnits::deg));
 std::unique_ptr<pros::Motor> bl(new pros::Motor(-11,
                                                 pros::v5::MotorGears::green,
-                       pros::v5::MotorUnits::deg));
+                                                pros::v5::MotorUnits::deg));
 std::shared_ptr<StarChassis> chassis = nullptr;
 std::shared_ptr<AbstractGyro> imu(new AbstractImuGyro(8));
 
@@ -82,9 +82,15 @@ void autonomous() {
           .with_pid(HoloChassisPID::pid_dimension_e::r, 100.0, 0.0, 0.0)
           .build();
   PurePursuitController pp(controller, odom, std::move(cond));
-  std::vector<pose_s> control_points = {}; // TODO: invent
-  CatmullRomSpline spline(control_points);
+  std::vector<pose_s> ctrl = {
+      {0.0, 0.0, 0.0}, {0.4, 0.6, 45.0}, {-0.2, 0.6, 60.0}, {-1.0, 1.0, -45.0}};
+  CatmullRomSpline spline(ctrl);
+  spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
+  auto spline_points = spline.sample(200);
+
   // TODO: create full trajectory generation
+  odom->set_position(0.0, 0.0);
+  odom->set_heading(0.0);
   // test: pp.follow(std::vector<pose_s> iwaypoints, double lookahead);
 }
 

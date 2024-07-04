@@ -1,5 +1,6 @@
 #include "subzerolib/api/control/pid.hpp"
 #include "pros/rtos.hpp"
+#include <cmath>
 
 void PIDF::reset() {
   last_update = pros::millis();
@@ -14,7 +15,10 @@ void PIDF::update(double error) {
   if (std::isnan(error)) {
     return;
   }
-  total_err += error * dt;
+  if (std::isnan(total_err) || (std::signbit(prev_err) != std::signbit(error))) {
+    total_err = 0.0;
+  }
+   total_err += error * dt;
   double p = kp * error;
   double i = ki * total_err;
   double d = 0.0;

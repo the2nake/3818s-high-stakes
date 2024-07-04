@@ -1,4 +1,5 @@
 #pragma once
+
 #include "subzerolib/api/geometry/pose.hpp"
 
 /// @brief class that provides movement algorithms with position-based movement

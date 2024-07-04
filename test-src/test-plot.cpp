@@ -18,9 +18,9 @@ int main() {
   file.clear();
 
   // generate the spline
-  CatmullRomSpline spline(std::vector<point_s>{
-      {-1.5, 0.6}, {-0.6, 0.6}, {-0.2, 1.2}, {-0.6, 1.2}, {-1.5, 0}});
-  spline.pad_velocity({1, 0}, {0, -1});
+  CatmullRomSpline spline(
+      std::vector<point_s>{{0.0, 0.0}, {0.4, 0.6}, {-0.2, 0.6}, {-1.0, 1.0}});
+  spline.pad_velocity({0.5, 0.5}, {-0.5, 0.5});
   std::vector<point_s> spline_points = spline.sample(200);
 
   for (auto &control : spline.get_control_points()) {
@@ -96,7 +96,6 @@ int main() {
   file.close();
 
   // TODO: write unit tests for line segment
-  // TODO: write unit tests for circle/segment intersection
 
   segment_s segment{{-1, -1}, {1, 1}};
   circle_s circle{0, 0, 1};

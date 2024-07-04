@@ -1,15 +1,12 @@
 #include "subzerolib/api/odometry/imu_odometry.hpp"
 #include "subzerolib/api/util/math.hpp"
-#include <stdio.h>
 
 void ImuOdometry::update() {
-  // FIXME: locks up the program
   double dh = shorter_turn(prev_heading, gyro->get_heading());
   if (std::isnan(dh)) {
     dh = 0;
   }
 
-  // NOTE: the following code updates prev encoder values right away
   double x_impact_lx = 0.0;
   double x_impact_ly = 0.0;
   for (auto &x_enc : x_encs) {
@@ -58,7 +55,6 @@ void ImuOdometry::update() {
               dy_l * std::cos(in_rad(prev_heading));
 
   prev_heading = pose.heading();
-  printf("%d, %d", x_encs.size(), y_encs.size());
 
   if (enabled) {
     lock();

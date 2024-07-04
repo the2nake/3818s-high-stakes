@@ -6,7 +6,8 @@
 struct pose_s {
   pose_s(point_s ipoint, double iheading = 0)
       : x(ipoint.x), y(ipoint.y), h(iheading) {}
-  pose_s(double ix = 0, double iy = 0, double ih = 0) : x(ix), y(iy), h(ih) {}
+  pose_s(double ix = 0, double iy = 0, double ih = 0)
+      : x(ix), y(iy), h(mod(ih, 360.0)) {}
 
   double x;
   double y;

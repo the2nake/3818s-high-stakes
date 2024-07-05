@@ -54,6 +54,15 @@ void initialize() {
           .with_geometry(0.35, 0.37)
           .with_rot_pref(0.3)
           .build();
+
+  // TODO: test this, should be two errors
+  int i = 0;
+  const int *ptr = &i;
+  delete ptr;
+
+  printf("%d", *ptr);
+  ml->brake(); // should err, unique_ptr, deleted smth
+
   odom =
       ImuOdometry::Builder()
           .with_gyro(imu)
@@ -72,14 +81,14 @@ void competition_initialize() {}
 void autonomous() {
   std::unique_ptr<ExitCondition<double>> cond(
       new ExitCondition<double>({0, 10}, 400));
-  // TODO: tune
+  // TODO: tune integral
   std::shared_ptr<HoloChassisPID> controller =
       HoloChassisPID::Builder()
           .with_chassis(chassis)
           .with_odom(odom)
-          .with_pid(HoloChassisPID::pid_dimension_e::x, 100.0, 0.0, 0.0)
-          .with_pid(HoloChassisPID::pid_dimension_e::y, 100.0, 0.0, 0.0)
-          .with_pid(HoloChassisPID::pid_dimension_e::r, 100.0, 0.0, 0.0)
+          .with_pid(HoloChassisPID::pid_dimension_e::x, 1.6, 0.0, 0.0)
+          .with_pid(HoloChassisPID::pid_dimension_e::y, 1.6, 0.0, 0.0)
+          .with_pid(HoloChassisPID::pid_dimension_e::r, 1.6, 0.0, 0.0)
           .build();
   PurePursuitController pp(controller, odom, std::move(cond));
   std::vector<pose_s> ctrl = {

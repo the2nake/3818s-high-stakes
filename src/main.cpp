@@ -86,9 +86,9 @@ void autonomous() {
       HoloChassisPID::Builder()
           .with_chassis(chassis)
           .with_odom(odom)
-          .with_pid(HoloChassisPID::pid_dimension_e::x, 1.6, 0.0, 0.0)
-          .with_pid(HoloChassisPID::pid_dimension_e::y, 1.6, 0.0, 0.0)
-          .with_pid(HoloChassisPID::pid_dimension_e::r, 1.6, 0.0, 0.0)
+          .with_pid(HoloChassisPID::pid_dimension_e::x, 1.6, 0.0, 0.01)
+          .with_pid(HoloChassisPID::pid_dimension_e::y, 1.6, 0.0, 0.01)
+          .with_pid(HoloChassisPID::pid_dimension_e::r, 1.6, 0.0, 0.01)
           .build();
   PurePursuitController pp(controller, odom, std::move(cond));
   std::vector<pose_s> ctrl = {

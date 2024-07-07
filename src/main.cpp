@@ -34,18 +34,22 @@ std::unique_ptr<pros::Motor> bl(new pros::Motor(-11,
                                                 pros::v5::MotorGears::green,
                                                 pros::v5::MotorUnits::deg));
 std::shared_ptr<StarChassis> chassis = nullptr;
-std::shared_ptr<AbstractGyro> imu(new AbstractImuGyro(9));
+std::shared_ptr<AbstractGyro> imu{new AbstractImuGyro(8)};
 
 // TODO: make ports.h
-std::shared_ptr<AbstractEncoder> odom_x(new AbstractRotationEncoder(6, true));
-std::shared_ptr<AbstractEncoder> odom_y(new AbstractRotationEncoder(7, true));
+std::shared_ptr<AbstractEncoder> odom_x{new AbstractRotationEncoder(6, true)};
+std::shared_ptr<AbstractEncoder> odom_y{new AbstractRotationEncoder(7, true)};
 std::shared_ptr<Odometry> odom = nullptr;
 
 void initialize() {
-  auto initial_val = imu->heading();
-  while (initial_val == imu->heading()) {
-    pros::delay(20);
+  auto imus = pros::Imu::get_all_devices();
+  for (auto device : imus) {
+    device.reset(true);
   }
+  pros::delay(250);
+
+  pros::screen::print(pros::E_TEXT_MEDIUM, 10, "%d", imus.size());
+
   chassis =
       StarChassis::Builder()
           .with_motors(StarChassis::motor_position_e::front_left, std::move(fl))
@@ -125,7 +129,7 @@ void opcontrol() {
     chassis->move(vec.x, vec.y, 0.75 * r);
 
     // TODO: chassis angle correction
-    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
+    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
       // test pausing/starting odometry
       if (odom->is_enabled()) {
         odom->set_enabled(false);
@@ -135,8 +139,8 @@ void opcontrol() {
     }
     // print odometry output
     // TODO: graph odometry output
-    pros::screen::print(pros::E_TEXT_MEDIUM, 0, "x: %f, y: %f, h: %f", pose.x,
-                        pose.y, pose.heading());
+    pros::screen::print(pros::E_TEXT_MEDIUM, 0, "x: %.2f, y: %.2f, h: %.1f%s",
+                        pose.x, pose.y, pose.heading(), "                   ");
 
     pros::delay(10); // high update rate, as imu data comes in every 10 ms
   }

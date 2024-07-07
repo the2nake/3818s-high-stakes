@@ -1,8 +1,8 @@
 #include "subzerolib/api/control/pure-pursuit.hpp"
 #include "subzerolib/api/geometry/circle.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
+
 #include <memory>
-#include <sys/select.h>
 
 // TODO: pure pursuit untested
 
@@ -32,12 +32,15 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
   circle_s seek_circle(curr_pose, lookahead);
 
   uint32_t start = pros::millis();
+  // TODO: test if this works without error
+  // TODO: remove exit condition and redo to check?
   pos_exit_condition->auto_update(
       [&]() -> double { return odom->get_pose().dist(waypoints.back()); }, 10);
 
   for (uint32_t duration = 0; duration < ms_timeout;
        duration = pros::millis() - start) {
     curr_pose = odom->get_pose();
+
     for (int i = 0; i < resolution; ++i) {
       auto check_pose = lerp(prev_pose, curr_pose, i * 1.0 / resolution);
       seek_circle = circle_s(check_pose, lookahead);
@@ -51,11 +54,12 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
 
     // use chassis controller implementation
     chassis->approach_pose(carrot);
-    if (pos_exit_condition->is_met()) {
+    if (motion_complete || pos_exit_condition->is_met()) {
       break;
     }
 
     prev_pose = curr_pose;
+    pros::delay(10);
   }
 
   chassis->brake();
@@ -91,4 +95,7 @@ void PurePursuitController::select_carrot(pose_s pose, double lookahead,
   }
 }
 
-void PurePursuitController::stop() { pos_exit_condition->stop_updating(); }
+void PurePursuitController::stop() {
+  motion_complete = true;
+  pos_exit_condition->stop_updating();
+}

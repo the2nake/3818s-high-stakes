@@ -10,6 +10,7 @@
 #include "subzerolib/api/sensors/abstract_gyro.hpp"
 #include "subzerolib/api/spline/catmull-rom.hpp"
 #include "subzerolib/api/util/math.hpp"
+#include <algorithm>
 #include <memory>
 
 namespace saturnine {
@@ -33,7 +34,7 @@ std::unique_ptr<pros::Motor> bl(new pros::Motor(-11,
                                                 pros::v5::MotorGears::green,
                                                 pros::v5::MotorUnits::deg));
 std::shared_ptr<StarChassis> chassis = nullptr;
-std::shared_ptr<AbstractGyro> imu(new AbstractImuGyro(8));
+std::shared_ptr<AbstractGyro> imu(new AbstractImuGyro(9));
 
 // TODO: make ports.h
 std::shared_ptr<AbstractEncoder> odom_x(new AbstractRotationEncoder(6, true));
@@ -41,6 +42,10 @@ std::shared_ptr<AbstractEncoder> odom_y(new AbstractRotationEncoder(7, true));
 std::shared_ptr<Odometry> odom = nullptr;
 
 void initialize() {
+  auto initial_val = imu->heading();
+  while (initial_val == imu->heading()) {
+    pros::delay(20);
+  }
   chassis =
       StarChassis::Builder()
           .with_motors(StarChassis::motor_position_e::front_left, std::move(fl))
@@ -88,11 +93,16 @@ void autonomous() {
   CatmullRomSpline spline(ctrl);
   spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
   auto spline_points = spline.sample(200);
+  std::vector<pose_s> waypoints(spline_points.size());
+  transform(spline_points.begin(), spline_points.end(), waypoints.begin(),
+            [](point_s point) -> pose_s { return pose_s{point}; });
 
-  // TODO: create full trajectory generation
   odom->set_position(0.0, 0.0);
   odom->set_heading(0.0);
-  // test: pp.follow(std::vector<pose_s> iwaypoints, double lookahead);
+  // TODO: fix bug, data abort exception, path following seems to start
+  // correctly
+  // TODO: rewrite pure pursuit? it's very short
+  pp.follow(waypoints, 0.1);
 }
 
 void opcontrol() {
@@ -114,6 +124,7 @@ void opcontrol() {
     auto vec = rotate_acw(x, y, pose.h);
     chassis->move(vec.x, vec.y, 0.75 * r);
 
+    // TODO: chassis angle correction
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
       // test pausing/starting odometry
       if (odom->is_enabled()) {
@@ -123,6 +134,7 @@ void opcontrol() {
       }
     }
     // print odometry output
+    // TODO: graph odometry output
     pros::screen::print(pros::E_TEXT_MEDIUM, 0, "x: %f, y: %f, h: %f", pose.x,
                         pose.y, pose.heading());
 

@@ -2,25 +2,25 @@
 #include "subzerolib/api/util/math.hpp"
 
 void ImuOdometry::update() {
-  double dh = shorter_turn(prev_heading, gyro->get_heading());
+  double dh = shorter_turn(prev_heading, gyro->heading());
   if (std::isnan(dh)) {
     dh = 0;
   }
 
   double x_impact_lx = 0.0;
   double x_impact_ly = 0.0;
-  for (auto &x_enc : x_encs) {
-    int i = &x_enc - &x_encs[0];
-    auto curr = x_enc.first->get_deg();
-    double d_raw = x_enc.second.travel_per_deg * (curr - prev_x_enc_vals[i]);
+  for (int i = 0; i < x_encs.size(); ++i) {
+    auto curr = x_encs[i].first->get_deg();
+    double d_raw =
+        x_encs[i].second.travel_per_deg * (curr - prev_x_enc_vals[i]);
     prev_x_enc_vals[i] = curr;
     if (rougheq(0, dh)) {
       x_impact_lx += d_raw;
-      continue;
+    } else {
+      double tmp = (d_raw / in_rad(dh) - x_encs[i].second.offset);
+      x_impact_lx += std::sin(in_rad(dh)) * tmp;
+      x_impact_ly += (std::cos(in_rad(dh)) - 1) * tmp;
     }
-    double tmp = (d_raw / in_rad(dh) - x_enc.second.offset);
-    x_impact_lx += std::sin(in_rad(dh)) * tmp;
-    x_impact_ly += (std::cos(in_rad(dh)) - 1) * tmp;
   }
   if (x_encs.size() > 0) {
     x_impact_lx /= x_encs.size();
@@ -29,18 +29,18 @@ void ImuOdometry::update() {
 
   double y_impact_lx = 0.0;
   double y_impact_ly = 0.0;
-  for (auto &y_enc : y_encs) {
-    int i = &y_enc - &y_encs[0];
-    auto curr = y_enc.first->get_deg();
-    double d_raw = y_enc.second.travel_per_deg * (curr - prev_y_enc_vals[i]);
+  for (int i = 0; i < y_encs.size(); ++i) {
+    auto curr = y_encs[i].first->get_deg();
+    double d_raw =
+        y_encs[i].second.travel_per_deg * (curr - prev_y_enc_vals[i]);
     prev_y_enc_vals[i] = curr;
     if (rougheq(0, dh)) {
       y_impact_ly += d_raw;
-      continue;
+    } else {
+      double tmp = (d_raw / in_rad(dh) - y_encs[i].second.offset);
+      y_impact_lx += (1 - std::cos(in_rad(dh))) * tmp;
+      y_impact_ly += std::sin(in_rad(dh)) * tmp;
     }
-    double tmp = (d_raw / in_rad(dh) - y_enc.second.offset);
-    y_impact_lx += (1 - std::cos(in_rad(dh))) * tmp;
-    y_impact_ly += std::sin(in_rad(dh)) * tmp;
   }
   if (y_encs.size() > 0) {
     y_impact_lx /= y_encs.size();

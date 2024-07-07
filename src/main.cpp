@@ -55,14 +55,6 @@ void initialize() {
           .with_rot_pref(0.3)
           .build();
 
-  // TODO: test this, should be two errors
-  int i = 0;
-  const int *ptr = &i;
-  delete ptr;
-
-  printf("%d", *ptr);
-  ml->brake(); // should err, unique_ptr, deleted smth
-
   odom =
       ImuOdometry::Builder()
           .with_gyro(imu)

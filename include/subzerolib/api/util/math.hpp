@@ -24,12 +24,11 @@ double mod(double a, double circ);
 /// @returns the difference in angle, with (+) values clockwise.
 template <typename T>
 auto shorter_turn(T h0, T hf, T circle_size = 360.0) -> decltype(hf - h0) {
-  circle_size = std::abs(circle_size);
-  auto cw = mod(hf - h0, circle_size);
-  if (std::abs(cw) < circle_size / 2.0) {
-    return cw;
+  auto rightward_angle = mod(hf - h0, circle_size);
+  if (std::abs(rightward_angle) < std::abs(circle_size / 2.0)) {
+    return rightward_angle;
   } else {
-    return cw - circle_size;
+    return rightward_angle - circle_size;
   }
 }
 

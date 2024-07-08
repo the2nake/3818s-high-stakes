@@ -8,12 +8,18 @@ double rougheq(double a, double b) {
   return !std::isnan(a) && !std::isnan(b) && std::abs(a - b) < K_EPSILON;
 }
 
-double mod(double a, double circ) {
-  while (a >= circ) {
-    a -= circ;
+double mod(double x, double modulo) {
+  if (modulo == 0) {
+    return x;
   }
-  while (a < 0) {
-    a += circ;
+
+  if (x < 0) {
+    return mod(x + modulo, modulo);
   }
-  return a;
+
+  if (x >= modulo) {
+    return mod(x - modulo, modulo);
+  }
+
+  return x;
 }

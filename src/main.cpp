@@ -1,5 +1,6 @@
 #include "main.h"
 #include "pros/abstract_motor.hpp"
+#include "pros/screen.hpp"
 #include "subzerolib/api.hpp"
 #include "subzerolib/api/chassis/star-chassis.hpp"
 #include "subzerolib/api/control/holo-chassis-pid.hpp"
@@ -34,7 +35,7 @@ std::unique_ptr<pros::Motor> bl(new pros::Motor(-11,
                                                 pros::v5::MotorGears::green,
                                                 pros::v5::MotorUnits::deg));
 std::shared_ptr<StarChassis> chassis = nullptr;
-std::shared_ptr<AbstractGyro> imu{new AbstractImuGyro(8)};
+std::shared_ptr<AbstractGyro> imu{new AbstractImuGyro(9)};
 
 // TODO: make ports.h
 std::shared_ptr<AbstractEncoder> odom_x{new AbstractRotationEncoder(6, true)};
@@ -67,10 +68,33 @@ void initialize() {
   odom =
       ImuOdometry::Builder()
           .with_gyro(imu)
-          .with_x_enc(odom_x, Odometry::encoder_conf_s(-0.045, 160.0 / 360.0))
-          .with_y_enc(odom_y, Odometry::encoder_conf_s(0.09, 160.0 / 360.0))
+          .with_x_enc(odom_x, Odometry::encoder_conf_s(-0.045, 0.160 / 360.0))
+          .with_y_enc(odom_y, Odometry::encoder_conf_s(0.09, 0.160 / 360.0))
           .build();
   odom->auto_update(10);
+
+  pros::Task graphing_task{
+      [&] {
+        std::vector<point_s> past_points;
+        while (true) {
+          past_points.push_back(odom->get_pose().point());
+          if (past_points.size() > 200) {
+            past_points.erase(past_points.begin());
+          }
+
+          pros::screen::set_pen(pros::Color::black);
+          pros::screen::fill_rect(24, 24, 124, 124);
+          pros::screen::set_pen(pros::Color::white);
+          pros::screen::draw_line(24, 74, 124, 74); // x axis
+          pros::screen::draw_line(74, 24, 74, 124); // y axis
+
+          for (auto &point : past_points) {
+            pros::screen::draw_circle(74 + 50 * point.x, 74 - 50 * point.y, 2);
+          }
+          pros::delay(10);
+        }
+      },
+      "graphing task"};
 }
 
 void disabled() {}
@@ -80,17 +104,30 @@ void competition_initialize() {}
 // TODO: write the rest of the test code
 
 void autonomous() {
-  std::unique_ptr<ExitCondition<double>> cond(
-      new ExitCondition<double>({0, 10}, 400));
-  // TODO: tune integral
+
   std::shared_ptr<HoloChassisPID> controller =
       HoloChassisPID::Builder()
           .with_chassis(chassis)
           .with_odom(odom)
-          .with_pid(HoloChassisPID::pid_dimension_e::x, 1.6, 0.0, 0.01)
-          .with_pid(HoloChassisPID::pid_dimension_e::y, 1.6, 0.0, 0.01)
-          .with_pid(HoloChassisPID::pid_dimension_e::r, 1.6, 0.0, 0.01)
+          .with_pid(HoloChassisPID::pid_dimension_e::x, 1.8, 0.0, 0)
+          .with_pid(HoloChassisPID::pid_dimension_e::y, 1.8, 0.0, 0)
+          .with_pid(HoloChassisPID::pid_dimension_e::r, 0.01, 0.0, 0)
           .build();
+  std::unique_ptr<ExitCondition<double>> cond(
+      new ExitCondition<double>({0, 0.02}, 400));
+  const pose_s target{0.3, 0.3, 270};
+  odom->set_position(0.0, 0.0);
+  odom->set_heading(0.0);
+
+  // cond->auto_update([&]() -> double { return odom->get_pose().dist(target);
+  // },
+  //                   10);
+  while (!cond->is_met()) {
+    controller->approach_pose(target);
+    pros::delay(10);
+  }
+  /*
+  // TODO: tune integral
   PurePursuitController pp(controller, odom, std::move(cond));
   std::vector<pose_s> ctrl = {
       {0.0, 0.0, 0.0}, {0.4, 0.6, 45.0}, {-0.2, 0.6, 60.0}, {-1.0, 1.0, -45.0}};
@@ -101,12 +138,11 @@ void autonomous() {
   transform(spline_points.begin(), spline_points.end(), waypoints.begin(),
             [](point_s point) -> pose_s { return pose_s{point}; });
 
-  odom->set_position(0.0, 0.0);
-  odom->set_heading(0.0);
   // TODO: fix bug, data abort exception, path following seems to start
   // correctly
   // TODO: rewrite pure pursuit? it's very short
   pp.follow(waypoints, 0.1);
+  */
 }
 
 void opcontrol() {

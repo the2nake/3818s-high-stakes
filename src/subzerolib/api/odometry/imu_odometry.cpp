@@ -37,7 +37,7 @@ void ImuOdometry::update() {
     if (rougheq(0, dh)) {
       y_impact_ly += d_raw;
     } else {
-      double tmp = (d_raw / in_rad(dh) - y_encs[i].second.offset);
+      double tmp = (d_raw / in_rad(dh) + y_encs[i].second.offset);
       y_impact_lx += (1 - std::cos(in_rad(dh))) * tmp;
       y_impact_ly += std::sin(in_rad(dh)) * tmp;
     }

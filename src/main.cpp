@@ -1,5 +1,6 @@
 #include "main.h"
 
+#include "pros/colors.hpp"
 #include "subzerolib/api.hpp"
 #include "subzerolib/api/chassis/star-chassis.hpp"
 #include "subzerolib/api/control/holo-chassis-pid.hpp"
@@ -9,6 +10,8 @@
 #include "subzerolib/api/sensors/abstract_encoder.hpp"
 #include "subzerolib/api/sensors/abstract_gyro.hpp"
 #include "subzerolib/api/spline/catmull-rom.hpp"
+#include "subzerolib/api/util/helper.hpp"
+#include "subzerolib/api/util/logging.hpp"
 #include "subzerolib/api/util/math.hpp"
 
 #include "pros/abstract_motor.hpp"
@@ -44,23 +47,88 @@ std::shared_ptr<AbstractEncoder> odom_x{new AbstractRotationEncoder(6, true)};
 std::shared_ptr<AbstractEncoder> odom_y{new AbstractRotationEncoder(7, true)};
 std::shared_ptr<Odometry> odom = nullptr;
 
+void odom_graph_loop(void *ignore) {
+  std::vector<point_s> past_points;
+  const int graphx1 = 330;
+  const int graphy1 = 30;
+  const int graphx2 = 450;
+  const int graphy2 = 150;
+  const int graphxmid = (graphx1 + graphx2) / 2.0;
+  const int graphymid = (graphy1 + graphy2) / 2.0;
+  const int graphw = std::abs(graphx1 - graphx2) / 2.0;
+  const int graphh = std::abs(graphy1 - graphy2) / 2.0;
+
+  const double max_x = 0.5;
+  const double max_y = 0.5;
+
+  while (saturnine::running) {
+    past_points.push_back(odom->get_pose().point());
+    if (past_points.size() > 200) {
+      past_points.erase(past_points.begin());
+    }
+
+    pros::screen::set_pen(pros::Color::black);
+    pros::screen::fill_rect(graphx1, graphy1, graphx2, graphy2);
+    pros::screen::set_pen(pros::Color::gray);
+    pros::screen::draw_line(graphx1, graphymid, graphx2,
+                            graphymid); // x axis
+    pros::screen::draw_line(graphxmid, graphy1, graphxmid,
+                            graphy2); // y axis
+    pros::screen::set_pen(pros::Color::light_gray);
+    pros::screen::draw_rect(graphx1 - 12, graphy1 - 12, graphx2 + 12,
+                            graphy2 + 12); // frame
+
+    for (int i = 0; i < past_points.size(); ++i) {
+      if (i >= past_points.size() * 0.75) {
+        pros::screen::set_pen(pros::Color::white);
+      } else if (i >= past_points.size() * 0.5) {
+        pros::screen::set_pen(pros::Color::light_gray);
+      } else if (i >= past_points.size() * 0.25) {
+        pros::screen::set_pen(pros::Color::dark_gray);
+      } else {
+        pros::screen::set_pen(pros::Color::gray);
+      }
+      point_s pixel_point{graphxmid + past_points[i].x * graphw / (2.0 * max_x),
+                          graphymid -
+                              past_points[i].y * graphh / (max_y * 2.0)};
+
+      if (pixel_point.x > graphx2 || pixel_point.x < graphx1 ||
+          pixel_point.y > graphy2 || pixel_point.y < graphy1) {
+        continue;
+      }
+
+      if (i == past_points.size() - 1) {
+        pros::screen::draw_circle(pixel_point.x, pixel_point.y, 1);
+        pros::screen::draw_pixel(pixel_point.x, pixel_point.y + 3);
+        pros::screen::draw_pixel(pixel_point.x, pixel_point.y - 3);
+        pros::screen::draw_pixel(pixel_point.x + 3, pixel_point.y);
+        pros::screen::draw_pixel(pixel_point.x - 3, pixel_point.y);
+        pros::screen::set_pen(pros::Color::black);
+        pros::screen::draw_pixel(pixel_point.x, pixel_point.y);
+      } else {
+        pros::screen::draw_pixel(pixel_point.x, pixel_point.y);
+      }
+    }
+    pros::screen::set_pen(pros::Color::white);
+    pros::delay(10);
+  }
+}
+
 void initialize() {
   auto imus = pros::Imu::get_all_devices();
   for (auto device : imus) {
+    subzero::log("[info]: resetting imu on port %d", device.get_port());
     device.reset();
   }
 
   for (auto device : imus) {
     while (device.is_calibrating()) {
-      pros::screen::print(pros::E_TEXT_MEDIUM, 6, "imu on port %d not ready",
-                          device.get_port());
       pros::delay(100);
     }
+    subzero::log("[info]: imu on port %d ready", device.get_port());
   }
 
   pros::delay(250);
-
-  pros::screen::print(pros::E_TEXT_MEDIUM, 10, "%d", imus.size());
 
   chassis =
       StarChassis::Builder()
@@ -84,44 +152,7 @@ void initialize() {
           .build();
   odom->auto_update(10);
 
-  pros::Task graphing_task{
-      [&] {
-        std::vector<point_s> past_points;
-        const int graphx1 = 24;
-        const int graphy1 = 24;
-        const int graphx2 = 124;
-        const int graphy2 = 124;
-        const int graphxmid = (graphx1 + graphx2) / 2.0;
-        const int graphymid = (graphy1 + graphy2) / 2.0;
-        const int graphw = std::abs(graphx1 - graphx2) / 2.0;
-        const int graphh = std::abs(graphy1 - graphy2) / 2.0;
-
-        const double max_x = 2;
-        const double max_y = 2;
-
-        while (true) {
-          past_points.push_back(odom->get_pose().point());
-          if (past_points.size() > 200) {
-            past_points.erase(past_points.begin());
-          }
-
-          pros::screen::set_pen(pros::Color::black);
-          pros::screen::fill_rect(graphx1, graphy1, graphx2, graphy2);
-          pros::screen::set_pen(pros::Color::white);
-          pros::screen::draw_line(graphx1, graphymid, graphx2,
-                                  graphymid); // x axis
-          pros::screen::draw_line(graphxmid, graphy1, graphxmid,
-                                  graphy2); // y axis
-
-          for (auto &point : past_points) {
-            pros::screen::draw_circle(
-                graphxmid + point.x * graphw / (2.0 * max_x),
-                graphymid - point.y * graphh / (max_y * 2.0), 2);
-          }
-          pros::delay(10);
-        }
-      },
-      "graphing task"};
+  pros::Task graphing_task{odom_graph_loop, nullptr, "odom graphing task"};
 }
 
 void disabled() {}
@@ -129,16 +160,17 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
+  auto auton_start_time = pros::millis();
   std::shared_ptr<HoloChassisPID> controller =
       HoloChassisPID::Builder()
           .with_chassis(chassis)
           .with_odom(odom)
-          .with_pid(HoloChassisPID::pid_dimension_e::x, 1.7, 0.0, 0)
-          .with_pid(HoloChassisPID::pid_dimension_e::y, 1.7, 0.0, 0)
+          .with_pid(HoloChassisPID::pid_dimension_e::x, 1.7, 0.0001, 0.09)
+          .with_pid(HoloChassisPID::pid_dimension_e::y, 1.7, 0.0001, 0.09)
           .with_pid(HoloChassisPID::pid_dimension_e::r, 0.01, 0.0, 0)
           .build();
-  std::shared_ptr<ExitCondition<double>> cond(
-      new ExitCondition<double>({0, 0.02}, 200));
+  std::shared_ptr<ExitCondition<double>> cond{
+      new ExitCondition<double>{{0, 0.02}, 200}};
   const pose_s target{0.3, 0.3, 270};
   odom->set_position(0.0, 0.0);
   odom->set_heading(0.0);
@@ -147,14 +179,13 @@ void autonomous() {
       [&cond](double val) { cond->update(val); },
       [&, target]() -> double { return odom->get_pose().dist(target); });
   updater.start(10);
-
-  while (!cond->is_met()) {
+  while (!cond->is_met() && pros::millis() - auton_start_time < 14900) {
     controller->approach_pose(target);
     pros::delay(10);
   }
-
   updater.stop();
-  pros::screen::print(pros::E_TEXT_MEDIUM, 6, "motion complete");
+  subzero::log("[info]: pid to (%.2f, %.2f) @ %.0f done", target.x, target.y,
+               target.h);
   /*
   // TODO: tune integral
   PurePursuitController pp(controller, odom, std::move(cond));
@@ -201,8 +232,7 @@ void opcontrol() {
         odom->set_enabled(true);
       }
     }
-    pros::screen::print(pros::E_TEXT_MEDIUM, 0, "x: %.2f, y: %.2f, h: %.1f%s",
-                        pose.x, pose.y, pose.heading(), "                   ");
+    subzero::print(0, "(%.2f, %.2f) h: %.0f", pose.x, pose.y, pose.heading());
 
     pros::delay(10); // high update rate, as imu data comes in every 10 ms
   }

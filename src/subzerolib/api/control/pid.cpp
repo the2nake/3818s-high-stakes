@@ -11,14 +11,15 @@ void PIDF::reset() {
 
 void PIDF::update(double error) {
   uint32_t now = pros::millis();
-  double dt = now - last_update;
+  double dt = (now - last_update) / 1000.0;
   if (std::isnan(error)) {
     return;
   }
-  if (std::isnan(total_err) || (std::signbit(prev_err) != std::signbit(error))) {
+  if (std::isnan(total_err) ||
+      (std::signbit(prev_err) != std::signbit(error))) {
     total_err = 0.0;
   }
-   total_err += error * dt;
+  total_err += error * dt;
   double p = kp * error;
   double i = ki * total_err;
   double d = 0.0;

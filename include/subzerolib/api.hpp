@@ -21,6 +21,7 @@
 #include "subzerolib/api/spline/cubic-spline.hpp"
 #include "subzerolib/api/trajectory/motion-profile/linear-motion-profile.hpp"
 #include "subzerolib/api/trajectory/motion-profile/trapezoidal-motion-profile.hpp"
+#include "subzerolib/api/util/auto-updater.hpp"
 #include "subzerolib/api/util/controls.hpp"
 #include "subzerolib/api/util/helper.hpp"
 #include "subzerolib/api/util/math.hpp"

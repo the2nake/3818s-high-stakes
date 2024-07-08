@@ -1,6 +1,5 @@
 #include "main.h"
-#include "pros/abstract_motor.hpp"
-#include "pros/screen.hpp"
+
 #include "subzerolib/api.hpp"
 #include "subzerolib/api/chassis/star-chassis.hpp"
 #include "subzerolib/api/control/holo-chassis-pid.hpp"
@@ -11,6 +10,9 @@
 #include "subzerolib/api/sensors/abstract_gyro.hpp"
 #include "subzerolib/api/spline/catmull-rom.hpp"
 #include "subzerolib/api/util/math.hpp"
+
+#include "pros/abstract_motor.hpp"
+#include "pros/screen.hpp"
 #include <algorithm>
 #include <memory>
 
@@ -45,8 +47,17 @@ std::shared_ptr<Odometry> odom = nullptr;
 void initialize() {
   auto imus = pros::Imu::get_all_devices();
   for (auto device : imus) {
-    device.reset(true);
+    device.reset();
   }
+
+  for (auto device : imus) {
+    while (device.is_calibrating()) {
+      pros::screen::print(pros::E_TEXT_MEDIUM, 6, "imu on port %d not ready",
+                          device.get_port());
+      pros::delay(100);
+    }
+  }
+
   pros::delay(250);
 
   pros::screen::print(pros::E_TEXT_MEDIUM, 10, "%d", imus.size());
@@ -76,6 +87,18 @@ void initialize() {
   pros::Task graphing_task{
       [&] {
         std::vector<point_s> past_points;
+        const int graphx1 = 24;
+        const int graphy1 = 24;
+        const int graphx2 = 124;
+        const int graphy2 = 124;
+        const int graphxmid = (graphx1 + graphx2) / 2.0;
+        const int graphymid = (graphy1 + graphy2) / 2.0;
+        const int graphw = std::abs(graphx1 - graphx2) / 2.0;
+        const int graphh = std::abs(graphy1 - graphy2) / 2.0;
+
+        const double max_x = 2;
+        const double max_y = 2;
+
         while (true) {
           past_points.push_back(odom->get_pose().point());
           if (past_points.size() > 200) {
@@ -83,13 +106,17 @@ void initialize() {
           }
 
           pros::screen::set_pen(pros::Color::black);
-          pros::screen::fill_rect(24, 24, 124, 124);
+          pros::screen::fill_rect(graphx1, graphy1, graphx2, graphy2);
           pros::screen::set_pen(pros::Color::white);
-          pros::screen::draw_line(24, 74, 124, 74); // x axis
-          pros::screen::draw_line(74, 24, 74, 124); // y axis
+          pros::screen::draw_line(graphx1, graphymid, graphx2,
+                                  graphymid); // x axis
+          pros::screen::draw_line(graphxmid, graphy1, graphxmid,
+                                  graphy2); // y axis
 
           for (auto &point : past_points) {
-            pros::screen::draw_circle(74 + 50 * point.x, 74 - 50 * point.y, 2);
+            pros::screen::draw_circle(
+                graphxmid + point.x * graphw / (2.0 * max_x),
+                graphymid - point.y * graphh / (max_y * 2.0), 2);
           }
           pros::delay(10);
         }
@@ -101,31 +128,33 @@ void disabled() {}
 
 void competition_initialize() {}
 
-// TODO: write the rest of the test code
-
 void autonomous() {
-
   std::shared_ptr<HoloChassisPID> controller =
       HoloChassisPID::Builder()
           .with_chassis(chassis)
           .with_odom(odom)
-          .with_pid(HoloChassisPID::pid_dimension_e::x, 1.8, 0.0, 0)
-          .with_pid(HoloChassisPID::pid_dimension_e::y, 1.8, 0.0, 0)
+          .with_pid(HoloChassisPID::pid_dimension_e::x, 1.7, 0.0, 0)
+          .with_pid(HoloChassisPID::pid_dimension_e::y, 1.7, 0.0, 0)
           .with_pid(HoloChassisPID::pid_dimension_e::r, 0.01, 0.0, 0)
           .build();
-  std::unique_ptr<ExitCondition<double>> cond(
-      new ExitCondition<double>({0, 0.02}, 400));
+  std::shared_ptr<ExitCondition<double>> cond(
+      new ExitCondition<double>({0, 0.02}, 200));
   const pose_s target{0.3, 0.3, 270};
   odom->set_position(0.0, 0.0);
   odom->set_heading(0.0);
 
-  // cond->auto_update([&]() -> double { return odom->get_pose().dist(target);
-  // },
-  //                   10);
+  AutoUpdater<double> updater(
+      [&cond](double val) { cond->update(val); },
+      [&, target]() -> double { return odom->get_pose().dist(target); });
+  updater.start(10);
+
   while (!cond->is_met()) {
     controller->approach_pose(target);
     pros::delay(10);
   }
+
+  updater.stop();
+  pros::screen::print(pros::E_TEXT_MEDIUM, 6, "motion complete");
   /*
   // TODO: tune integral
   PurePursuitController pp(controller, odom, std::move(cond));
@@ -166,15 +195,12 @@ void opcontrol() {
 
     // TODO: chassis angle correction
     if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
-      // test pausing/starting odometry
       if (odom->is_enabled()) {
         odom->set_enabled(false);
       } else {
         odom->set_enabled(true);
       }
     }
-    // print odometry output
-    // TODO: graph odometry output
     pros::screen::print(pros::E_TEXT_MEDIUM, 0, "x: %.2f, y: %.2f, h: %.1f%s",
                         pose.x, pose.y, pose.heading(), "                   ");
 

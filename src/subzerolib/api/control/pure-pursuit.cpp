@@ -1,6 +1,7 @@
 #include "subzerolib/api/control/pure-pursuit.hpp"
 #include "subzerolib/api/geometry/circle.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
+#include "subzerolib/api/util/auto-updater.hpp"
 
 #include <memory>
 
@@ -33,9 +34,10 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
 
   uint32_t start = pros::millis();
   // TODO: test if this works without error
-  // TODO: remove exit condition and redo to check?
-  pos_exit_condition->auto_update(
-      [&]() -> double { return odom->get_pose().dist(waypoints.back()); }, 10);
+  AutoUpdater<double> updater(
+      [&](double val) { pos_exit_condition->update(val); },
+      [&]() -> double { return odom->get_pose().dist(waypoints.back()); });
+  updater.start(10);
 
   for (uint32_t duration = 0; duration < ms_timeout;
        duration = pros::millis() - start) {
@@ -61,6 +63,8 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
     prev_pose = curr_pose;
     pros::delay(10);
   }
+
+  updater.stop();
 
   chassis->brake();
   while (!mutex.take(5)) {
@@ -97,5 +101,5 @@ void PurePursuitController::select_carrot(pose_s pose, double lookahead,
 
 void PurePursuitController::stop() {
   motion_complete = true;
-  pos_exit_condition->stop_updating();
+  // pos_exit_condition->stop_updating();
 }

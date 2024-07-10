@@ -210,24 +210,43 @@ void autonomous() {
 
 void opcontrol() {
   pros::Controller master(pros::E_CONTROLLER_MASTER);
+  PIDF angle_pid(0.02, 0.0, 0.0008);
+  auto pose = odom->get_pose();
+  if (std::isnan(pose.h)) {
+    pose.h = 0.0;
+  }
+  double target_angle = pose.h;
 
   while (saturnine::running) {
-    // Arcade control scheme
-    // FIXME: may need adjustments to increase accuracy along diagonals
-    // model as a polar radial percentage of a rounded circle
-    double x = master.get_analog(ANALOG_RIGHT_X) / 127.0;
-    double y = master.get_analog(ANALOG_RIGHT_Y) / 127.0;
-    double r = master.get_analog(ANALOG_LEFT_X) / 127.0;
-    auto pose = odom->get_pose();
+    // TODO: adjustments to increase accuracy along diagonals
+    // model as a polar radial percentage of a rounded circle?
+    double ctrl_x = master.get_analog(ANALOG_RIGHT_X) / 127.0;
+    double ctrl_y = master.get_analog(ANALOG_RIGHT_Y) / 127.0;
+    double ctrl_rx = master.get_analog(ANALOG_LEFT_X) / 127.0;
+    double ctrl_ry = master.get_analog(ANALOG_LEFT_Y) / 127.0;
 
+    pose = odom->get_pose();
     if (std::isnan(pose.h)) {
       pose.h = 0.0;
     }
 
-    auto vec = rotate_acw(x, y, pose.h);
-    chassis->move(vec.x, vec.y, 0.75 * r);
+    if (std::abs(ctrl_rx) < 0.2 && std::abs(ctrl_ry) < 0.2) {
+      target_angle = pose.h;
+    } else {
+      target_angle = 90 - in_deg(atan2(ctrl_ry, ctrl_rx));
+    }
+    auto angle_err = shorter_turn(pose.h, target_angle);
+    angle_pid.update(angle_err);
+    auto vec = rotate_acw(ctrl_x, ctrl_y, pose.h);
+    if (std::abs(angle_err) > 1 &&
+        std::abs(angle_pid.get_output()) > 0.3) { // anti jitter
+      chassis->move(vec.x, vec.y, angle_pid.get_output());
+    } else {
+      chassis->move(vec.x, vec.y, 0.5 * angle_pid.get_output());
+    }
 
-    // TODO: chassis angle correction
+    // chassis->move(vec.x, vec.y, 0.75 * ctrl_rx);
+
     if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
       if (odom->is_enabled()) {
         odom->set_enabled(false);

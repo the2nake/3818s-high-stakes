@@ -68,7 +68,8 @@ void odom_graph_loop(void *ignore) {
     }
 
     pros::screen::set_pen(pros::Color::black);
-    pros::screen::fill_rect(graphx1, graphy1, graphx2, graphy2);
+    pros::screen::fill_rect(graphx1 - 12, graphy1 - 12, graphx2 + 12,
+                            graphy2 + 12);
     pros::screen::set_pen(pros::Color::gray);
     pros::screen::draw_line(graphx1, graphymid, graphx2,
                             graphymid); // x axis
@@ -117,7 +118,7 @@ void odom_graph_loop(void *ignore) {
 void initialize() {
   auto imus = pros::Imu::get_all_devices();
   for (auto device : imus) {
-    subzero::log("[info]: resetting imu on port %d", device.get_port());
+    subzero::log("[i]: resetting imu on port %d", device.get_port());
     device.reset();
   }
 
@@ -125,10 +126,10 @@ void initialize() {
     while (device.is_calibrating()) {
       pros::delay(100);
     }
-    subzero::log("[info]: imu on port %d ready", device.get_port());
+    subzero::log("[i]: imu on port %d ready", device.get_port());
   }
 
-  pros::delay(250);
+  pros::delay(500);
 
   chassis =
       StarChassis::Builder()
@@ -159,33 +160,38 @@ void disabled() {}
 
 void competition_initialize() {}
 
+void go_to(std::shared_ptr<ChassisController> controller, pose_s target) {
+  std::shared_ptr<ExitCondition<double>> cond{
+      new ExitCondition<double>{{0, 0.02}, 200}};
+  AutoUpdater<double> updater(
+      [cond](double val) { cond->update(val); },
+      [&, target]() -> double { return odom->get_pose().dist(target); });
+  updater.start(10);
+  while (!cond->is_met()) {
+    controller->approach_pose(target);
+    pros::delay(10);
+  }
+  controller->brake();
+  updater.stop();
+  subzero::log("[i]: pid to (%.2f, %.2f) @ %.0f done", target.x, target.y,
+               target.h);
+}
+
 void autonomous() {
   auto auton_start_time = pros::millis();
   std::shared_ptr<HoloChassisPID> controller =
       HoloChassisPID::Builder()
           .with_chassis(chassis)
           .with_odom(odom)
-          .with_pid(HoloChassisPID::pid_dimension_e::x, 1.7, 0.0001, 0.09)
-          .with_pid(HoloChassisPID::pid_dimension_e::y, 1.7, 0.0001, 0.09)
+          .with_pid(HoloChassisPID::pid_dimension_e::x, 4.0, 0.0, 0.4)
+          .with_pid(HoloChassisPID::pid_dimension_e::y, 4.0, 0.0, 0.4)
           .with_pid(HoloChassisPID::pid_dimension_e::r, 0.01, 0.0, 0)
           .build();
-  std::shared_ptr<ExitCondition<double>> cond{
-      new ExitCondition<double>{{0, 0.02}, 200}};
-  const pose_s target{0.3, 0.3, 270};
   odom->set_position(0.0, 0.0);
   odom->set_heading(0.0);
 
-  AutoUpdater<double> updater(
-      [&cond](double val) { cond->update(val); },
-      [&, target]() -> double { return odom->get_pose().dist(target); });
-  updater.start(10);
-  while (!cond->is_met() && pros::millis() - auton_start_time < 14900) {
-    controller->approach_pose(target);
-    pros::delay(10);
-  }
-  updater.stop();
-  subzero::log("[info]: pid to (%.2f, %.2f) @ %.0f done", target.x, target.y,
-               target.h);
+  go_to(controller, {0.3, 0.3, 270});
+  go_to(controller, {-0.6, 0.5, 315});
   /*
   // TODO: tune integral
   PurePursuitController pp(controller, odom, std::move(cond));

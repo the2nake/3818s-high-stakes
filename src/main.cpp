@@ -1,6 +1,6 @@
 #include "main.h"
+#include "ports.h"
 
-#include "pros/colors.hpp"
 #include "subzerolib/api.hpp"
 #include "subzerolib/api/chassis/star-chassis.hpp"
 #include "subzerolib/api/control/holo-chassis-pid.hpp"
@@ -15,6 +15,7 @@
 #include "subzerolib/api/util/math.hpp"
 
 #include "pros/abstract_motor.hpp"
+#include "pros/colors.hpp"
 #include "pros/screen.hpp"
 #include <algorithm>
 #include <memory>
@@ -25,28 +26,35 @@ bool running = true;
 
 // TODO: test PID on the arm
 
-std::unique_ptr<pros::Motor> fl(new pros::Motor(-1, pros::v5::MotorGears::green,
-                                                pros::v5::MotorUnits::deg));
-std::unique_ptr<pros::Motor> fr(new pros::Motor(10, pros::v5::MotorGears::green,
-                                                pros::v5::MotorUnits::deg));
-std::unique_ptr<pros::Motor> ml(new pros::Motor(-12,
+std::unique_ptr<pros::Motor> fl(new pros::Motor(-DRIVE_FL_PORT,
                                                 pros::v5::MotorGears::green,
                                                 pros::v5::MotorUnits::deg));
-std::unique_ptr<pros::Motor> mr(new pros::Motor(19, pros::v5::MotorGears::green,
+std::unique_ptr<pros::Motor> fr(new pros::Motor(DRIVE_FR_PORT,
+                                                pros::v5::MotorGears::green,
                                                 pros::v5::MotorUnits::deg));
-std::unique_ptr<pros::Motor> br(new pros::Motor(20, pros::v5::MotorGears::green,
+std::unique_ptr<pros::Motor> ml(new pros::Motor(-DRIVE_ML_PORT,
+                                                pros::v5::MotorGears::green,
                                                 pros::v5::MotorUnits::deg));
-std::unique_ptr<pros::Motor> bl(new pros::Motor(-11,
+std::unique_ptr<pros::Motor> mr(new pros::Motor(DRIVE_MR_PORT,
+                                                pros::v5::MotorGears::green,
+                                                pros::v5::MotorUnits::deg));
+std::unique_ptr<pros::Motor> br(new pros::Motor(DRIVE_BR_PORT,
+                                                pros::v5::MotorGears::green,
+                                                pros::v5::MotorUnits::deg));
+std::unique_ptr<pros::Motor> bl(new pros::Motor(-DRIVE_BL_PORT,
                                                 pros::v5::MotorGears::green,
                                                 pros::v5::MotorUnits::deg));
 std::shared_ptr<StarChassis> chassis = nullptr;
-std::shared_ptr<AbstractGyro> imu{new AbstractImuGyro(9)};
+std::shared_ptr<AbstractGyro> imu2{new AbstractImuGyro(IMU2_PORT)};
 
 // TODO: make ports.h
-std::shared_ptr<AbstractEncoder> odom_x{new AbstractRotationEncoder(6, true)};
-std::shared_ptr<AbstractEncoder> odom_y{new AbstractRotationEncoder(7, true)};
+std::shared_ptr<AbstractEncoder> odom_x{
+    new AbstractRotationEncoder(PORT_X_ENC, true)};
+std::shared_ptr<AbstractEncoder> odom_y{
+    new AbstractRotationEncoder(PORT_Y_ENC, true)};
 std::shared_ptr<Odometry> odom = nullptr;
 
+// TODO: refactor, add "graph_module"?
 void odom_graph_loop(void *ignore) {
   std::vector<point_s> past_points;
   const int graphx1 = 330;
@@ -116,6 +124,8 @@ void odom_graph_loop(void *ignore) {
 }
 
 void initialize() {
+  subzero::set_log_area(0, 18, 480, 240);
+
   auto imus = pros::Imu::get_all_devices();
   for (auto device : imus) {
     subzero::log("[i]: resetting imu on port %d", device.get_port());
@@ -147,7 +157,7 @@ void initialize() {
 
   odom =
       ImuOdometry::Builder()
-          .with_gyro(imu)
+          .with_gyro(imu2)
           .with_x_enc(odom_x, Odometry::encoder_conf_s(-0.045, 0.160 / 360.0))
           .with_y_enc(odom_y, Odometry::encoder_conf_s(0.09, 0.160 / 360.0))
           .build();
@@ -183,8 +193,8 @@ void autonomous() {
       HoloChassisPID::Builder()
           .with_chassis(chassis)
           .with_odom(odom)
-          .with_pid(HoloChassisPID::pid_dimension_e::x, 4.0, 0.0, 0.4)
-          .with_pid(HoloChassisPID::pid_dimension_e::y, 4.0, 0.0, 0.4)
+          .with_pid(HoloChassisPID::pid_dimension_e::x, 4.0, 0.0, 0.42)
+          .with_pid(HoloChassisPID::pid_dimension_e::y, 4.0, 0.0, 0.42)
           .with_pid(HoloChassisPID::pid_dimension_e::r, 0.01, 0.0, 0)
           .build();
   odom->set_position(0.0, 0.0);

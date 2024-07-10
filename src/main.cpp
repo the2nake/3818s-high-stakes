@@ -2,17 +2,6 @@
 #include "ports.h"
 
 #include "subzerolib/api.hpp"
-#include "subzerolib/api/chassis/star-chassis.hpp"
-#include "subzerolib/api/control/holo-chassis-pid.hpp"
-#include "subzerolib/api/control/pure-pursuit.hpp"
-#include "subzerolib/api/odometry/imu_odometry.hpp"
-#include "subzerolib/api/odometry/odometry.hpp"
-#include "subzerolib/api/sensors/abstract_encoder.hpp"
-#include "subzerolib/api/sensors/abstract_gyro.hpp"
-#include "subzerolib/api/spline/catmull-rom.hpp"
-#include "subzerolib/api/util/helper.hpp"
-#include "subzerolib/api/util/logging.hpp"
-#include "subzerolib/api/util/math.hpp"
 
 #include "pros/abstract_motor.hpp"
 #include "pros/colors.hpp"

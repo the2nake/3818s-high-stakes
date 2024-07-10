@@ -24,4 +24,5 @@
 #include "subzerolib/api/util/auto-updater.hpp"
 #include "subzerolib/api/util/controls.hpp"
 #include "subzerolib/api/util/helper.hpp"
+#include "subzerolib/api/util/logging.hpp"
 #include "subzerolib/api/util/math.hpp"

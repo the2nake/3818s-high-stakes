@@ -36,7 +36,6 @@ std::unique_ptr<pros::Motor> bl(new pros::Motor(-DRIVE_BL_PORT,
 std::shared_ptr<StarChassis> chassis = nullptr;
 std::shared_ptr<AbstractGyro> imu2{new AbstractImuGyro(IMU2_PORT)};
 
-// TODO: make ports.h
 std::shared_ptr<AbstractEncoder> odom_x{
     new AbstractRotationEncoder(PORT_X_ENC, true)};
 std::shared_ptr<AbstractEncoder> odom_y{
@@ -171,7 +170,7 @@ void go_to(std::shared_ptr<ChassisController> controller, pose_s target) {
     pros::delay(10);
   }
   controller->brake();
-  updater.stop();
+  updater.stop(); // TODO: stop when out of scope
   subzero::log("[i]: pid to (%.2f, %.2f) @ %.0f done", target.x, target.y,
                target.h);
 }
@@ -182,32 +181,31 @@ void autonomous() {
       HoloChassisPID::Builder()
           .with_chassis(chassis)
           .with_odom(odom)
-          .with_pid(HoloChassisPID::pid_dimension_e::x, 4.0, 0.0, 0.42)
-          .with_pid(HoloChassisPID::pid_dimension_e::y, 4.0, 0.0, 0.42)
-          .with_pid(HoloChassisPID::pid_dimension_e::r, 0.01, 0.0, 0)
+          .with_pid(HoloChassisPID::pid_dimension_e::x, 3.6, 0, 0.42)
+          .with_pid(HoloChassisPID::pid_dimension_e::y, 3.6, 0, 0.42)
+          .with_pid(HoloChassisPID::pid_dimension_e::r, 0.015, 0.0, 0.0008)
           .build();
   odom->set_position(0.0, 0.0);
   odom->set_heading(0.0);
 
-  go_to(controller, {0.3, 0.3, 270});
-  go_to(controller, {-0.6, 0.5, 315});
-  /*
-  // TODO: tune integral
+  // go_to(controller, {0.3, 0.3, 270});
+  // go_to(controller, {-0.6, 0.5, 315});
+
+  std::shared_ptr<ExitCondition<double>> cond{
+      new ExitCondition<double>{{0, 0.02}, 200}};
   PurePursuitController pp(controller, odom, std::move(cond));
-  std::vector<pose_s> ctrl = {
-      {0.0, 0.0, 0.0}, {0.4, 0.6, 45.0}, {-0.2, 0.6, 60.0}, {-1.0, 1.0, -45.0}};
+
+  std::vector<pose_s> ctrl = {{0.0, 0.0, 0.0},
+                              {0.4, 0.6, 45.0},
+                              {-0.2, 0.6, 60.0},
+                              {-0.75, 0.75, -45.0}};
   CatmullRomSpline spline(ctrl);
   spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
   auto spline_points = spline.sample(200);
   std::vector<pose_s> waypoints(spline_points.size());
   transform(spline_points.begin(), spline_points.end(), waypoints.begin(),
-            [](point_s point) -> pose_s { return pose_s{point}; });
-
-  // TODO: fix bug, data abort exception, path following seems to start
-  // correctly
-  // TODO: rewrite pure pursuit? it's very short
-  pp.follow(waypoints, 0.1);
-  */
+            [](point_s point) -> pose_s { return pose_s{point, 0.0}; });
+  pp.follow(waypoints, 0.4);
 }
 
 void opcontrol() {

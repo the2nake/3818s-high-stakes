@@ -38,6 +38,11 @@ public:
     last_update = pros::millis();
   }
 
+  void reset() {
+    last_update = pros::millis();
+    met_duration = 0;
+  }
+
   void update(T input) {
     uint32_t now = pros::millis();
     if (range.contains(input)) {

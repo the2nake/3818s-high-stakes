@@ -2,21 +2,23 @@
 #include "subzerolib/api/geometry/circle.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
 #include "subzerolib/api/util/auto-updater.hpp"
+#include "subzerolib/api/util/logging.hpp"
 
 #include <memory>
 
-// TODO: pure pursuit untested
+// TODO: refactor pure pursuit code it's ugly as fuck
 
 PurePursuitController::PurePursuitController(
     std::shared_ptr<ChassisController> ichassis,
     std::shared_ptr<Odometry> iodom,
-    std::unique_ptr<ExitCondition<double>> ipos_exit_condition)
+    std::shared_ptr<ExitCondition<double>> ipos_exit_condition)
     : chassis(std::move(ichassis)), odom(std::move(iodom)),
       pos_exit_condition(std::move(ipos_exit_condition)) {}
 
 void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
                                    double lookahead, int ms_timeout,
                                    int iresolution) {
+  pos_exit_condition->reset();
   waypoints = iwaypoints;
   resolution = std::max(1, iresolution);
 
@@ -33,10 +35,10 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
   circle_s seek_circle(curr_pose, lookahead);
 
   uint32_t start = pros::millis();
-  // TODO: test if this works without error
+  pose_s goal{waypoints.back()};
   AutoUpdater<double> updater(
-      [&](double val) { pos_exit_condition->update(val); },
-      [&]() -> double { return odom->get_pose().dist(waypoints.back()); });
+      [&](double val) { this->pos_exit_condition->update(val); },
+      [&, goal]() -> double { return this->odom->get_pose().dist(goal); });
   updater.start(10);
 
   for (uint32_t duration = 0; duration < ms_timeout;
@@ -72,6 +74,9 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
   }
   motion_complete = true;
   mutex.give();
+
+  subzero::log("[i]: pure pursuit to (%.02f, %.02f) @ %.0f done", goal.x,
+               goal.y, goal.h);
 }
 
 void PurePursuitController::select_carrot(pose_s pose, double lookahead,

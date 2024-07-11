@@ -163,7 +163,7 @@ void go_to(std::shared_ptr<ChassisController> controller, pose_s target) {
       new ExitCondition<double>{{0, 0.02}, 200}};
   AutoUpdater<double> updater(
       [cond](double val) { cond->update(val); },
-      [&, target]() -> double { return odom->get_pose().dist(target); });
+      [target]() -> double { return odom->get_pose().dist(target); });
   updater.start(10);
   while (!cond->is_met()) {
     controller->approach_pose(target);

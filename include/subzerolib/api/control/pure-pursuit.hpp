@@ -4,6 +4,7 @@
 #include "subzerolib/api/geometry/pose.hpp"
 #include "subzerolib/api/logic/exit-condition.hpp"
 #include "subzerolib/api/odometry/odometry.hpp"
+#include "subzerolib/api/util/auto-updater.hpp"
 
 #include "pros/rtos.hpp"
 #include <atomic>
@@ -16,6 +17,7 @@ public:
       std::shared_ptr<ChassisController> ichassis,
       std::shared_ptr<Odometry> iodom,
       std::shared_ptr<ExitCondition<double>> ipos_exit_condition);
+
   /// @brief follows the path described by the linear spline connecting the
   /// waypoints
   ///
@@ -41,4 +43,5 @@ private:
 
   std::atomic<bool> motion_complete = true;
   pros::Mutex mutex;
+  std::unique_ptr<AutoUpdater<double>> pos_exit_condition_updater;
 };

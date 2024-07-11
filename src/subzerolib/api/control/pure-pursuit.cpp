@@ -36,10 +36,10 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
 
   uint32_t start = pros::millis();
   pose_s goal{waypoints.back()};
-  AutoUpdater<double> updater(
+  pos_exit_condition_updater = std::make_unique<AutoUpdater<double>>(
       [&](double val) { this->pos_exit_condition->update(val); },
       [&, goal]() -> double { return this->odom->get_pose().dist(goal); });
-  updater.start(10);
+  pos_exit_condition_updater->start(10);
 
   for (uint32_t duration = 0; duration < ms_timeout;
        duration = pros::millis() - start) {
@@ -66,7 +66,7 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
     pros::delay(10);
   }
 
-  updater.stop();
+  pos_exit_condition_updater->stop();
 
   chassis->brake();
   while (!mutex.take(5)) {

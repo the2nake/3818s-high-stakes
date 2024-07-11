@@ -21,7 +21,7 @@ int main() {
   CatmullRomSpline spline(
       std::vector<point_s>{{0.0, 0.0}, {0.4, 0.6}, {-0.2, 0.6}, {-1.0, 1.0}});
   spline.pad_velocity({0.5, 0.5}, {-0.5, 0.5});
-  std::vector<point_s> spline_points = spline.sample(200);
+  std::vector<point_s> spline_points = spline.sample_coordinates(200);
 
   for (auto &control : spline.get_control_points()) {
     file << "ctrl " << control.x << " " << control.y << std::endl;

@@ -1,4 +1,5 @@
 #include "subzerolib/api/spline/catmull-rom.hpp"
+#include "subzerolib/api/spline/cubic-spline.hpp"
 #include <algorithm>
 
 CatmullRomSpline::CatmullRomSpline(std::vector<point_s> icontrol_points)
@@ -30,19 +31,44 @@ void CatmullRomSpline::calculate_bernstein_coeffs() {
   }
 }
 
-std::vector<point_s> CatmullRomSpline::sample(int count) {
-  std::vector<point_s> output;
+std::vector<point_s> CatmullRomSpline::sample_coordinates(int count) {
+  std::vector<point_s> sampled_points;
   if (count < 1) {
-    return output;
+    return sampled_points;
   }
   double step = (control_points.size() - 3) / (count - 1.0);
   double u = 0.0;
   for (int i = 0; i < count; ++i) {
-    output.emplace_back(get_pos(u));
+    sampled_points.emplace_back(get_pos(u));
     u += step;
   }
 
-  return output;
+  return sampled_points;
+}
+
+std::vector<spline_point_s> CatmullRomSpline::sample_kinematics(int count) {
+  std::vector<spline_point_s> sampled_points;
+  if (count < 1) {
+    return sampled_points;
+  }
+  double step = (control_points.size() - 3) / (count - 1.0);
+  double u = 0.0;
+  for (int i = 0; i < count; ++i) {
+    auto pos = get_pos(u);
+    double s = 0.0;
+    if (i > 0) {
+      point_s prev_pos{sampled_points.back().x, sampled_points.back().y};
+      s = sampled_points.back().s + pos.dist(prev_pos);
+    }
+    auto vel = get_vel(u);
+    auto accel = get_accel(u);
+
+    sampled_points.emplace_back(pos.x, pos.y, s, vel.x, vel.y, accel.x,
+                                accel.y);
+    u += step;
+  }
+
+  return sampled_points;
 }
 
 point_s CatmullRomSpline::get_val(Eigen::Matrix<double, 1, 4> t_row, double u) {

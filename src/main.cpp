@@ -201,7 +201,7 @@ void autonomous() {
                               {-0.75, 0.75, -45.0}};
   CatmullRomSpline spline(ctrl);
   spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
-  auto spline_points = spline.sample(200);
+  auto spline_points = spline.sample_coordinates(200);
   std::vector<pose_s> waypoints(spline_points.size());
   transform(spline_points.begin(), spline_points.end(), waypoints.begin(),
             [](point_s point) -> pose_s { return pose_s{point, 0.0}; });

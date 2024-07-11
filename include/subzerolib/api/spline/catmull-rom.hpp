@@ -12,7 +12,8 @@ public:
   CatmullRomSpline(std::vector<pose_s> control_points);
   ~CatmullRomSpline() {}
 
-  std::vector<point_s> sample(int count) override;
+  std::vector<point_s> sample_coordinates(int count) override;
+  std::vector<spline_point_s> sample_kinematics(int count) override;
 
   point_s get_pos(double u) override;
   point_s get_vel(double u) override;

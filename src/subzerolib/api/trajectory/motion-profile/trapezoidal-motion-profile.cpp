@@ -5,12 +5,15 @@
 TrapezoidalMotionProfile::TrapezoidalMotionProfile(double imax_vel,
                                                    double imax_accel,
                                                    double imax_decel)
-    : max_vel(imax_vel), max_accel(imax_accel), max_decel(imax_decel) {
-  // paranoia
+    : max_vel(std::abs(imax_vel)), max_accel(std::abs(imax_accel)),
+      max_decel(imax_decel) {
+  if (std::isnan(imax_decel)) {
+    imax_decel = -std::abs(imax_accel);
+  }
 }
 
-void TrapezoidalMotionProfile::set_resolution(double dist) {
-  resolution = std::max(0.01, std::abs(dist));
+void TrapezoidalMotionProfile::set_resolution(double step_length) {
+  resolution = std::max(0.01, std::abs(step_length));
 }
 
 void TrapezoidalMotionProfile::generate(double distance) {

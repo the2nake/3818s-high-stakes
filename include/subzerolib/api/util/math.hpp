@@ -4,11 +4,26 @@
 #include <cmath>
 
 const double K_PI = 3.141592654;
-const double K_EPSILON = 0.00001;
+const double K_EPSILON = 0.00001; // range at which things are the same
 const double K_SQRT_2 = 1.414213562;
 
-double rougheq(double a, double b);
+/// @brief return if two values are roughly equal
+/// @tparam T the type of the values
+/// @param a the first value
+/// @param b the second value
+/// @returns if the values are roughly the same
+template <typename T> bool rougheq(T a, T b) {
+  return std::abs(a - b) < K_EPSILON;
+}
+
+/// @brief converts from degrees to radians
+/// @param deg the value in degrees
+/// @returns a value in radians
 double in_rad(double deg);
+
+/// @brief converts from radians to degrees
+/// @param rad the value in radians
+/// @returns a value in degrees
 double in_deg(double rad);
 
 /// @brief calculates a solely positive modulus
@@ -18,6 +33,7 @@ double in_deg(double rad);
 double mod(double a, double circ);
 
 /// @brief finds the shortest turn from h0 to hf.
+/// @tparam T the type of the values
 /// @param h0 initial angle
 /// @param hf final angle
 /// @param circle_size number of units in a circle. degrees default (360.0)
@@ -42,6 +58,11 @@ auto lerp(T a, T b, T2 t) -> decltype(a * t) {
   return a + (b - a) * t;
 }
 
+/// @brief clamps a value between two ranges
+/// @tparam T the type of the values
+/// @param val reference to the value
+/// @param min the minimum
+/// @param max the maximum
 template <typename T> void clamp(T &val, T min, T max) {
   if (max < min) {
     std::swap(max, min);
@@ -53,18 +74,28 @@ template <typename T> void clamp(T &val, T min, T max) {
   }
 }
 
-template <typename T> void clamp_distance(T dist, T &x, T &y) {
+/// @brief clamps the distance to the origin
+/// @tparam T the type of the values
+/// @param max_dist the distance maximum
+/// @param x reference to the x coordinate
+/// @param y reference to the y coordinate
+template <typename T> void clamp_distance(T max_dist, T &x, T &y) {
   double d = std::hypot(x, y);
-  if (std::abs(d) > dist) {
+  if (std::abs(d) > max_dist) {
     double sin = y / d;
     double cos = x / d;
-    d = std::min(dist, d);
+    d = std::min(max_dist, d);
     y = sin * d;
     x = cos * d;
   }
 }
 
-template <typename T> point_s rotate_acw(T x, T y, T h) {
-  double rad = in_rad(-h);
+/// @brief rotate a point anticlockwise
+/// @tparam T the type of the values
+/// @param x the x coordinate
+/// @param y the y coordinate
+/// @param deg the angle to rotate in degrees
+template <typename T> point_s rotate_acw(T x, T y, T deg) {
+  double rad = in_rad(-deg);
   return {x * cos(rad) + y * sin(rad), y * cos(rad) - x * sin(rad)};
 }

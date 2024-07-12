@@ -1,15 +1,14 @@
 #include "subzerolib/api/control/holo-chassis-pid.hpp"
 #include "subzerolib/api/util/math.hpp"
 
-// linv is ignored
 void HoloChassisPID::approach_pose(pose_s target, double linv) {
-  point_s dev = target.point() -
-                odom->get_pose().point();
-  x_pid->update(dev.x);
-  y_pid->update(dev.y);
-  r_pid->update(shorter_turn(odom->get_pose().h, target.h));
+  auto pose = odom->get_pose();
+  x_pid->update(target.x - pose.x);
+  y_pid->update(target.y - pose.y);
+  r_pid->update(shorter_turn(pose.h, target.h));
+
   point_s vel{x_pid->get_output(), y_pid->get_output()};
-  vel = rotate_acw(vel.x, vel.y, odom->get_pose().h);
+  vel = rotate_acw(vel.x, vel.y, pose.h);
 
   chassis->move(vel.x, vel.y, r_pid->get_output());
 }

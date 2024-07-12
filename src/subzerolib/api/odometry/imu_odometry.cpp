@@ -14,7 +14,7 @@ void ImuOdometry::update() {
     double d_raw =
         x_encs[i].second.travel_per_deg * (curr - prev_x_enc_vals[i]);
     prev_x_enc_vals[i] = curr;
-    if (rougheq(0, dh)) {
+    if (rougheq(0.0, dh)) {
       x_impact_lx += d_raw;
     } else {
       double tmp = (d_raw / in_rad(dh) - x_encs[i].second.offset);
@@ -34,7 +34,7 @@ void ImuOdometry::update() {
     double d_raw =
         y_encs[i].second.travel_per_deg * (curr - prev_y_enc_vals[i]);
     prev_y_enc_vals[i] = curr;
-    if (rougheq(0, dh)) {
+    if (rougheq(0.0, dh)) {
       y_impact_ly += d_raw;
     } else {
       double tmp = (d_raw / in_rad(dh) + y_encs[i].second.offset);

@@ -3,27 +3,32 @@
 #include "pros/rtos.hpp"
 #include <functional>
 
-template <typename InputType> class AutoUpdater {
+template <typename T> class AutoUpdater {
 public:
-  AutoUpdater(std::function<void(InputType)> iupdater,
-              std::function<InputType()> igetter)
+  /// @brief create an object for automatic updating
+  /// @param iupdater a callable that takes a single argument. usually a lambda
+  /// @param igetter a callable that returns a single argument. usually a lambda
+  /// @returns the auto updater
+  AutoUpdater(std::function<void(T)> iupdater, std::function<T()> igetter)
       : updater(std::move(iupdater)), getter(igetter) {}
 
-  ~AutoUpdater() {
-    stop();
-  }
+  /// @brief destroys the auto updater, stopping running updates in the process
+  ~AutoUpdater() { stop(); }
 
-  void start(const int delay) {
-    update_task = new pros::Task{[this, delay] {
+  /// @brief begin updating
+  /// @param interval milliseconds between updates
+  void start(const int interval) {
+    update_task = new pros::Task{[this, interval] {
       while (true) {
         uint32_t start = pros::millis();
         const auto ptr = &start;
         this->updater(this->getter());
-        pros::Task::delay_until(ptr, delay);
+        pros::Task::delay_until(ptr, interval);
       }
     }};
   }
 
+  /// @brief stops updates
   void stop() {
     if (update_task != nullptr) {
       update_task->remove();
@@ -33,8 +38,8 @@ public:
   }
 
 private:
-  std::function<void(InputType)> updater = nullptr;
-  std::function<InputType()> getter = nullptr;
+  std::function<void(T)> updater = nullptr;
+  std::function<T()> getter = nullptr;
 
   pros::Task *update_task = nullptr;
 };

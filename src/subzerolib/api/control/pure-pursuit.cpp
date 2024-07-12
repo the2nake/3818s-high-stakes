@@ -12,7 +12,7 @@ PurePursuitController::PurePursuitController(
     std::shared_ptr<ChassisController> ichassis,
     std::shared_ptr<Odometry> iodom,
     std::shared_ptr<ExitCondition<double>> ipos_exit_condition)
-    : chassis(std::move(ichassis)), odom(std::move(iodom)),
+    : controller(std::move(ichassis)), odom(std::move(iodom)),
       pos_exit_condition(std::move(ipos_exit_condition)) {}
 
 void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
@@ -21,6 +21,7 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
   pos_exit_condition->reset();
   waypoints = iwaypoints;
   resolution = std::max(1, iresolution);
+  lookahead = std::abs(lookahead);
 
   while (!mutex.take(5)) {
     pros::delay(1);
@@ -57,18 +58,18 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
     select_carrot(curr_pose, lookahead, carrot);
 
     // use chassis controller implementation
-    chassis->approach_pose(carrot);
+    controller->approach_pose(carrot);
     if (motion_complete || pos_exit_condition->is_met()) {
       break;
     }
 
     prev_pose = curr_pose;
-    pros::delay(10);
+    pros::delay(10); // TODO: change to uniform timings
   }
 
   pos_exit_condition_updater->stop();
 
-  chassis->brake();
+  controller->brake();
   while (!mutex.take(5)) {
     pros::delay(1);
   }
@@ -104,7 +105,4 @@ void PurePursuitController::select_carrot(pose_s pose, double lookahead,
   }
 }
 
-void PurePursuitController::stop() {
-  motion_complete = true;
-  // pos_exit_condition->stop_updating();
-}
+void PurePursuitController::stop() { motion_complete = true; }

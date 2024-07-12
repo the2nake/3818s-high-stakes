@@ -8,23 +8,49 @@
 
 class CatmullRomSpline : public Spline {
 public:
+  /// @brief create a catmull-rom spline
+  /// @param control_points a vector of control points
+  /// @returns a catmull-rom spline object
   CatmullRomSpline(std::vector<point_s> control_points);
+
+  /// @brief create a catmull-rom spline
+  /// @param control_points a vector of poses representing control points
+  /// @returns a catmull-rom spline object
   CatmullRomSpline(std::vector<pose_s> control_points);
   ~CatmullRomSpline() {}
 
+  /// @brief sample points on a spline
+  /// @param count number of points to sample
+  /// @return a vector of evenly spaced points (in parameter space)
   std::vector<point_s> sample_coordinates(int count) override;
+
+  /// @brief sample points with kinematic information on a spline
+  /// @param count number of points to sample
+  /// @return a vector of evenly spaced point data (in paramter space)
   std::vector<spline_point_s> sample_kinematics(int count) override;
 
+  /// @brief gets the position
+  /// @param u the parameter space value
+  /// @returns a point_s with the position
   point_s get_pos(double u) override;
+
+  /// @brief gets the velocity
+  /// @param u the parameter space value
+  /// @returns a point_s with the velocity
   point_s get_vel(double u) override;
+
+  /// @brief gets the acceleration
+  /// @param u the parameter space value
+  /// @returns a point_s with the acceleration
   point_s get_accel(double u) override;
 
   /// @brief adds points to the ends of the catmull-rom spline
   /// @param v0 a point representing the velocity at the initial waypoint
   /// @param vf a point representing the velocity at the final waypoint
-  /// @returns a vector of control points for use with generation
   void pad_velocity(point_s v0, point_s vf);
 
+  /// @brief gets the control points for the spline
+  /// @returns a vector of control points
   std::vector<point_s> get_control_points() { return control_points; }
 
 private:

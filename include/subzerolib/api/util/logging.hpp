@@ -5,18 +5,32 @@
 
 namespace subzero {
 
-extern int log_area_x1;
-extern int log_area_y1;
-extern int log_area_x2;
-extern int log_area_y2;
+extern int log_area_x1; // left bound
+extern int log_area_y1; // top bound
+extern int log_area_x2; // right bound
+extern int log_area_y2; // bottom bound
 
+/// @brief change the area of the logging
+/// @param x1 left bound
+/// @param y1 top bound
+/// @param x2 right bound
+/// @param y2 bottom bound
 void set_log_area(int x1, int y1, int x2, int y2);
 
+/// @brief print out a message
+/// @tparam Params print parameters
+/// @param line the line number
+/// @param msg the message to pring
+/// @param args the insertables
 template <typename... Params>
 void print(const int line, std::string msg, Params... args) {
   pros::screen::print(pros::E_TEXT_MEDIUM, line, msg.c_str(), args...);
 }
 
+/// @brief log a message
+/// @tparam Params print parameters
+/// @param msg the message to pring
+/// @param args the insertables
 template <typename... Params> void log(std::string msg, Params... args) {
   pros::screen::scroll_area(log_area_x1, log_area_y1, log_area_x2, log_area_y2,
                             15);
@@ -27,6 +41,10 @@ template <typename... Params> void log(std::string msg, Params... args) {
   pros::screen::set_pen(color);
 }
 
+/// @brief log an error
+/// @tparam Params print parameters
+/// @param msg the message to pring
+/// @param args the insertables
 template <typename... Params> void error(std::string msg, Params... args) {
   pros::screen::scroll_area(log_area_x1, log_area_y1, log_area_x2, log_area_y2,
                             15);

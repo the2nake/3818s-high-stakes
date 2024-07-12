@@ -20,7 +20,11 @@ public:
     std::map<state_e, std::function<bool()>> exit_map;
   };
 
+  /// @brief get the state data for the current state
+  /// @returns the state data
   state_data_s get_curr_state_data() { return curr_state_data; }
+
+  /// @brief executes the behaviour of the current state
   void exec_behaviour() {
     bool exit = false;
     do {

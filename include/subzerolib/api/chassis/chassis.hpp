@@ -2,7 +2,7 @@
 
 class Chassis {
 public:
-  /// @brief move the robot in relative reference frame
+  /// @brief move in relative reference frame
   ///
   /// @param x lateral component
   /// @param y vertical component

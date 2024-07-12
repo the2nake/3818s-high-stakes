@@ -3,8 +3,8 @@
 #include "subzerolib/api/chassis/chassis.hpp"
 #include "subzerolib/api/util/controls.hpp"
 
-#include "pros/motors.hpp"
 #include "pros/abstract_motor.hpp"
+#include "pros/motors.hpp"
 #include <map>
 #include <memory>
 
@@ -18,7 +18,16 @@ public:
     back_left,
     back_right
   };
+
+  /// @brief move in relative reference frame
+  ///
+  /// @param x lateral component
+  /// @param y vertical component
+  /// @param r rotational component
   void move(double x, double y, double r) override;
+
+  /// @brief specify a preference for combining linear and angular components
+  /// @param rot_pref a value in the range [0.0, 1.0]
   void set_rot_pref(double irot_pref = 0.5) override;
 
 private:
@@ -43,13 +52,43 @@ private:
 public:
   class Builder {
   public:
-    Builder &with_motors(motor_position_e dimension,
+    /// @brief specify a motor for the chassis
+    ///
+    /// the chassis motor should be reversed such that positive voltage moves
+    /// the drive forward
+    ///
+    /// @param position the motor position
+    /// @param motor a unique pointer to the motor
+    /// @returns a reference to the builder object
+    Builder &with_motors(motor_position_e position,
                          std::unique_ptr<pros::Motor> motor);
-    Builder &with_motors(motor_position_e dimension,
-                         std::unique_ptr<pros::AbstractMotor> motor);
-    Builder &with_geometry(double iboost_radius, double icorner_radius);
-    Builder &with_rot_pref(double rot_pref = 0.5);
 
+    /// @brief specify a motor for the chassis
+    ///
+    /// the chassis motor should be reversed such that positive voltage moves
+    /// the drive forward
+    ///
+    /// @param position the motor position
+    /// @param motor a unique pointer to the motor
+    /// @returns a reference to the builder object
+    Builder &with_motors(motor_position_e position,
+                         std::unique_ptr<pros::AbstractMotor> motor);
+
+    /// @brief specify star drive geometry
+    /// @param iboost_radius the radius from the centre to the middle of the
+    /// boost wheels
+    /// @param icorner_radius the radius from the centre to the middle of the
+    /// corner wheels
+    /// @returns a reference to the builder object
+    Builder &with_geometry(double iboost_radius, double icorner_radius);
+
+    /// @brief specify a preference for combining linear and angular components
+    /// @param irot_pref a value in the range [0.0, 1.0]
+    /// @returns a reference to the builder object
+    Builder &with_rot_pref(double irot_pref = 0.5);
+
+    /// @brief creates the star drive chassis object
+    /// @returns a shared pointer to the created object
     std::shared_ptr<StarChassis> build();
 
   private:

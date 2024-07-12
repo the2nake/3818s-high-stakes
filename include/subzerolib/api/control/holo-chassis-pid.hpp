@@ -15,7 +15,15 @@ public:
     r,
   };
 
+  /// @brief move the chassis in the direction of a target pose
+  ///
+  /// linear velocity is ignored
+  ///
+  /// @param target the target pose
+  /// @param linv ignored paramter, set to nan by default
   void approach_pose(pose_s target, double linv = std::nan("")) override;
+
+  /// @brief brake the chassis
   void brake() override { chassis->move(0, 0, 0); }
 
 private:

@@ -93,10 +93,10 @@ StarChassis::Builder::with_geometry(double iboost_radius,
   return *this;
 }
 
-StarChassis::Builder &StarChassis::Builder::with_rot_pref(double rot_pref) {
-  rot_pref = std::abs(rot_pref);
-  clamp(rot_pref, 0.0, 1.0);
-  this->brot_pref = rot_pref;
+StarChassis::Builder &StarChassis::Builder::with_rot_pref(double irot_pref) {
+  irot_pref = std::abs(irot_pref);
+  clamp(irot_pref, 0.0, 1.0);
+  this->brot_pref = irot_pref;
   return *this;
 }
 

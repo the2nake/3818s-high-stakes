@@ -2,10 +2,8 @@
 
 #include "pros/rtos.hpp"
 #include <atomic>
-#include <functional>
 
 // concept kinda sorta stolen from lemlib
-// TODO: test ExitCondition auto update
 
 template <typename T> class ExitCondition {
 public:
@@ -33,16 +31,24 @@ public:
     }
   };
 
+  /// @brief create an object representing an exit condition
+  /// @param irange the range in which to stop
+  /// @param imin_ms the minimum duration in milliseconds that the condition
+  /// must be true for
+  /// @returns the exit condition object
   ExitCondition(range_s<T> irange, int imin_ms = 500)
       : range(irange), min_ms(imin_ms) {
     last_update = pros::millis();
   }
 
+  /// @brief reset the exit condition
   void reset() {
     last_update = pros::millis();
     met_duration = 0;
   }
 
+  /// @brief update the condition with a new value
+  /// @param input the value
   void update(T input) {
     uint32_t now = pros::millis();
     if (range.contains(input)) {
@@ -53,28 +59,10 @@ public:
     last_update = now;
   }
 
+  /// @brief check if the condition is met
+  /// @returns whether the condition has been true for at least min_ms
+  /// milliseconds
   bool is_met() { return met_duration.load() >= min_ms; }
-
-  // TODO: ask rocky why this doesn't work but the AutoUpdater class does
-  // TODO: perhaps something about managing an object within itself?
-  /* auto update does not work, prefetch error + data abort exception
-  void auto_update(std::function<T()> igetter, int iupdate_delay) {
-    getter = igetter;
-    update_delay = iupdate_delay;
-    uint32_t prev_ts = pros::millis();
-    const auto ptr = &prev_ts;
-
-    update_task = new pros::Task([&, this] {
-      while (!pros::Task::notify_take(true, 0)) {
-        if (getter != nullptr) {
-          this->update(getter());
-        }
-        pros::delay(20);
-        pros::Task::delay_until(ptr, update_delay);
-      }
-    });
-  }
-  */
 
 private:
   range_s<T> range;

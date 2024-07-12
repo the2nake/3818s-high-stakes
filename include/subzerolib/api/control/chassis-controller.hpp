@@ -10,6 +10,14 @@
 /// roughly aligned with the direction of the drive
 class ChassisController {
 public:
+  /// @brief move the chassis in the direction of a target pose
+  ///
+  /// implementations need not work as a move to pose function, necessarily
+  ///
+  /// @param target the target pose
+  /// @param linv the intended movement velocity
   virtual void approach_pose(pose_s target, double linv = std::nan("")) = 0;
+
+  /// @brief brake the chassis
   virtual void brake() = 0;
 };

@@ -9,11 +9,17 @@
 
 class ImuOdometry : public Odometry {
 public:
+  /// @brief sets the heading of the odometry module
+  /// @param heading the desired heading
   void set_heading(double ih) override {
     lock();
     this->pose.h = ih;
     unlock();
   }
+
+  /// @brief sets the position of the odometry module
+  /// @param x the desired position's x coordinate
+  /// @param y the desired position's y coordinate
   void set_position(double ix, double iy) override {
     lock();
     this->pose.x = ix;
@@ -21,17 +27,29 @@ public:
     unlock();
   }
 
+  /// @brief get the current pose
+  /// @returns the pose measurement
   pose_s get_pose() override {
     lock();
     auto temp = pose;
     unlock();
     return temp;
   }
+
+  /// @brief get the current velocity
+  /// @returns the velocity measurement
   point_s get_vel() override { return point_s{0, 0}; }
 
+  /// @brief trigger an update tick
   void update() override;
-  bool is_enabled() override { return enabled.load(); }
+
+  /// @brief enable/disable the module
+  /// @param bool desired state
   void set_enabled(bool v) override { enabled = v; }
+
+  /// @brief check if the module is enabled
+  /// @returns whether odometry is active
+  bool is_enabled() override { return enabled.load(); }
 
 private:
   pros::Mutex state_mutex;

@@ -6,6 +6,8 @@ void ImuOdometry::update() {
   if (std::isnan(dh)) {
     dh = 0;
   }
+  // for reference: maximum rotation = 2 deg / 10 ms
+  bool is_low_turn = std::abs(dh) < 0.1;
 
   double x_impact_lx = 0.0;
   double x_impact_ly = 0.0;
@@ -14,7 +16,7 @@ void ImuOdometry::update() {
     double d_raw =
         x_encs[i].second.travel_per_deg * (curr - prev_x_enc_vals[i]);
     prev_x_enc_vals[i] = curr;
-    if (rougheq(0.0, dh)) {
+    if (is_low_turn) {
       x_impact_lx += d_raw;
     } else {
       double tmp = (d_raw / in_rad(dh) - x_encs[i].second.offset);
@@ -34,7 +36,7 @@ void ImuOdometry::update() {
     double d_raw =
         y_encs[i].second.travel_per_deg * (curr - prev_y_enc_vals[i]);
     prev_y_enc_vals[i] = curr;
-    if (rougheq(0.0, dh)) {
+    if (is_low_turn) {
       y_impact_ly += d_raw;
     } else {
       double tmp = (d_raw / in_rad(dh) + y_encs[i].second.offset);

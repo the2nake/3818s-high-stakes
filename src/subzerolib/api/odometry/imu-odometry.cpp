@@ -1,4 +1,4 @@
-#include "subzerolib/api/odometry/imu_odometry.hpp"
+#include "subzerolib/api/odometry/imu-odometry.hpp"
 #include "subzerolib/api/util/math.hpp"
 
 void ImuOdometry::update() {
@@ -16,6 +16,7 @@ void ImuOdometry::update() {
     double d_raw =
         x_encs[i].second.travel_per_deg * (curr - prev_x_enc_vals[i]);
     prev_x_enc_vals[i] = curr;
+
     if (is_low_turn) {
       x_impact_lx += d_raw;
     } else {
@@ -36,6 +37,7 @@ void ImuOdometry::update() {
     double d_raw =
         y_encs[i].second.travel_per_deg * (curr - prev_y_enc_vals[i]);
     prev_y_enc_vals[i] = curr;
+
     if (is_low_turn) {
       y_impact_ly += d_raw;
     } else {

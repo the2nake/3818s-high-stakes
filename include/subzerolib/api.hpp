@@ -13,7 +13,7 @@
 #include "subzerolib/api/geometry/segment.hpp"
 #include "subzerolib/api/logic/exit-condition.hpp"
 #include "subzerolib/api/logic/state-machine.hpp"
-#include "subzerolib/api/odometry/imu_odometry.hpp"
+#include "subzerolib/api/odometry/imu-odometry.hpp"
 #include "subzerolib/api/odometry/odometry.hpp"
 #include "subzerolib/api/sensors/abstract_encoder.hpp"
 #include "subzerolib/api/sensors/abstract_gyro.hpp"

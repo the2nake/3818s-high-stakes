@@ -12,7 +12,7 @@ const double K_SQRT_2 = 1.414213562;
 /// @param a the first value
 /// @param b the second value
 /// @returns if the values are roughly the same
-template <typename T> inline bool rougheq(T a, T b) {
+template <typename T> bool rougheq(T a, T b) {
   return std::abs(a - b) < K_EPSILON;
 }
 
@@ -54,7 +54,7 @@ auto shorter_turn(T h0, T hf, T circle_size = 360.0) -> decltype(hf - h0) {
 /// @param t the interpolation factor (0 <= t <= 1)
 /// @returns interpolated value between a and b
 template <typename T, typename T2>
-inline auto lerp(T a, T b, T2 t) -> decltype(a * t) {
+auto lerp(T a, T b, T2 t) -> decltype(a * t) {
   return a + (b - a) * t;
 }
 
@@ -95,7 +95,7 @@ template <typename T> void clamp_distance(T max_dist, T &x, T &y) {
 /// @param x the x coordinate
 /// @param y the y coordinate
 /// @param deg the angle to rotate in degrees
-template <typename T> inline point_s rotate_acw(T x, T y, T deg) {
+template <typename T> point_s rotate_acw(T x, T y, T deg) {
   double rad = in_rad(-deg);
   return {x * cos(rad) + y * sin(rad), y * cos(rad) - x * sin(rad)};
 }

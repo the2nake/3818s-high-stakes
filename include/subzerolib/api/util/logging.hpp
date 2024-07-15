@@ -23,7 +23,7 @@ void set_log_area(int x1, int y1, int x2, int y2);
 /// @param msg the message to pring
 /// @param args the insertables
 template <typename... Params>
-inline void print(const int line, std::string msg, Params... args) {
+void print(const int line, std::string msg, Params... args) {
   pros::screen::print(pros::E_TEXT_MEDIUM, line, msg.c_str(), args...);
 }
 
@@ -31,7 +31,7 @@ inline void print(const int line, std::string msg, Params... args) {
 /// @tparam Params print parameters
 /// @param msg the message to pring
 /// @param args the insertables
-template <typename... Params> inline void log(std::string msg, Params... args) {
+template <typename... Params> void log(std::string msg, Params... args) {
   pros::screen::scroll_area(log_area_x1, log_area_y1, log_area_x2, log_area_y2,
                             15);
   auto color = pros::screen::get_pen();
@@ -45,8 +45,7 @@ template <typename... Params> inline void log(std::string msg, Params... args) {
 /// @tparam Params print parameters
 /// @param msg the message to pring
 /// @param args the insertables
-template <typename... Params>
-inline void error(std::string msg, Params... args) {
+template <typename... Params> void error(std::string msg, Params... args) {
   pros::screen::scroll_area(log_area_x1, log_area_y1, log_area_x2, log_area_y2,
                             15);
   auto color = pros::screen::get_pen();

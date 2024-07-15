@@ -1,8 +1,8 @@
-#include "subzerolib/api/odometry/imu-odometry.hpp"
+#include "subzerolib/api/odometry/gyro-odometry.hpp"
 #include "subzerolib/api/filter/filter.hpp"
 #include "subzerolib/api/util/math.hpp"
 
-void ImuOdometry::update() {
+void GyroOdometry::update() {
   auto now = pros::millis();
   double dt = now - prev_timestamp;
   prev_timestamp = now;
@@ -104,7 +104,7 @@ void ImuOdometry::update() {
   }
 }
 
-void ImuOdometry::update_pose_from_filter() {
+void GyroOdometry::update_pose_from_filter() {
   auto state = filter->get_state();
   if (enabled) {
     lock();
@@ -115,28 +115,28 @@ void ImuOdometry::update_pose_from_filter() {
   }
 }
 
-ImuOdometry::Builder &
-ImuOdometry::Builder::with_gyro(std::shared_ptr<AbstractGyro> igyro) {
+GyroOdometry::Builder &
+GyroOdometry::Builder::with_gyro(std::shared_ptr<AbstractGyro> igyro) {
   gyro = std::move(igyro);
   return *this;
 }
 
-ImuOdometry::Builder &
-ImuOdometry::Builder::with_x_enc(std::shared_ptr<AbstractEncoder> encoder,
+GyroOdometry::Builder &
+GyroOdometry::Builder::with_x_enc(std::shared_ptr<AbstractEncoder> encoder,
                                  encoder_conf_s conf) {
   x_encs.emplace_back(std::move(encoder), conf);
   return *this;
 }
 
-ImuOdometry::Builder &
-ImuOdometry::Builder::with_y_enc(std::shared_ptr<AbstractEncoder> encoder,
+GyroOdometry::Builder &
+GyroOdometry::Builder::with_y_enc(std::shared_ptr<AbstractEncoder> encoder,
                                  encoder_conf_s conf) {
   y_encs.emplace_back(std::move(encoder), conf);
   return *this;
 }
 
-ImuOdometry::Builder &
-ImuOdometry::Builder::with_filter(std::unique_ptr<Filter> i_filter,
+GyroOdometry::Builder &
+GyroOdometry::Builder::with_filter(std::unique_ptr<Filter> i_filter,
                                   filter_config_e i_config) {
   if (i_filter != nullptr) {
     this->filter = std::move(i_filter);
@@ -145,7 +145,7 @@ ImuOdometry::Builder::with_filter(std::unique_ptr<Filter> i_filter,
   return *this;
 }
 
-std::shared_ptr<ImuOdometry> ImuOdometry::Builder::build() {
+std::shared_ptr<GyroOdometry> GyroOdometry::Builder::build() {
   if (gyro == nullptr) {
     return nullptr;
   }
@@ -163,7 +163,7 @@ std::shared_ptr<ImuOdometry> ImuOdometry::Builder::build() {
     return nullptr;
   }
 
-  std::shared_ptr<ImuOdometry> odom(new ImuOdometry());
+  std::shared_ptr<GyroOdometry> odom(new GyroOdometry());
 
   odom->prev_timestamp = pros::millis();
   odom->gyro = gyro;

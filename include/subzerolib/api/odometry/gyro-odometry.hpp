@@ -8,7 +8,7 @@
 #include "pros/rtos.hpp"
 #include <memory>
 
-class ImuOdometry : public Odometry {
+class GyroOdometry : public Odometry {
 public:
   enum class filter_config_e {
     none,
@@ -79,7 +79,7 @@ private:
   std::unique_ptr<Filter> filter = nullptr;
   filter_config_e config = filter_config_e::none;
 
-  ImuOdometry() {}
+  GyroOdometry() {}
   void lock() {
     while (!this->state_mutex.take(5)) {
       pros::delay(1);
@@ -105,7 +105,7 @@ public:
     Builder &with_filter(std::unique_ptr<Filter> i_filter,
                          filter_config_e i_config);
 
-    std::shared_ptr<ImuOdometry> build();
+    std::shared_ptr<GyroOdometry> build();
 
   private:
     std::shared_ptr<AbstractGyro> gyro;

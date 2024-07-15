@@ -144,7 +144,7 @@ void initialize() {
           .build();
 
   odom =
-      ImuOdometry::Builder()
+      GyroOdometry::Builder()
           .with_gyro(imu2)
           .with_x_enc(odom_x, Odometry::encoder_conf_s(-0.045, 0.160 / 360.0))
           .with_y_enc(odom_y, Odometry::encoder_conf_s(0.09, 0.160 / 360.0))
@@ -263,6 +263,6 @@ void opcontrol() {
   // free all memory
   //   no need in XChassis, everything is a smart pointer
   //   no need for imu, it's a smart pointer
-  //   no need in ImuOdometry, everything is a smart pointer
+  //   no need in GyroOdometry, everything is a smart pointer
   // delete pointers
 }

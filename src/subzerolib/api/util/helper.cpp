@@ -2,16 +2,16 @@
 
 #include <stdio.h>
 
-void print(point_s point) {
+inline void print(point_s point) {
   printf("point_s: (%.2f, %.2f)\n", point.x, point.y);
 }
 
-void print(segment_s segment) {
+inline void print(segment_s segment) {
   printf("segment_s: start (%.2f, %.2f), end (%.2f, %.2f)\n", segment.start.x,
          segment.start.y, segment.end.x, segment.end.y);
 }
 
-void print(circle_s circle) {
+inline void print(circle_s circle) {
   printf("circle_s: centre(%.2f, %.2f), radius %.2f\n", circle.centre.x,
          circle.centre.y, circle.radius);
 }

@@ -1,8 +1,10 @@
 #include "subzerolib/api/util/controls.hpp"
 #include "subzerolib/api/util/math.hpp"
 #include <algorithm>
-double control_components_s::sum() { return lin + rot; }
-double control_components_s::sum(double rot_pref) {
+
+inline double control_components_s::sum() { return lin + rot; }
+
+inline double control_components_s::sum(double rot_pref) {
   clamp<double>(rot_pref, 0.0, 1.0);
   return (1 - rot_pref) * lin + rot_pref * rot;
 }

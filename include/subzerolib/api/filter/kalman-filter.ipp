@@ -1,4 +1,7 @@
+#pragma once
+
 #include "subzerolib/api/filter/kalman-filter.hpp"
+
 #include "eigen/Dense"
 
 template <typename state_vector_t, typename control_vector_t,

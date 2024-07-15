@@ -28,7 +28,7 @@ void print(std::vector<segment_s>);
 /// @param key the key
 /// @param value the value to assign
 template <typename Tkey, typename Tval>
-void insert_or_modify(std::map<Tkey, Tval> &map, Tkey key, Tval value) {
+inline void insert_or_modify(std::map<Tkey, Tval> &map, Tkey key, Tval value) {
   if (!map.try_emplace(key, value).second) {
     map.at(key) = value;
   }

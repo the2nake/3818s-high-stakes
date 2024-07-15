@@ -1,6 +1,7 @@
 #pragma once
 
 #include "subzerolib/api/filter/filter.hpp"
+
 #include <memory>
 
 template <typename state_vector_t, typename control_vector_t,

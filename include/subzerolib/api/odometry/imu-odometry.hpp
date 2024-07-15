@@ -1,5 +1,6 @@
 #pragma once
 
+#include "subzerolib/api/filter/filter.hpp"
 #include "subzerolib/api/odometry/odometry.hpp"
 #include "subzerolib/api/sensors/abstract_encoder.hpp"
 #include "subzerolib/api/sensors/abstract_gyro.hpp"
@@ -9,6 +10,13 @@
 
 class ImuOdometry : public Odometry {
 public:
+  enum class filter_config_e {
+    none,
+    raw,   // direct imu, encoder measurements
+    local, // changes calculated to local
+    global // calculated global movements
+  };
+
   /// @brief sets the heading of the odometry module
   /// @param heading the desired heading
   void set_heading(double ih) override {
@@ -68,6 +76,9 @@ private:
 
   pose_s pose{0, 0, 0};
 
+  std::unique_ptr<Filter> filter = nullptr;
+  filter_config_e config = filter_config_e::none;
+
   ImuOdometry() {}
   void lock() {
     while (!this->state_mutex.take(5)) {
@@ -76,14 +87,23 @@ private:
   }
   void unlock() { this->state_mutex.give(); }
 
+  void update_pose_from_filter();
+
 public:
   class Builder {
   public:
     Builder &with_gyro(std::shared_ptr<AbstractGyro> igyro);
+
     Builder &with_x_enc(std::shared_ptr<AbstractEncoder> encoder,
                         encoder_conf_s conf);
+
     Builder &with_y_enc(std::shared_ptr<AbstractEncoder> encoder,
                         encoder_conf_s conf);
+
+    // filter input order should be dh, dx, dy
+    // filter output order should be h, global_x, global_y
+    Builder &with_filter(std::unique_ptr<Filter> i_filter,
+                         filter_config_e i_config);
 
     std::shared_ptr<ImuOdometry> build();
 
@@ -93,5 +113,8 @@ public:
         x_encs;
     std::vector<std::pair<std::shared_ptr<AbstractEncoder>, encoder_conf_s>>
         y_encs;
+
+    std::unique_ptr<Filter> filter = nullptr;
+    filter_config_e config = filter_config_e::none;
   };
 };

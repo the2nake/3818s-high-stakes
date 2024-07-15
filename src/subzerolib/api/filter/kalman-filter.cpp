@@ -1,6 +1,13 @@
 #include "subzerolib/api/filter/kalman-filter.hpp"
 #include <memory>
 
+void KalmanFilter::predict(int delta_ms) {
+  next_state = state_transition_matrix * state; // TODO: get control input if necessary
+  next_covariance = state_transition_matrix * covariance *
+                        state_transition_matrix.transpose() +
+                    process_noise_covariance;
+}
+
 void KalmanFilter::predict(int delta_ms, Eigen::VectorXd control_input) {
   if (control_input.rows() != nu) {
     return;

@@ -6,6 +6,7 @@
 
 class KalmanFilter : public Filter {
 public:
+  void predict(int delta_ms) override;
   void predict(int delta_ms, Eigen::VectorXd control_input) override;
   void update(int delta_ms, Eigen::VectorXd measurement) override;
 

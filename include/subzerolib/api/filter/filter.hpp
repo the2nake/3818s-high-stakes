@@ -4,6 +4,7 @@
 
 class Filter {
 public:
+  virtual void predict(int delta_ms) = 0;
   virtual void predict(int delta_ms, Eigen::VectorXd control_input) = 0;
   virtual void update(int delta_ms, Eigen::VectorXd measurement) = 0;
 

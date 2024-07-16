@@ -40,8 +40,8 @@ void GyroOdometry::update() {
     for (int i = 0; i < y_enc_raws.size(); ++i) {
       measurements(1 + x_enc_raws.size() + i) = y_enc_raws[i];
     }
-    filter->update(dt, measurements);
     filter->predict(dt);
+    filter->update(dt, measurements);
     update_pose_from_filter();
   }
 
@@ -94,12 +94,12 @@ void GyroOdometry::update() {
       unlock();
     }
   } else if (config != filter_config_e::raw) {
+    filter->predict(dt); // TODO: fix slight lag error with high [dt]
     if (config == filter_config_e::local) {
       filter->update(dt, Eigen::Vector<double, 3>{{dh, dx_l, dy_l}});
     } else if (config == filter_config_e::global) {
       filter->update(dt, Eigen::Vector<double, 3>{{dh, dx_g, dy_g}});
     }
-    filter->predict(dt);
     update_pose_from_filter();
   }
 }
@@ -123,21 +123,21 @@ GyroOdometry::Builder::with_gyro(std::shared_ptr<AbstractGyro> igyro) {
 
 GyroOdometry::Builder &
 GyroOdometry::Builder::with_x_enc(std::shared_ptr<AbstractEncoder> encoder,
-                                 encoder_conf_s conf) {
+                                  encoder_conf_s conf) {
   x_encs.emplace_back(std::move(encoder), conf);
   return *this;
 }
 
 GyroOdometry::Builder &
 GyroOdometry::Builder::with_y_enc(std::shared_ptr<AbstractEncoder> encoder,
-                                 encoder_conf_s conf) {
+                                  encoder_conf_s conf) {
   y_encs.emplace_back(std::move(encoder), conf);
   return *this;
 }
 
 GyroOdometry::Builder &
 GyroOdometry::Builder::with_filter(std::unique_ptr<Filter> i_filter,
-                                  filter_config_e i_config) {
+                                   filter_config_e i_config) {
   if (i_filter != nullptr) {
     this->filter = std::move(i_filter);
   }

@@ -38,7 +38,7 @@ void GyroOdometry::update() {
       measurements(1 + i) = x_enc_raws[i];
     }
     for (int i = 0; i < y_enc_raws.size(); ++i) {
-      measurements(x_enc_raws.size() + i) = y_enc_raws[i];
+      measurements(1 + x_enc_raws.size() + i) = y_enc_raws[i];
     }
     filter->update(dt, measurements);
     filter->predict(dt);

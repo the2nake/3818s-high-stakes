@@ -2,9 +2,35 @@
 #include "subzerolib/api/filter/filter.hpp"
 #include "subzerolib/api/util/math.hpp"
 
+void GyroOdometry::set_heading(double i_h) {
+  lock();
+  this->pose.h = i_h;
+  if (filter_config != filter_config_e::none) {
+    auto state = filter->get_state();
+    state(0) = i_h;
+    auto cov = filter->get_covariance();
+    filter->initialise(state, cov);
+  }
+  unlock();
+}
+
+void GyroOdometry::set_position(double i_x, double i_y) {
+  lock();
+  this->pose.x = i_x;
+  this->pose.y = i_y;
+  if (filter_config != filter_config_e::none) {
+    auto state = filter->get_state();
+    state(1) = i_x;
+    state(2) = i_y;
+    auto cov = filter->get_covariance();
+    filter->initialise(state, cov);
+  }
+  unlock();
+}
+
 void GyroOdometry::update() {
   auto now = pros::millis();
-  double dt = now - prev_timestamp;
+  double dt = (now - prev_timestamp) * 0.001;
   prev_timestamp = now;
 
   double dh = shorter_turn(prev_heading, gyro->heading());
@@ -14,12 +40,16 @@ void GyroOdometry::update() {
 
   std::vector<double> x_enc_raws(x_encs.size());
   std::vector<double> y_enc_raws(y_encs.size());
+  bool skip = false;
 
   for (int i = 0; i < x_encs.size(); ++i) {
     auto curr = x_encs[i].first->get_deg();
     double d_raw =
         x_encs[i].second.travel_per_deg * (curr - prev_x_enc_vals[i]);
     prev_x_enc_vals[i] = curr;
+    if (std::isnan(d_raw)) {
+      skip = true;
+    }
     x_enc_raws[i] = d_raw;
   }
   for (int i = 0; i < y_encs.size(); ++i) {
@@ -27,10 +57,16 @@ void GyroOdometry::update() {
     double d_raw =
         y_encs[i].second.travel_per_deg * (curr - prev_y_enc_vals[i]);
     prev_y_enc_vals[i] = curr;
+    if (std::isnan(d_raw)) {
+      skip = true;
+    }
     y_enc_raws[i] = d_raw;
   }
+  if (skip) {
+    return;
+  }
 
-  if (config == filter_config_e::raw) {
+  if (filter_config == filter_config_e::raw) {
     Eigen::VectorXd measurements;
     measurements.resize(1 + x_enc_raws.size() + y_enc_raws.size());
     measurements(0) = dh;
@@ -40,15 +76,15 @@ void GyroOdometry::update() {
     for (int i = 0; i < y_enc_raws.size(); ++i) {
       measurements(1 + x_enc_raws.size() + i) = y_enc_raws[i];
     }
-    filter->predict(dt);
-    filter->update(dt, measurements);
+    filter->predict(1000.0 * dt);
+    filter->update(1000.0 * dt, measurements);
     update_pose_from_filter();
   }
 
   double x_impact_lx = 0.0, x_impact_ly = 0.0, y_impact_lx = 0.0,
          y_impact_ly = 0.0;
   // for reference: maximum rotation = 2 deg / 10 ms
-  bool is_low_turn = std::abs(dh) < 0.1;
+  bool is_low_turn = std::abs(dh) < 0.01;
 
   for (int i = 0; i < x_enc_raws.size(); ++i) {
     if (is_low_turn) {
@@ -85,7 +121,7 @@ void GyroOdometry::update() {
               dy_l * std::cos(in_rad(prev_heading));
   prev_heading = pose.heading();
 
-  if (config == filter_config_e::none) {
+  if (filter_config == filter_config_e::none) {
     if (enabled) {
       lock();
       pose.x += dx_g;
@@ -93,12 +129,18 @@ void GyroOdometry::update() {
       pose.h = mod(pose.h + dh, 360.0);
       unlock();
     }
-  } else if (config != filter_config_e::raw) {
-    filter->predict(dt); // TODO: fix slight lag error with high [dt]
-    if (config == filter_config_e::local) {
-      filter->update(dt, Eigen::Vector<double, 3>{{dh, dx_l, dy_l}});
-    } else if (config == filter_config_e::global) {
-      filter->update(dt, Eigen::Vector<double, 3>{{dh, dx_g, dy_g}});
+  } else if (filter_config != filter_config_e::raw) {
+    filter->predict(1000.0 * dt); // TODO: fix slight lag error with high [dt]
+    if (filter_config == filter_config_e::local) {
+      filter->update(1000.0 * dt,
+                     Eigen::Vector<double, 3>{
+                         {dh / dt, dx_l / dt, dy_l / dt}
+      });
+    } else if (filter_config == filter_config_e::global) {
+      filter->update(1000.0 * dt,
+                     Eigen::Vector<double, 3>{
+                         {dh / dt, dx_g / dt, dy_g / dt}
+      });
     }
     update_pose_from_filter();
   }
@@ -170,13 +212,13 @@ std::shared_ptr<GyroOdometry> GyroOdometry::Builder::build() {
   odom->x_encs = x_encs;
   odom->y_encs = y_encs;
 
-  odom->prev_x_enc_vals = std::vector<double>(x_encs.size(), 0.0);
-  odom->prev_y_enc_vals = std::vector<double>(y_encs.size(), 0.0);
+  odom->prev_x_enc_vals = std::vector<double>(x_encs.size(), std::nan(""));
+  odom->prev_y_enc_vals = std::vector<double>(y_encs.size(), std::nan(""));
   odom->pose = pose_s{0, 0, 0};
 
   if (filter != nullptr) {
     odom->filter = std::move(filter);
-    odom->config = config;
+    odom->filter_config = config;
   }
 
   return odom;

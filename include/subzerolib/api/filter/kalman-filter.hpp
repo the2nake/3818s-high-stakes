@@ -13,6 +13,17 @@ public:
   Eigen::VectorXd get_state() override { return state; }
   Eigen::MatrixXd get_covariance() override { return covariance; }
 
+  void initialise(Eigen::VectorXd i_state,
+                  Eigen::MatrixXd i_covariance) override {
+    if (state.rows() < nx || covariance.rows() < nx || covariance.cols() < nx) {
+      return;
+    }
+    i_state.conservativeResize(nx, 1);
+    i_covariance.conservativeResize(nx, nx);
+    state = i_state;
+    covariance = i_covariance;
+  }
+
 private:
   int n = 0;
 

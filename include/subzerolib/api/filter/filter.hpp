@@ -11,6 +11,9 @@ public:
   virtual Eigen::VectorXd get_state() = 0;
   virtual Eigen::MatrixXd get_covariance() = 0;
 
+  virtual void initialise(Eigen::VectorXd state,
+                          Eigen::MatrixXd covariance) = 0;
+
 protected:
   Filter() {}
 };

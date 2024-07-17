@@ -19,21 +19,12 @@ public:
 
   /// @brief sets the heading of the odometry module
   /// @param heading the desired heading
-  void set_heading(double ih) override {
-    lock();
-    this->pose.h = ih;
-    unlock();
-  }
+  void set_heading(double i_h) override;
 
   /// @brief sets the position of the odometry module
   /// @param x the desired position's x coordinate
   /// @param y the desired position's y coordinate
-  void set_position(double ix, double iy) override {
-    lock();
-    this->pose.x = ix;
-    this->pose.y = iy;
-    unlock();
-  }
+  void set_position(double i_x, double i_y) override;
 
   /// @brief get the current pose
   /// @returns the pose measurement
@@ -77,7 +68,7 @@ private:
   pose_s pose{0, 0, 0};
 
   std::unique_ptr<Filter> filter = nullptr;
-  filter_config_e config = filter_config_e::none;
+  filter_config_e filter_config = filter_config_e::none;
 
   GyroOdometry() {}
   void lock() {
@@ -100,7 +91,7 @@ public:
     Builder &with_y_enc(std::shared_ptr<AbstractEncoder> encoder,
                         encoder_conf_s conf);
 
-    // filter input order should be dh, dx, dy
+    // filter input order should be vh, vx, vy
     // filter output order should be h, global_x, global_y
     Builder &with_filter(std::unique_ptr<Filter> i_filter,
                          filter_config_e i_config);

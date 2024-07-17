@@ -41,6 +41,7 @@ std::shared_ptr<AbstractEncoder> odom_x{
 std::shared_ptr<AbstractEncoder> odom_y{
     new AbstractRotationEncoder(PORT_Y_ENC, true)};
 std::shared_ptr<Odometry> odom = nullptr;
+std::unique_ptr<Filter> odom_filter = nullptr;
 
 // TODO: refactor, add "graph_module"?
 void odom_graph_loop(void *ignore) {
@@ -64,15 +65,17 @@ void odom_graph_loop(void *ignore) {
     }
 
     pros::screen::set_pen(pros::Color::black);
-    pros::screen::fill_rect(graphx1 - 12, graphy1 - 12, graphx2 + 12,
-                            graphy2 + 12);
+    pros::screen::fill_rect(
+        graphx1 - 12, graphy1 - 12, graphx2 + 12, graphy2 + 12);
     pros::screen::set_pen(pros::Color::gray);
     pros::screen::draw_line(graphx1, graphymid, graphx2,
                             graphymid); // x axis
     pros::screen::draw_line(graphxmid, graphy1, graphxmid,
                             graphy2); // y axis
     pros::screen::set_pen(pros::Color::light_gray);
-    pros::screen::draw_rect(graphx1 - 12, graphy1 - 12, graphx2 + 12,
+    pros::screen::draw_rect(graphx1 - 12,
+                            graphy1 - 12,
+                            graphx2 + 12,
                             graphy2 + 12); // frame
 
     for (int i = 0; i < past_points.size(); ++i) {
@@ -143,13 +146,77 @@ void initialize() {
           .with_rot_pref(0.3)
           .build();
 
+  Eigen::Vector<double, 6> initial_state{
+      {0, 0, 0, 0, 0, 0}
+  };
+  Eigen::Matrix<double, 6, 6> initial_covariance;
+  initial_covariance.setZero();
+  initial_covariance.diagonal() = Eigen::Vector<double, 6>{
+      {5, 1, 1, 5, 1, 1}
+  };
+
+  const double dt = 0.01;
+  Eigen::Matrix<double, 6, 6> state_transition_matrix{
+      {1, 0, 0, dt,  0,  0},
+      {0, 1, 0,  0, dt,  0},
+      {0, 0, 1,  0,  0, dt},
+      {0, 0, 0,  1,  0,  0},
+      {0, 0, 0,  0,  1,  0},
+      {0, 0, 0,  0,  0,  1}
+  };
+  Eigen::Matrix<double, 3, 6> observation_matrix{
+      {0, 0, 0, 1, 0, 0},
+      {0, 0, 0, 0, 1, 0},
+      {0, 0, 0, 0, 0, 1},
+  };
+
+  const double s_a = 5.0; // angular acceleration stdev
+  const double s_l = 5.0; // linear acceleration stdev
+  const double v_a = s_a * s_a;
+  const double v_l = s_l * s_l;
+
+  const double c4 = 0.25 * dt * dt * dt * dt;
+  const double c3 = 0.5 * dt * dt * dt;
+  const double c2 = dt * dt;
+  Eigen::Matrix<double, 6, 6> process_noise_covariance{
+      {{c4 * v_a, 0, 0, c3 * v_a, 0, 0},
+       {0, c4 * v_l, 0, 0, c3 * v_l, 0},
+       {0, 0, dt * v_l, 0, 0, c3 * v_l},
+       {c3 * v_a, 0, 0, c2 * v_a, 0, 0},
+       {0, c3 * v_l, 0, 0, c2 * v_l, 0},
+       {0, 0, c3 * v_l, 0, 0, c2 * v_l}}
+  };
+
+  const double v_imu = std::pow(0.25, 2);
+  const double v_tracker = std::pow(0.001, 2);
+  Eigen::Matrix3d measurement_covariance{
+      {v_imu,       0.0,       0.0},
+      {  0.0, v_tracker,       0.0},
+      {  0.0,       0.0, v_tracker}
+  };
+
+  odom_filter.reset(KalmanFilter::Builder(6, 0, 3)
+                        .with_initial_state(initial_state)
+                        .with_initial_covariance(initial_covariance)
+                        .with_measurement_covariance(measurement_covariance)
+                        .with_state_transition_matrix(state_transition_matrix)
+                        //.with_control_matrix()
+                        .with_observation_matrix(observation_matrix)
+                        .with_process_noise_covariance(process_noise_covariance)
+                        .build()
+                        .get());
+
+  // INFO: odometry must initialise after chassis if filter uses chassis control
+  // input
   odom =
       GyroOdometry::Builder()
           .with_gyro(imu2)
           .with_x_enc(odom_x, Odometry::encoder_conf_s(-0.045, 0.160 / 360.0))
           .with_y_enc(odom_y, Odometry::encoder_conf_s(0.09, 0.160 / 360.0))
+          //.with_filter(std::move(odom_filter),
+          //             GyroOdometry::filter_config_e::global)
           .build();
-  odom->auto_update(10);
+  odom->auto_update(1000 * dt);
 
   pros::Task graphing_task{odom_graph_loop, nullptr, "odom graphing task"};
 }
@@ -160,7 +227,8 @@ void competition_initialize() {}
 
 void go_to(std::shared_ptr<ChassisController> controller, pose_s target) {
   std::shared_ptr<ExitCondition<double>> cond{
-      new ExitCondition<double>{{0, 0.02}, 200}};
+      new ExitCondition<double>{{0, 0.02}, 200}
+  };
   AutoUpdater<double> updater(
       [cond](double val) { cond->update(val); },
       [target]() -> double { return odom->get_pose().dist(target); });
@@ -171,8 +239,8 @@ void go_to(std::shared_ptr<ChassisController> controller, pose_s target) {
   }
   controller->brake();
   updater.stop(); // TODO: stop when out of scope
-  subzero::log("[i]: pid to (%.2f, %.2f) @ %.0f done", target.x, target.y,
-               target.h);
+  subzero::log(
+      "[i]: pid to (%.2f, %.2f) @ %.0f done", target.x, target.y, target.h);
 }
 
 void autonomous() {
@@ -192,18 +260,23 @@ void autonomous() {
   // go_to(controller, {-0.6, 0.5, 315});
 
   std::shared_ptr<ExitCondition<double>> cond{
-      new ExitCondition<double>{{0, 0.02}, 200}};
+      new ExitCondition<double>{{0, 0.02}, 200}
+  };
   PurePursuitController pp(controller, odom, std::move(cond));
 
-  std::vector<pose_s> ctrl = {{0.0, 0.0, 0.0},
-                              {0.4, 0.6, 45.0},
-                              {-0.2, 0.6, 60.0},
-                              {-0.75, 0.75, -45.0}};
+  std::vector<pose_s> ctrl = {
+      {  0.0,  0.0,   0.0},
+      {  0.4,  0.6,  45.0},
+      { -0.2,  0.6,  60.0},
+      {-0.75, 0.75, -45.0}
+  };
   CatmullRomSpline spline(ctrl);
   spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
   auto spline_points = spline.sample_coordinates(200);
   std::vector<pose_s> waypoints(spline_points.size());
-  transform(spline_points.begin(), spline_points.end(), waypoints.begin(),
+  transform(spline_points.begin(),
+            spline_points.end(),
+            waypoints.begin(),
             [](point_s point) -> pose_s { return pose_s{point, 0.0}; });
   pp.follow(waypoints, 0.4);
 }
@@ -254,7 +327,7 @@ void opcontrol() {
         odom->set_enabled(true);
       }
     }
-    subzero::print(0, "(%.2f, %.2f) h: %.0f", pose.x, pose.y, pose.heading());
+    subzero::print(0, "(%.2f, %.2f) h: %.0f  ", pose.x, pose.y, pose.heading());
 
     pros::delay(10); // high update rate, as imu data comes in every 10 ms
   }

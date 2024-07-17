@@ -1,6 +1,6 @@
 #pragma once
 
-#include "eigen/Dense"
+#include <eigen/Dense>
 
 struct point_s {
   point_s(double ix = 0, double iy = 0) : x(ix), y(iy) {}

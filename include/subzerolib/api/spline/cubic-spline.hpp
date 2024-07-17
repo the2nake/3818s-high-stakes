@@ -2,7 +2,7 @@
 
 #include "subzerolib/api/geometry/point.hpp"
 
-#include "eigen/Dense"
+#include <eigen/Dense>
 #include <cmath>
 #include <vector>
 

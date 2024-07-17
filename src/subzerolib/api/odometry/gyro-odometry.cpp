@@ -84,7 +84,7 @@ void GyroOdometry::update() {
   double x_impact_lx = 0.0, x_impact_ly = 0.0, y_impact_lx = 0.0,
          y_impact_ly = 0.0;
   // for reference: maximum rotation = 2 deg / 10 ms
-  bool is_low_turn = std::abs(dh) < 0.01;
+  bool is_low_turn = std::abs(dh) < 1;
 
   for (int i = 0; i < x_enc_raws.size(); ++i) {
     if (is_low_turn) {
@@ -211,6 +211,12 @@ std::shared_ptr<GyroOdometry> GyroOdometry::Builder::build() {
   odom->gyro = gyro;
   odom->x_encs = x_encs;
   odom->y_encs = y_encs;
+  for (auto &enc : x_encs) {
+    enc.first->set_deg(0.0);
+  }
+  for (auto &enc : y_encs) {
+    enc.first->set_deg(0.0);
+  }
 
   odom->prev_x_enc_vals = std::vector<double>(x_encs.size(), std::nan(""));
   odom->prev_y_enc_vals = std::vector<double>(y_encs.size(), std::nan(""));

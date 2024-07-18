@@ -3,10 +3,14 @@
 #include "subzerolib/api/sensors/abstract-gyro.hpp"
 #include "subzerolib/api/util/math.hpp"
 #include <initializer_list>
-#include <numeric>
 
 class AbstractMeanGyro : public AbstractGyro {
 public:
+  AbstractMeanGyro(std::shared_ptr<AbstractGyro> i_gyro1,
+                   std::shared_ptr<AbstractGyro> i_gyro2) {
+    gyros.push_back(std::move(i_gyro1));
+    gyros.push_back(std::move(i_gyro2));
+  }
   AbstractMeanGyro(
       std::initializer_list<std::shared_ptr<AbstractGyro>> i_gyros) {
     for (auto &gyro : i_gyros) {

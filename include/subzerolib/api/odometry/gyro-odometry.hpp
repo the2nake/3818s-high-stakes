@@ -2,8 +2,8 @@
 
 #include "subzerolib/api/filter/filter.hpp"
 #include "subzerolib/api/odometry/odometry.hpp"
-#include "subzerolib/api/sensors/abstract_encoder.hpp"
-#include "subzerolib/api/sensors/abstract_gyro.hpp"
+#include "subzerolib/api/sensors/abstract-encoder.hpp"
+#include "subzerolib/api/sensors/abstract-gyro.hpp"
 
 #include "pros/rtos.hpp"
 #include <memory>

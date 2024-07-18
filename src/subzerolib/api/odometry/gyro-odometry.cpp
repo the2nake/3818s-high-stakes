@@ -85,7 +85,7 @@ void GyroOdometry::update() {
   double x_impact_lx = 0.0, x_impact_ly = 0.0, y_impact_lx = 0.0,
          y_impact_ly = 0.0;
   // for reference: maximum rotation = 2 deg / 10 ms
-  bool is_low_turn = std::abs(dh) < 1;
+  bool is_low_turn = std::abs(dh) < 0.2;
 
   for (int i = 0; i < x_enc_raws.size(); ++i) {
     if (is_low_turn) {

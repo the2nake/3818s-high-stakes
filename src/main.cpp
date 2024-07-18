@@ -34,8 +34,11 @@ std::unique_ptr<pros::Motor> bl(new pros::Motor(-DRIVE_BL_PORT,
                                                 pros::v5::MotorGears::green,
                                                 pros::v5::MotorUnits::deg));
 std::shared_ptr<StarChassis> chassis = nullptr;
-std::shared_ptr<AbstractGyro> imu1{new AbstractImuGyro(IMU1_PORT)};
-std::shared_ptr<AbstractGyro> imu2{new AbstractImuGyro(IMU2_PORT)};
+std::shared_ptr<AbstractGyro> imu1{
+    new AbstractImuGyro(IMU1_PORT, (18 * 360.0) / (17 * 360.0 + 283))};
+std::shared_ptr<AbstractGyro> imu2{
+    new AbstractImuGyro(IMU2_PORT, (19 * 360.0) / (18 * 360.0 + 260))};
+std::shared_ptr<AbstractGyro> mean_imu{new AbstractMeanGyro({imu1, imu2})};
 
 std::shared_ptr<AbstractEncoder> odom_x{
     new AbstractRotationEncoder(PORT_X_ENC, true)};
@@ -175,7 +178,7 @@ void initialize() {
   };
 
   const double s_a = 16.0; // angular acceleration stdev
-  const double s_l = 7.0; // linear acceleration stdev
+  const double s_l = 7.0;  // linear acceleration stdev
   const double v_a = s_a * s_a;
   const double v_l = s_l * s_l;
 
@@ -215,7 +218,7 @@ void initialize() {
   // input
   odom =
       GyroOdometry::Builder()
-          .with_gyro(imu1)
+          .with_gyro(mean_imu)
           .with_x_enc(odom_x, Odometry::encoder_conf_s(-0.045, 0.160 / 360.0))
           .with_y_enc(odom_y, Odometry::encoder_conf_s(0.09, 0.160 / 360.0))
           //.with_filter(std::move(odom_filter),
@@ -261,8 +264,8 @@ void autonomous() {
   odom->set_position(0.0, 0.0);
   odom->set_heading(0.0);
 
-  // go_to(controller, {0.3, 0.3, 270});
-  // go_to(controller, {-0.6, 0.5, 315});
+  go_to(controller, {0.3, 0.3, 270});
+  go_to(controller, {-0.6, 0.5, 315});
 
   std::shared_ptr<ExitCondition<double>> cond{
       new ExitCondition<double>{{0, 0.02}, 200}
@@ -283,7 +286,7 @@ void autonomous() {
             spline_points.end(),
             waypoints.begin(),
             [](point_s point) -> pose_s { return pose_s{point, 0.0}; });
-  pp.follow(waypoints, 0.4);
+  // pp.follow(waypoints, 0.4);
 }
 
 void opcontrol() {
@@ -307,7 +310,9 @@ void opcontrol() {
     if (std::isnan(pose.h)) {
       pose.h = 0.0;
     }
+    auto vec = rotate_acw(ctrl_x, ctrl_y, pose.h);
 
+    /*
     if (std::abs(ctrl_rx) < 0.2 && std::abs(ctrl_ry) < 0.2) {
       target_angle = pose.h;
     } else {
@@ -315,15 +320,14 @@ void opcontrol() {
     }
     auto angle_err = shorter_turn(pose.h, target_angle);
     angle_pid.update(angle_err);
-    auto vec = rotate_acw(ctrl_x, ctrl_y, pose.h);
     if (std::abs(angle_err) > 1 &&
         std::abs(angle_pid.get_output()) > 0.3) { // anti jitter
       chassis->move(vec.x, vec.y, angle_pid.get_output());
     } else {
       chassis->move(vec.x, vec.y, 0.5 * angle_pid.get_output());
     }
-
-    // chassis->move(vec.x, vec.y, 0.75 * ctrl_rx);
+    */
+    chassis->move(vec.x, vec.y, 0.75 * ctrl_rx);
 
     if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
       if (odom->is_enabled()) {

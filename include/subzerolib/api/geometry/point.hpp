@@ -1,6 +1,6 @@
 #pragma once
 
-#include <eigen/Dense>
+#include <cmath>
 
 struct point_s {
   point_s(double ix = 0, double iy = 0) : x(ix), y(iy) {}
@@ -10,11 +10,6 @@ struct point_s {
   void operator=(const point_s &b) {
     x = b.x;
     y = b.y;
-  }
-
-  void operator=(const Eigen::Matrix<double, 1, 2> &b) {
-    x = b[0];
-    y = b[1];
   }
 
   double dist(const point_s &b) const;

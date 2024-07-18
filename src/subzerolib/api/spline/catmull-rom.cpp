@@ -79,7 +79,8 @@ point_s CatmullRomSpline::get_val(Eigen::Matrix<double, 1, 4> t_row, double u) {
   int whole = (int)std::floor(u) - (u >= bernstein_coeffs.size());
   Eigen::Matrix<double, 1, 2> product = t_row * bernstein_coeffs[whole];
 
-  out = product;
+  out.x = product(0);
+  out.y = product(1);
   return out;
 }
 

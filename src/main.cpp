@@ -34,6 +34,7 @@ std::unique_ptr<pros::Motor> bl(new pros::Motor(-DRIVE_BL_PORT,
                                                 pros::v5::MotorGears::green,
                                                 pros::v5::MotorUnits::deg));
 std::shared_ptr<StarChassis> chassis = nullptr;
+std::shared_ptr<AbstractGyro> imu1{new AbstractImuGyro(IMU1_PORT)};
 std::shared_ptr<AbstractGyro> imu2{new AbstractImuGyro(IMU2_PORT)};
 
 std::shared_ptr<AbstractEncoder> odom_x{
@@ -44,7 +45,7 @@ std::shared_ptr<Odometry> odom = nullptr;
 std::unique_ptr<Filter> odom_filter = nullptr;
 
 // TODO: refactor, add "graph_module"?
-void odom_graph_loop(void *ignore) {
+void odom_disp_loop(void *ignore) {
   std::vector<point_s> past_points;
   const int graphx1 = 330;
   const int graphy1 = 30;
@@ -59,7 +60,8 @@ void odom_graph_loop(void *ignore) {
   const double max_y = 0.5;
 
   while (saturnine::running) {
-    past_points.push_back(odom->get_pose().point());
+    auto pose = odom->get_pose();
+    past_points.push_back(pose.point());
     if (past_points.size() > 200) {
       past_points.erase(past_points.begin());
     }
@@ -110,6 +112,8 @@ void odom_graph_loop(void *ignore) {
       }
     }
     pros::screen::set_pen(pros::Color::white);
+    subzero::print(
+        0, "(%5.2f, %5.2f) h: %3.0f", pose.x, pose.y, pose.heading());
     pros::delay(10);
   }
 }
@@ -152,7 +156,7 @@ void initialize() {
   Eigen::Matrix<double, 6, 6> initial_covariance;
   initial_covariance.setZero();
   initial_covariance.diagonal() = Eigen::Vector<double, 6>{
-      {5, 1, 1, 5, 1, 1}
+      {2, 1, 1, 2, 1, 1}
   };
 
   const double dt = 0.01;
@@ -170,25 +174,26 @@ void initialize() {
       {0, 0, 0, 0, 0, 1},
   };
 
-  const double s_a = 5.0; // angular acceleration stdev
-  const double s_l = 5.0; // linear acceleration stdev
+  const double s_a = 16.0; // angular acceleration stdev
+  const double s_l = 7.0; // linear acceleration stdev
   const double v_a = s_a * s_a;
   const double v_l = s_l * s_l;
 
   const double c4 = 0.25 * dt * dt * dt * dt;
   const double c3 = 0.5 * dt * dt * dt;
   const double c2 = dt * dt;
+
   Eigen::Matrix<double, 6, 6> process_noise_covariance{
-      {{c4 * v_a, 0, 0, c3 * v_a, 0, 0},
-       {0, c4 * v_l, 0, 0, c3 * v_l, 0},
-       {0, 0, dt * v_l, 0, 0, c3 * v_l},
-       {c3 * v_a, 0, 0, c2 * v_a, 0, 0},
-       {0, c3 * v_l, 0, 0, c2 * v_l, 0},
-       {0, 0, c3 * v_l, 0, 0, c2 * v_l}}
+      {c4 * v_a,      0.0,      0.0, c3 * v_a,      0.0,      0.0},
+      {     0.0, c4 * v_l,      0.0,      0.0, c3 * v_l,      0.0},
+      {     0.0,      0.0, c4 * v_l,      0.0,      0.0, c3 * v_l},
+      {c3 * v_a,      0.0,      0.0, c2 * v_a,      0.0,      0.0},
+      {     0.0, c3 * v_l,      0.0,      0.0, c2 * v_l,      0.0},
+      {     0.0,      0.0, c3 * v_l,      0.0,      0.0, c2 * v_l}
   };
 
-  const double v_imu = std::pow(0.25, 2);
-  const double v_tracker = std::pow(0.001, 2);
+  const double v_imu = std::pow(1, 2);
+  const double v_tracker = std::pow(0.01, 2);
   Eigen::Matrix3d measurement_covariance{
       {v_imu,       0.0,       0.0},
       {  0.0, v_tracker,       0.0},
@@ -210,7 +215,7 @@ void initialize() {
   // input
   odom =
       GyroOdometry::Builder()
-          .with_gyro(imu2)
+          .with_gyro(imu1)
           .with_x_enc(odom_x, Odometry::encoder_conf_s(-0.045, 0.160 / 360.0))
           .with_y_enc(odom_y, Odometry::encoder_conf_s(0.09, 0.160 / 360.0))
           //.with_filter(std::move(odom_filter),
@@ -218,7 +223,7 @@ void initialize() {
           .build();
   odom->auto_update(1000 * dt);
 
-  pros::Task graphing_task{odom_graph_loop, nullptr, "odom graphing task"};
+  pros::Task graphing_task{odom_disp_loop, nullptr, "odom display task"};
 }
 
 void disabled() {}
@@ -327,7 +332,6 @@ void opcontrol() {
         odom->set_enabled(true);
       }
     }
-    subzero::print(0, "(%.2f, %.2f) h: %.0f  ", pose.x, pose.y, pose.heading());
 
     pros::delay(10); // high update rate, as imu data comes in every 10 ms
   }

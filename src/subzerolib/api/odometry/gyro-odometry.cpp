@@ -33,7 +33,8 @@ void GyroOdometry::update() {
   double dt = (now - prev_timestamp) * 0.001;
   prev_timestamp = now;
 
-  double dh = shorter_turn(prev_heading, gyro->heading());
+  double raw_h = gyro->heading();
+  double dh = shorter_turn(prev_heading, raw_h);
   if (std::isnan(dh)) {
     dh = 0;
   }
@@ -119,7 +120,7 @@ void GyroOdometry::update() {
               dy_l * std::sin(in_rad(prev_heading));
   auto dy_g = -dx_l * std::sin(in_rad(prev_heading)) +
               dy_l * std::cos(in_rad(prev_heading));
-  prev_heading = pose.heading();
+  prev_heading = raw_h;
 
   if (filter_config == filter_config_e::none) {
     if (enabled) {

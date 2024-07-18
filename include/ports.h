@@ -7,7 +7,7 @@
 #define DRIVE_BL_PORT 11
 #define DRIVE_BR_PORT 20
 
-#define IMU1_PORT 8 // not used atm
+#define IMU1_PORT 8
 #define IMU2_PORT 9
 
 #define PORT_X_ENC 6

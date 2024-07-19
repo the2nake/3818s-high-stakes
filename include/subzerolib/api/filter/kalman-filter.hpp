@@ -1,7 +1,6 @@
 #pragma once
 
 #include "subzerolib/api/filter/filter.hpp"
-
 #include <memory>
 
 class KalmanFilter : public Filter {
@@ -37,15 +36,24 @@ private:
   Eigen::VectorXd next_state;
   Eigen::MatrixXd next_covariance;
 
-  KalmanFilter(uint inx, uint inu, uint inz, Eigen::MatrixXd i_f,
-               Eigen::MatrixXd i_g, Eigen::MatrixXd i_h, Eigen::MatrixXd i_q,
+  KalmanFilter(uint inx,
+               uint inu,
+               uint inz,
+               Eigen::MatrixXd i_f,
+               Eigen::MatrixXd i_g,
+               Eigen::MatrixXd i_h,
+               Eigen::MatrixXd i_q,
                Eigen::MatrixXd i_r)
       : nx(inx), nu(inu), nz(inz), state_transition_matrix(i_f),
-        control_matrix(i_g), observation_matrix(i_h),
-        process_noise_covariance(i_q), measurement_covariance(i_r) {}
+        observation_matrix(i_h), process_noise_covariance(i_q),
+        measurement_covariance(i_r) {
+    if (inu != 0) {
+      control_matrix = i_g;
+    }
+  }
 
   const Eigen::MatrixXd state_transition_matrix;
-  const Eigen::MatrixXd control_matrix;
+  Eigen::MatrixXd control_matrix;
   const Eigen::MatrixXd observation_matrix;
 
   const Eigen::MatrixXd process_noise_covariance;

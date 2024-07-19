@@ -2,13 +2,18 @@
 
 #include "subzerolib/api/geometry/point.hpp"
 
-#include <eigen/Dense>
 #include <cmath>
+#include <eigen/Dense>
 #include <vector>
 
 struct spline_point_s {
-  spline_point_s(double ix = 0, double iy = 0, double is = 0, double ivx = 0,
-                 double ivy = 0, double iax = 0, double iay = 0)
+  spline_point_s(double ix = 0,
+                 double iy = 0,
+                 double is = 0,
+                 double ivx = 0,
+                 double ivy = 0,
+                 double iax = 0,
+                 double iay = 0)
       : x(ix), y(iy), s(is), vx(ivx), vy(ivy), ax(iax), ay(iay) {}
   double x;
   double y;

@@ -42,7 +42,8 @@ public:
   /// @param adi_port_top the bottom port
   /// @param reversed if it should be reversed
   /// @returns an abstract encoder object
-  AbstractADIEncoder(std::uint8_t adi_port_top, std::uint8_t adi_port_bottom,
+  AbstractADIEncoder(std::uint8_t adi_port_top,
+                     std::uint8_t adi_port_bottom,
                      bool reversed = false)
       : pros::adi::Encoder(adi_port_top, adi_port_bottom, reversed) {}
 

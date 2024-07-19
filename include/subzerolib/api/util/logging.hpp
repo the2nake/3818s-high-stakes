@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pros/screen.hpp"
+#include <stdio.h>
 #include <string>
 
 namespace subzero {
@@ -32,13 +33,17 @@ void print(const int line, std::string msg, Params... args) {
 /// @param msg the message to pring
 /// @param args the insertables
 template <typename... Params> void log(std::string msg, Params... args) {
-  pros::screen::scroll_area(log_area_x1, log_area_y1, log_area_x2, log_area_y2,
-                            15);
+  pros::screen::scroll_area(
+      log_area_x1, log_area_y1, log_area_x2, log_area_y2, 15);
   auto color = pros::screen::get_pen();
   pros::screen::set_pen(pros::Color::cornflower_blue);
-  pros::screen::print(pros::E_TEXT_MEDIUM, 11, (msg + "%s").c_str(), args...,
+  pros::screen::print(pros::E_TEXT_MEDIUM,
+                      11,
+                      (msg + "%s").c_str(),
+                      args...,
                       "                                                 ");
   pros::screen::set_pen(color);
+  printf((msg + "\n").c_str(), args...);
 }
 
 /// @brief log an error
@@ -46,12 +51,16 @@ template <typename... Params> void log(std::string msg, Params... args) {
 /// @param msg the message to pring
 /// @param args the insertables
 template <typename... Params> void error(std::string msg, Params... args) {
-  pros::screen::scroll_area(log_area_x1, log_area_y1, log_area_x2, log_area_y2,
-                            15);
+  pros::screen::scroll_area(
+      log_area_x1, log_area_y1, log_area_x2, log_area_y2, 15);
   auto color = pros::screen::get_pen();
   pros::screen::set_pen(pros::Color::pink);
-  pros::screen::print(pros::E_TEXT_MEDIUM, 11, (msg + "%s").c_str(), args...,
+  pros::screen::print(pros::E_TEXT_MEDIUM,
+                      11,
+                      (msg + "%s").c_str(),
+                      args...,
                       "                                                 ");
   pros::screen::set_pen(color);
+  printf(("%s" + msg + "%s\n").c_str(), "\033[1;32m", args..., "\033[0m");
 }
 }; // namespace subzero

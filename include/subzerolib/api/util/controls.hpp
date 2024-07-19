@@ -16,7 +16,8 @@ struct control_components_s {
 /// @param vels reference to the std::vector of control components
 /// @param max_v the maximum velocity
 /// @param rot_pref the preference for rotation over linear velocity
-void balance_vels(std::vector<control_components_s> &vels, double max_v = 1.0,
+void balance_vels(std::vector<control_components_s> &vels,
+                  double max_v = 1.0,
                   double rot_pref = 0.5);
 
 /// @brief balanced control velocities inside a map
@@ -26,7 +27,8 @@ void balance_vels(std::vector<control_components_s> &vels, double max_v = 1.0,
 /// @param rot_pref the preference for rotation over linear velocity
 template <typename T>
 void balance_mapped_vels(std::map<T, control_components_s> &vel_map,
-                         double max_v, double rot_pref) {
+                         double max_v,
+                         double rot_pref) {
   std::vector<T> keys;
   std::vector<control_components_s> components;
   for (auto &pair : vel_map) {

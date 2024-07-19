@@ -61,10 +61,11 @@ private:
   // v = [0 1  2t 3t^2][characteristic_matrix][c1 c2 c3 c4]
   // a = [0 0   2   6t][characteristic_matrix][c1 c2 c3 c4]
   const Eigen::Matrix<double, 4, 4> characteristic_matrix{
-      {0, 1, 0, 0},
-      {-0.5, 0, 0.5, 0},
-      {1, -2.5, 2, -0.5},
-      {-0.5, 1.5, -1.5, 0.5}};
+      {   0,    1,    0,    0},
+      {-0.5,    0,  0.5,    0},
+      {   1, -2.5,    2, -0.5},
+      {-0.5,  1.5, -1.5,  0.5}
+  };
 
   std::vector<Eigen::Matrix<double, 4, 2>> bernstein_coeffs;
 

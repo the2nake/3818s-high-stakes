@@ -1,8 +1,13 @@
 #include "subzerolib/api/filter/kalman-filter.hpp"
+#ifdef TARGET_V5
+#include "subzerolib/api/util/logging.hpp"
+#endif
+#include <iostream>
 #include <memory>
 
 void KalmanFilter::predict(int delta_ms) {
-  next_state = state_transition_matrix * state; // TODO: get control input if necessary
+  next_state =
+      state_transition_matrix * state; // TODO: get control input if necessary
   next_covariance = state_transition_matrix * covariance *
                         state_transition_matrix.transpose() +
                     process_noise_covariance;
@@ -40,7 +45,7 @@ using Matrix = Eigen::MatrixXd;
 using Vector = Eigen::VectorXd;
 
 Builder &Builder::with_state_transition_matrix(Matrix f) {
-  if (f.rows() == nx && f.cols() == 1) {
+  if (f.rows() == nx && f.cols() == nx) {
     b_f = f;
   }
 
@@ -99,6 +104,26 @@ std::shared_ptr<KalmanFilter> Builder::build() {
   if (!(initialised(b_f) && (nu == 0 || initialised(b_g)) && initialised(b_h) &&
         initialised(b_q) && initialised(b_r) && initialised(b_x) &&
         initialised(b_p))) {
+#ifdef TARGET_V5
+    subzero::log("[e]: filter initialisation failed");
+    subzero::log("[i]: f_init: %s", initialised(b_f) ? "true" : "false");
+    subzero::log("[i]: g_init: %s", initialised(b_g) ? "true" : "false");
+    subzero::log("[i]: h_init: %s", initialised(b_h) ? "true" : "false");
+    subzero::log("[i]: q_init: %s", initialised(b_q) ? "true" : "false");
+    subzero::log("[i]: r_init: %s", initialised(b_r) ? "true" : "false");
+    subzero::log("[i]: x_init: %s", initialised(b_x) ? "true" : "false");
+    subzero::log("[i]: p_init: %s", initialised(b_p) ? "true" : "false");
+#endif
+#ifndef TARGET_V5
+    std::cout << "filter init failed" << std::endl;
+    std::cout << "f init:" << initialised(b_f) << std::endl;
+    std::cout << "g init:" << initialised(b_g) << std::endl;
+    std::cout << "h init:" << initialised(b_h) << std::endl;
+    std::cout << "q init:" << initialised(b_q) << std::endl;
+    std::cout << "r init:" << initialised(b_r) << std::endl;
+    std::cout << "x init:" << initialised(b_x) << std::endl;
+    std::cout << "p init:" << initialised(b_p) << std::endl;
+#endif
     return nullptr;
   }
 

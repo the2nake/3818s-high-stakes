@@ -6,6 +6,7 @@
 #include "pros/abstract_motor.hpp"
 #include "pros/colors.hpp"
 #include "pros/screen.hpp"
+#include "subzerolib/api/odometry/gyro-odometry.hpp"
 #include <algorithm>
 #include <memory>
 
@@ -45,7 +46,7 @@ std::shared_ptr<AbstractEncoder> odom_x{
 std::shared_ptr<AbstractEncoder> odom_y{
     new AbstractRotationEncoder(PORT_Y_ENC, true)};
 std::shared_ptr<Odometry> odom = nullptr;
-std::unique_ptr<Filter> odom_filter = nullptr;
+std::unique_ptr<Filter> filter = nullptr;
 
 // TODO: refactor, add "graph_module"?
 void odom_disp_loop(void *ignore) {
@@ -136,7 +137,6 @@ void initialize() {
     }
     subzero::log("[i]: imu on port %d ready", device.get_port());
   }
-
   pros::delay(500);
 
   chassis =
@@ -159,7 +159,7 @@ void initialize() {
   Eigen::Matrix<double, 6, 6> initial_covariance;
   initial_covariance.setZero();
   initial_covariance.diagonal() = Eigen::Vector<double, 6>{
-      {2, 1, 1, 2, 1, 1}
+      {2, 0.25, 0.25, 2, 0.25, 0.25}
   };
 
   const double dt = 0.01;
@@ -177,7 +177,7 @@ void initialize() {
       {0, 0, 0, 0, 0, 1},
   };
 
-  const double s_a = 16.0; // angular acceleration stdev
+  const double s_a = 20.0; // angular acceleration stdev
   const double s_l = 7.0;  // linear acceleration stdev
   const double v_a = s_a * s_a;
   const double v_l = s_l * s_l;
@@ -185,6 +185,10 @@ void initialize() {
   const double c4 = 0.25 * dt * dt * dt * dt;
   const double c3 = 0.5 * dt * dt * dt;
   const double c2 = dt * dt;
+
+  // TODO: handle heading in filter direct from hardware
+  // TODO: give overall tracked position from imu_odometry for mode global
+  // TODO: tune filtering parameters properly
 
   Eigen::Matrix<double, 6, 6> process_noise_covariance{
       {c4 * v_a,      0.0,      0.0, c3 * v_a,      0.0,      0.0},
@@ -195,35 +199,42 @@ void initialize() {
       {     0.0,      0.0, c3 * v_l,      0.0,      0.0, c2 * v_l}
   };
 
-  const double v_imu = std::pow(1, 2);
-  const double v_tracker = std::pow(0.01, 2);
+  const double v_imu = std::pow(0.2, 2);
+  const double v_tracker = std::pow(0.005, 2);
   Eigen::Matrix3d measurement_covariance{
       {v_imu,       0.0,       0.0},
       {  0.0, v_tracker,       0.0},
       {  0.0,       0.0, v_tracker}
   };
 
-  odom_filter.reset(KalmanFilter::Builder(6, 0, 3)
-                        .with_initial_state(initial_state)
-                        .with_initial_covariance(initial_covariance)
-                        .with_measurement_covariance(measurement_covariance)
-                        .with_state_transition_matrix(state_transition_matrix)
-                        //.with_control_matrix()
-                        .with_observation_matrix(observation_matrix)
-                        .with_process_noise_covariance(process_noise_covariance)
-                        .build()
-                        .get());
+  filter.reset(KalmanFilter::Builder(6, 0, 3)
+                   .with_initial_state(initial_state)
+                   .with_initial_covariance(initial_covariance)
+                   .with_measurement_covariance(measurement_covariance)
+                   .with_state_transition_matrix(state_transition_matrix)
+                   //.with_control_matrix()
+                   .with_observation_matrix(observation_matrix)
+                   .with_process_noise_covariance(process_noise_covariance)
+                   .build()
+                   .get());
 
   // INFO: odometry must initialise after chassis if filter uses chassis control
   // input
-  odom =
+  auto builder = std::move(
       GyroOdometry::Builder()
           .with_gyro(mean_imu)
           .with_x_enc(odom_x, Odometry::encoder_conf_s(-0.045, 0.160 / 360.0))
-          .with_y_enc(odom_y, Odometry::encoder_conf_s(0.09, 0.160 / 360.0))
-          //.with_filter(std::move(odom_filter),
-          //             GyroOdometry::filter_config_e::global)
-          .build();
+          .with_y_enc(odom_y, Odometry::encoder_conf_s(0.09, 0.160 / 360.0)));
+
+  if (filter != nullptr) {
+    odom = builder
+               .with_filter(std::move(filter),
+                            GyroOdometry::filter_config_e::global)
+               .build();
+  } else {
+    odom = builder.build();
+  }
+
   odom->auto_update(1000 * dt);
 
   pros::Task graphing_task{odom_disp_loop, nullptr, "odom display task"};

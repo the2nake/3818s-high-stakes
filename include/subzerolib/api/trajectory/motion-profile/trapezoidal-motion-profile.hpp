@@ -12,7 +12,8 @@ public:
   /// @param imax_accel the maximum acceleration
   /// @param imax_decel the maximum deceleration
   /// @returns the motion profile object
-  TrapezoidalMotionProfile(double imax_vel, double imax_accel,
+  TrapezoidalMotionProfile(double imax_vel,
+                           double imax_accel,
                            double imax_decel = std::nan(""));
 
   /// @brief sets the steps between generated points

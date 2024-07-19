@@ -83,6 +83,15 @@ private:
 public:
   class Builder {
   public:
+    Builder() {}
+    Builder(Builder &&other) {
+      gyro = other.gyro;
+      x_encs = other.x_encs;
+      y_encs = other.y_encs;
+      filter = std::move(other.filter);
+      config = other.config;
+    }
+
     Builder &with_gyro(std::shared_ptr<AbstractGyro> igyro);
 
     Builder &with_x_enc(std::shared_ptr<AbstractEncoder> encoder,

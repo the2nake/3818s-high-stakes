@@ -31,8 +31,10 @@ public:
   /// @param lookahead range for pure-pursuit smoothening
   /// @param ms_timeout maximum controller run time
   /// @param resolution number of physics steps per iteration, >= 1
-  void follow(std::vector<pose_s> iwaypoints, double lookahead,
-              int ms_timeout = 5000, int iresolution = 1);
+  void follow(std::vector<pose_s> iwaypoints,
+              double lookahead,
+              int ms_timeout = 5000,
+              int iresolution = 1);
   // TODO: PurePursuitController::follow_async
 
   /// @brief stop the controller

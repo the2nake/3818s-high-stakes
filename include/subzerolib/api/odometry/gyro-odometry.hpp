@@ -1,9 +1,9 @@
 #pragma once
 
-#include "subzerolib/api/filter/filter.hpp"
 #include "subzerolib/api/odometry/odometry.hpp"
 #include "subzerolib/api/sensors/abstract-encoder.hpp"
 #include "subzerolib/api/sensors/abstract-gyro.hpp"
+#include "subzerolib/api/util/logging.hpp"
 
 #include "pros/rtos.hpp"
 #include <memory>
@@ -51,7 +51,7 @@ public:
   bool is_enabled() override { return enabled.load(); }
 
 private:
-  pros::Mutex state_mutex;
+  pros::Mutex mutex;
   std::atomic<bool> enabled = true;
 
   std::shared_ptr<AbstractGyro> gyro;
@@ -67,16 +67,17 @@ private:
 
   pose_s pose{0, 0, 0};
 
-  std::unique_ptr<Filter> filter = nullptr;
-  filter_config_e filter_config = filter_config_e::none;
-
   GyroOdometry() {}
   void lock() {
-    while (!this->state_mutex.take(5)) {
-      pros::delay(1);
+    if (!mutex.take(5)) {
+      subzero::error("[e]: gyro odom mutex failed to take");
     }
   }
-  void unlock() { this->state_mutex.give(); }
+  void unlock() {
+    if (!mutex.give()) {
+      subzero::error("[e]: gyro odom mutex failed to return");
+    }
+  }
 
   void update_pose_from_filter();
 
@@ -88,8 +89,6 @@ public:
       gyro = other.gyro;
       x_encs = other.x_encs;
       y_encs = other.y_encs;
-      filter = std::move(other.filter);
-      config = other.config;
     }
 
     Builder &with_gyro(std::shared_ptr<AbstractGyro> igyro);
@@ -100,11 +99,6 @@ public:
     Builder &with_y_enc(std::shared_ptr<AbstractEncoder> encoder,
                         encoder_conf_s conf);
 
-    // filter input order should be vh, vx, vy
-    // filter output order should be h, global_x, global_y
-    Builder &with_filter(std::unique_ptr<Filter> i_filter,
-                         filter_config_e i_config);
-
     std::shared_ptr<GyroOdometry> build();
 
   private:
@@ -113,8 +107,5 @@ public:
         x_encs;
     std::vector<std::pair<std::shared_ptr<AbstractEncoder>, encoder_conf_s>>
         y_encs;
-
-    std::unique_ptr<Filter> filter = nullptr;
-    filter_config_e config = filter_config_e::none;
   };
 };

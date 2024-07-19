@@ -8,15 +8,15 @@
 
 void StarChassis::move(double x, double y, double r) {
   clamp_distance<double>(1.0, x, y);
-  insert_or_modify(vels, StarChassis::motor_position_e::front_left, {x + y, r});
-  insert_or_modify(vels, StarChassis::motor_position_e::front_right,
+  insert_or_modify(vels, StarChassis::motor_pos_e::front_left, {x + y, r});
+  insert_or_modify(vels, StarChassis::motor_pos_e::front_right,
                    {-x + y, -r});
-  insert_or_modify(vels, StarChassis::motor_position_e::boost_left,
+  insert_or_modify(vels, StarChassis::motor_pos_e::boost_left,
                    {y, r * boost_radius / (K_SQRT_2 * corner_radius)});
-  insert_or_modify(vels, StarChassis::motor_position_e::boost_right,
+  insert_or_modify(vels, StarChassis::motor_pos_e::boost_right,
                    {y, -r * boost_radius / (K_SQRT_2 * corner_radius)});
-  insert_or_modify(vels, StarChassis::motor_position_e::back_left, {-x + y, r});
-  insert_or_modify(vels, StarChassis::motor_position_e::back_right,
+  insert_or_modify(vels, StarChassis::motor_pos_e::back_left, {-x + y, r});
+  insert_or_modify(vels, StarChassis::motor_pos_e::back_right,
                    {x + y, -r});
 
   balance_mapped_vels(vels, 1.0, rot_pref);
@@ -35,28 +35,28 @@ void StarChassis::set_rot_pref(double irot_pref) {
 }
 
 StarChassis::Builder &
-StarChassis::Builder::with_motors(StarChassis::motor_position_e position,
+StarChassis::Builder::with_motors(StarChassis::motor_pos_e position,
                                   std::unique_ptr<pros::AbstractMotor> motor) {
   if (motor == nullptr) {
     return *this;
   }
   switch (position) {
-  case StarChassis::motor_position_e::front_left:
+  case StarChassis::motor_pos_e::front_left:
     bfront_left = std::move(motor);
     break;
-  case StarChassis::motor_position_e::front_right:
+  case StarChassis::motor_pos_e::front_right:
     bfront_right = std::move(motor);
     break;
-  case StarChassis::motor_position_e::boost_left:
+  case StarChassis::motor_pos_e::boost_left:
     bboost_left = std::move(motor);
     break;
-  case StarChassis::motor_position_e::boost_right:
+  case StarChassis::motor_pos_e::boost_right:
     bboost_right = std::move(motor);
     break;
-  case StarChassis::motor_position_e::back_left:
+  case StarChassis::motor_pos_e::back_left:
     bback_left = std::move(motor);
     break;
-  case StarChassis::motor_position_e::back_right:
+  case StarChassis::motor_pos_e::back_right:
     bback_right = std::move(motor);
     break;
   }
@@ -64,7 +64,7 @@ StarChassis::Builder::with_motors(StarChassis::motor_position_e position,
 }
 
 StarChassis::Builder &
-StarChassis::Builder::with_motors(StarChassis::motor_position_e position,
+StarChassis::Builder::with_motors(StarChassis::motor_pos_e position,
                                   std::unique_ptr<pros::Motor> motor) {
   std::unique_ptr<pros::AbstractMotor> ptr(std::move(motor));
   return with_motors(position, std::move(ptr));
@@ -118,12 +118,12 @@ std::shared_ptr<StarChassis> StarChassis::Builder::build() {
   chassis->corner_radius = bcorner_radius;
   chassis->rot_pref = brot_pref;
   chassis->position_ptr_map = {
-      {StarChassis::motor_position_e::front_left, chassis->front_left},
-      {StarChassis::motor_position_e::front_right, chassis->front_right},
-      {StarChassis::motor_position_e::boost_left, chassis->boost_left},
-      {StarChassis::motor_position_e::boost_right, chassis->boost_right},
-      {StarChassis::motor_position_e::back_left, chassis->back_left},
-      {StarChassis::motor_position_e::back_right, chassis->back_right},
+      {StarChassis::motor_pos_e::front_left, chassis->front_left},
+      {StarChassis::motor_pos_e::front_right, chassis->front_right},
+      {StarChassis::motor_pos_e::boost_left, chassis->boost_left},
+      {StarChassis::motor_pos_e::boost_right, chassis->boost_right},
+      {StarChassis::motor_pos_e::back_left, chassis->back_left},
+      {StarChassis::motor_pos_e::back_right, chassis->back_right},
   };
   return std::shared_ptr<StarChassis>{chassis};
 }

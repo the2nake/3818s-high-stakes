@@ -57,7 +57,7 @@ public:
   void auto_update(int every_ms = 10) {
     update_delay = every_ms;
     update_task = new pros::Task([&, this] { this->auto_update_loop(); },
-                                 "subzerolib: odometry update task");
+                                 "subzerolib: odometry update");
   }
 
   /// @brief stops automatic updates

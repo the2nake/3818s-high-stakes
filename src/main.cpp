@@ -1,12 +1,10 @@
 #include "main.h"
-#include "ports.h"
+#include "devices.hpp"
 
 #include "subzerolib/api.hpp"
 
-#include "pros/abstract_motor.hpp"
 #include "pros/colors.hpp"
 #include "pros/screen.hpp"
-#include "subzerolib/api/odometry/gyro-odometry.hpp"
 #include <algorithm>
 #include <memory>
 
@@ -16,36 +14,6 @@ bool running = true;
 
 // TODO: test PID on the arm
 
-std::unique_ptr<pros::Motor> fl(new pros::Motor(-DRIVE_FL_PORT,
-                                                pros::v5::MotorGears::green,
-                                                pros::v5::MotorUnits::deg));
-std::unique_ptr<pros::Motor> fr(new pros::Motor(DRIVE_FR_PORT,
-                                                pros::v5::MotorGears::green,
-                                                pros::v5::MotorUnits::deg));
-std::unique_ptr<pros::Motor> ml(new pros::Motor(-DRIVE_ML_PORT,
-                                                pros::v5::MotorGears::green,
-                                                pros::v5::MotorUnits::deg));
-std::unique_ptr<pros::Motor> mr(new pros::Motor(DRIVE_MR_PORT,
-                                                pros::v5::MotorGears::green,
-                                                pros::v5::MotorUnits::deg));
-std::unique_ptr<pros::Motor> br(new pros::Motor(DRIVE_BR_PORT,
-                                                pros::v5::MotorGears::green,
-                                                pros::v5::MotorUnits::deg));
-std::unique_ptr<pros::Motor> bl(new pros::Motor(-DRIVE_BL_PORT,
-                                                pros::v5::MotorGears::green,
-                                                pros::v5::MotorUnits::deg));
-std::shared_ptr<StarChassis> chassis = nullptr;
-std::shared_ptr<AbstractGyro> imu1{
-    new AbstractImuGyro(IMU1_PORT, (18 * 360.0) / (17 * 360.0 + 283))};
-std::shared_ptr<AbstractGyro> imu2{
-    new AbstractImuGyro(IMU2_PORT, (19 * 360.0) / (18 * 360.0 + 260))};
-std::shared_ptr<AbstractGyro> mean_imu{new AbstractMeanGyro({imu1, imu2})};
-
-std::shared_ptr<AbstractEncoder> odom_x{
-    new AbstractRotationEncoder(PORT_X_ENC, true)};
-std::shared_ptr<AbstractEncoder> odom_y{
-    new AbstractRotationEncoder(PORT_Y_ENC, true)};
-std::shared_ptr<Odometry> odom = nullptr;
 std::unique_ptr<Filter> filter = nullptr;
 
 // TODO: refactor, add "graph_module"?
@@ -125,37 +93,12 @@ void odom_disp_loop(void *ignore) {
 void initialize() {
   subzero::set_log_area(0, 18, 480, 240);
 
-  auto imus = pros::Imu::get_all_devices();
-  for (auto device : imus) {
-    subzero::log("[i]: resetting imu on port %d", device.get_port());
-    device.reset();
-  }
-
-  for (auto device : imus) {
-    while (device.is_calibrating()) {
-      pros::delay(100);
-    }
-    subzero::log("[i]: imu on port %d ready", device.get_port());
-  }
-  pros::delay(500);
-
-  chassis =
-      StarChassis::Builder()
-          .with_motors(StarChassis::motor_position_e::front_left, std::move(fl))
-          .with_motors(StarChassis::motor_position_e::front_right,
-                       std::move(fr))
-          .with_motors(StarChassis::motor_position_e::boost_left, std::move(ml))
-          .with_motors(StarChassis::motor_position_e::boost_right,
-                       std::move(mr))
-          .with_motors(StarChassis::motor_position_e::back_left, std::move(bl))
-          .with_motors(StarChassis::motor_position_e::back_right, std::move(br))
-          .with_geometry(0.35, 0.37)
-          .with_rot_pref(0.3)
-          .build();
+  initialise_devices();
 
   Eigen::Vector<double, 6> initial_state{
       {0, 0, 0, 0, 0, 0}
   };
+
   Eigen::Matrix<double, 6, 6> initial_covariance;
   initial_covariance.setZero();
   initial_covariance.diagonal() = Eigen::Vector<double, 6>{
@@ -186,6 +129,7 @@ void initialize() {
   const double c3 = 0.5 * dt * dt * dt;
   const double c2 = dt * dt;
 
+  // TODO: separate class for filtering
   // TODO: handle heading in filter direct from hardware
   // TODO: give overall tracked position from imu_odometry for mode global
   // TODO: tune filtering parameters properly
@@ -218,49 +162,12 @@ void initialize() {
                    .build()
                    .get());
 
-  // INFO: odometry must initialise after chassis if filter uses chassis control
-  // input
-  auto builder = std::move(
-      GyroOdometry::Builder()
-          .with_gyro(mean_imu)
-          .with_x_enc(odom_x, Odometry::encoder_conf_s(-0.045, 0.160 / 360.0))
-          .with_y_enc(odom_y, Odometry::encoder_conf_s(0.09, 0.160 / 360.0)));
-
-  if (filter != nullptr) {
-    odom = builder
-               .with_filter(std::move(filter),
-                            GyroOdometry::filter_config_e::global)
-               .build();
-  } else {
-    odom = builder.build();
-  }
-
-  odom->auto_update(1000 * dt);
-
   pros::Task graphing_task{odom_disp_loop, nullptr, "odom display task"};
 }
 
 void disabled() {}
 
 void competition_initialize() {}
-
-void go_to(std::shared_ptr<ChassisController> controller, pose_s target) {
-  std::shared_ptr<ExitCondition<double>> cond{
-      new ExitCondition<double>{{0, 0.02}, 200}
-  };
-  AutoUpdater<double> updater(
-      [cond](double val) { cond->update(val); },
-      [target]() -> double { return odom->get_pose().dist(target); });
-  updater.start(10);
-  while (!cond->is_met()) {
-    controller->approach_pose(target);
-    pros::delay(10);
-  }
-  controller->brake();
-  updater.stop(); // TODO: stop when out of scope
-  subzero::log(
-      "[i]: pid to (%.2f, %.2f) @ %.0f done", target.x, target.y, target.h);
-}
 
 void autonomous() {
   std::shared_ptr<HoloChassisPID> controller =
@@ -274,8 +181,8 @@ void autonomous() {
   odom->set_position(0.0, 0.0);
   odom->set_heading(0.0);
 
-  go_to(controller, {0.3, 0.3, 270});
-  go_to(controller, {-0.6, 0.5, 315});
+  controller->move_to_pose({0.3, 0.3, 270});
+  controller->move_to_pose({-0.6, 0.5, 315});
 
   std::shared_ptr<ExitCondition<double>> cond{
       new ExitCondition<double>{{0, 0.02}, 200}
@@ -302,13 +209,16 @@ void autonomous() {
 void opcontrol() {
   pros::Controller master(pros::E_CONTROLLER_MASTER);
   auto pose = odom->get_pose();
-  if (std::isnan(pose.h)) {
+  if (std::isnan(pose.h))
     pose.h = 0.0;
-  }
+
 #ifdef ROTATION_CONTROL_PID
   PIDF angle_pid(0.02, 0.0, 0.0008);
   double target_angle = pose.h;
 #endif
+
+  std::uint32_t prev_update = pros::millis();
+  std::uint32_t *prev_update_ptr = &prev_update;
 
   while (saturnine::running) {
     // TODO: adjustments to increase accuracy along diagonals
@@ -321,9 +231,8 @@ void opcontrol() {
 #endif
 
     pose = odom->get_pose();
-    if (std::isnan(pose.h)) {
+    if (std::isnan(pose.h))
       pose.h = 0.0;
-    }
     auto vec = rotate_acw(ctrl_x, ctrl_y, pose.h);
 
 #ifdef ROTATION_CONTROL_PID
@@ -352,7 +261,11 @@ void opcontrol() {
       }
     }
 
-    pros::delay(10); // high update rate, as imu data comes in every 10 ms
+    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A))
+      odom->set_heading(0);
+
+    // high update rate, as imu data comes in every 10 ms
+    pros::Task::delay_until(prev_update_ptr, 10);
   }
 
   // garbage collection, good practice

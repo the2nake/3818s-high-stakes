@@ -1,44 +1,80 @@
 #include "subzerolib/api/filter/kalman-filter.hpp"
 #ifdef TARGET_V5
 #include "subzerolib/api/util/logging.hpp"
+#include <cerrno>
+#include <iostream>
 #else
 #include <iostream>
 #endif
 #include <memory>
 
 void KalmanFilter::predict(int delta_ms) {
-  next_state =
-      state_transition_matrix * state; // TODO: get control input if necessary
-  next_covariance = state_transition_matrix * covariance *
-                        state_transition_matrix.transpose() +
-                    process_noise_covariance;
+#ifdef TARGET_V5
+  if (mutex.take(5)) {
+#endif
+    next_state = state_transition_matrix * state;
+    next_covariance = state_transition_matrix * covariance *
+                          state_transition_matrix.transpose() +
+                      process_noise_covariance;
+#ifdef TARGET_V5
+    if (!mutex.give()) {
+      subzero::error("[e]: predict(): kf mutex failed to return");
+    }
+  } else {
+    subzero::error("[e]: predict(): kf mutex failed to take");
+  }
+#endif
 }
 
 void KalmanFilter::predict(int delta_ms, Eigen::VectorXd control_input) {
   if (control_input.rows() != nu) {
     return;
   }
-  next_state = state_transition_matrix * state + control_matrix * control_input;
-  next_covariance = state_transition_matrix * covariance *
-                        state_transition_matrix.transpose() +
-                    process_noise_covariance;
+#ifdef TARGET_V5
+  if (mutex.take(5)) {
+#endif
+    next_state =
+        state_transition_matrix * state + control_matrix * control_input;
+    next_covariance = state_transition_matrix * covariance *
+                          state_transition_matrix.transpose() +
+                      process_noise_covariance;
+#ifdef TARGET_V5
+    if (!mutex.give()) {
+      subzero::error("[e]: predict(): kf mutex failed to return");
+    }
+  } else {
+    subzero::error("[e]: predict(): kf mutex failed to take");
+  }
+#endif
 }
 
 void KalmanFilter::update(int delta_ms, Eigen::VectorXd measurement) {
   if (measurement.rows() != nz) {
     return;
   }
-  Eigen::MatrixXd kalman_gain =
-      (next_covariance * observation_matrix.transpose()) *
-      (observation_matrix * next_covariance * observation_matrix.transpose() +
-       measurement_covariance)
-          .inverse();
-  state = next_state +
-          kalman_gain * (measurement - observation_matrix * next_state);
-  auto identity = Eigen::MatrixXd::Identity(nx, nx);
-  auto ikh = identity - kalman_gain * observation_matrix;
-  covariance = (ikh * next_covariance * ikh.transpose()) +
-               kalman_gain * measurement_covariance * kalman_gain.transpose();
+
+#ifdef TARGET_V5
+  if (mutex.take(5)) {
+#endif
+    Eigen::MatrixXd kalman_gain =
+        (next_covariance * observation_matrix.transpose()) *
+        (observation_matrix * next_covariance * observation_matrix.transpose() +
+         measurement_covariance)
+            .inverse();
+    state = next_state +
+            kalman_gain * (measurement - observation_matrix * next_state);
+    auto identity = Eigen::MatrixXd::Identity(nx, nx);
+    auto ikh = identity - kalman_gain * observation_matrix;
+    covariance = (ikh * next_covariance * ikh.transpose()) +
+                 kalman_gain * measurement_covariance * kalman_gain.transpose();
+#ifdef TARGET_V5
+    if (!mutex.give()) {
+      subzero::error("[e]: update(): kf mutex failed to return");
+    }
+  } else {
+    subzero::error("[e]: update(): kf mutex failed to take");
+  }
+#endif
 }
 
 using Builder = KalmanFilter::Builder;

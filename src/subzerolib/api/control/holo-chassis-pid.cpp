@@ -1,4 +1,8 @@
 #include "subzerolib/api/control/holo-chassis-pid.hpp"
+#include "pros/misc.hpp"
+#include "subzerolib/api/logic/exit-condition.hpp"
+#include "subzerolib/api/util/auto-updater.hpp"
+#include "subzerolib/api/util/logging.hpp"
 #include "subzerolib/api/util/math.hpp"
 
 void HoloChassisPID::approach_pose(pose_s target, double linv) {
@@ -11,6 +15,26 @@ void HoloChassisPID::approach_pose(pose_s target, double linv) {
   vel = rotate_acw(vel.x, vel.y, pose.h);
 
   chassis->move(vel.x, vel.y, r_pid->get_output());
+}
+
+void HoloChassisPID::move_to_pose(pose_s goal) {
+  std::shared_ptr<ExitCondition<double>> cond{
+      new ExitCondition<double>{{0, 0.02}, 200}
+  };
+  AutoUpdater<double> updater(
+      [cond](double val) { cond->update(val); },
+      [goal, this]() -> double { return odom->get_pose().dist(goal); });
+  updater.start(10);
+  auto init_status = pros::competition::get_status();
+  std::uint32_t time = pros::millis();
+  std::uint32_t *ptr = &time;
+  while (!cond->is_met() && pros::competition::get_status() == init_status) {
+    approach_pose(goal);
+    pros::Task::delay_until(ptr, 10);
+  }
+  brake();
+  updater.stop();
+  subzero::log("[i]: pid to (%.2f, %.2f) @ %.0f done", goal.x, goal.y, goal.h);
 }
 
 HoloChassisPID::Builder &
@@ -31,7 +55,9 @@ HoloChassisPID::Builder::with_odom(std::shared_ptr<Odometry> iodom) {
 
 HoloChassisPID::Builder &
 HoloChassisPID::Builder::with_pid(HoloChassisPID::pid_dimension_e dimension,
-                                  double kp, double ki, double kd) {
+                                  double kp,
+                                  double ki,
+                                  double kd) {
   PIDF *pid = new PIDF(kp, ki, kd, 0.0);
   // if the dimension has been set before, it *should* disappear and memory
   // deallocated easily

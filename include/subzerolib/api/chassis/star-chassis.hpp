@@ -10,7 +10,7 @@
 
 class StarChassis : public Chassis {
 public:
-  enum class motor_position_e {
+  enum class motor_pos_e {
     front_left,
     front_right,
     boost_left,
@@ -38,8 +38,8 @@ private:
   double corner_radius;
   double rot_pref;
 
-  std::map<StarChassis::motor_position_e, control_components_s> vels = {};
-  std::map<StarChassis::motor_position_e,
+  std::map<StarChassis::motor_pos_e, control_components_s> vels = {};
+  std::map<StarChassis::motor_pos_e,
            std::unique_ptr<pros::AbstractMotor> &>
       position_ptr_map = {};
   std::unique_ptr<pros::AbstractMotor> front_left = nullptr;
@@ -60,7 +60,7 @@ public:
     /// @param position the motor position
     /// @param motor a unique pointer to the motor
     /// @returns a reference to the builder object
-    Builder &with_motors(motor_position_e position,
+    Builder &with_motors(motor_pos_e position,
                          std::unique_ptr<pros::Motor> motor);
 
     /// @brief specify a motor for the chassis
@@ -71,7 +71,7 @@ public:
     /// @param position the motor position
     /// @param motor a unique pointer to the motor
     /// @returns a reference to the builder object
-    Builder &with_motors(motor_position_e position,
+    Builder &with_motors(motor_pos_e position,
                          std::unique_ptr<pros::AbstractMotor> motor);
 
     /// @brief specify star drive geometry

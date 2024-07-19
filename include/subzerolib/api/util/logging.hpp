@@ -44,6 +44,7 @@ template <typename... Params> void log(std::string msg, Params... args) {
                       "                                                 ");
   pros::screen::set_pen(color);
   printf((msg + "\n").c_str(), args...);
+  fflush(stdout);
 }
 
 /// @brief log an error
@@ -61,6 +62,7 @@ template <typename... Params> void error(std::string msg, Params... args) {
                       args...,
                       "                                                 ");
   pros::screen::set_pen(color);
-  printf(("%s" + msg + "%s\n").c_str(), "\033[1;32m", args..., "\033[0m");
+  printf(("%s" + msg + "%s\n").c_str(), "\033[1;31m", args..., "\033[0m");
+  fflush(stdout);
 }
 }; // namespace subzero

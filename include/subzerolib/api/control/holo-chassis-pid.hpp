@@ -23,6 +23,8 @@ public:
   /// @param linv ignored paramter, set to nan by default
   void approach_pose(pose_s target, double linv = std::nan("")) override;
 
+  void move_to_pose(pose_s target) override;
+
   /// @brief brake the chassis
   void brake() override { chassis->move(0, 0, 0); }
 

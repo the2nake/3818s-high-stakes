@@ -1,6 +1,6 @@
 import io, matplotlib.pyplot as plt, matplotlib.animation as anim
 
-file = open("test-output/output.txt", "r")
+file = open("test-output/test-plot.txt", "r")
 
 
 def split_data(parsed):

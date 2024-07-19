@@ -14,9 +14,20 @@ public:
   CatmullRomSpline(std::vector<point_s> control_points);
 
   /// @brief create a catmull-rom spline
+  /// @param control_points an initialiser list of control points
+  /// @returns a catmull-rom spline object
+  CatmullRomSpline(std::initializer_list<point_s> control_points);
+
+  /// @brief create a catmull-rom spline
   /// @param control_points a vector of poses representing control points
   /// @returns a catmull-rom spline object
   CatmullRomSpline(std::vector<pose_s> control_points);
+
+  /// @brief create a catmull-rom spline
+  /// @param control_points an initialiser list of poses representing control
+  /// points
+  /// @returns a catmull-rom spline object
+  CatmullRomSpline(std::initializer_list<pose_s> control_points);
   ~CatmullRomSpline() {}
 
   /// @brief sample points on a spline

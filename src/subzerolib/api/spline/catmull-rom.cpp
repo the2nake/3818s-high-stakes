@@ -4,18 +4,25 @@
 
 CatmullRomSpline::CatmullRomSpline(std::vector<point_s> icontrol_points)
     : control_points(icontrol_points) {
-  // calculate cache for control points (every set of 4)
   calculate_bernstein_coeffs();
 }
 
+CatmullRomSpline::CatmullRomSpline(
+    std::initializer_list<point_s> icontrol_points)
+    : CatmullRomSpline(std::vector<point_s>{icontrol_points}) {}
+
 CatmullRomSpline::CatmullRomSpline(std::vector<pose_s> icontrol_points) {
-  // calculate cache for control points (every set of 4)
   control_points.resize(icontrol_points.size());
-  transform(icontrol_points.begin(), icontrol_points.end(),
+  transform(icontrol_points.begin(),
+            icontrol_points.end(),
             control_points.begin(),
             [](pose_s pose) -> point_s { return pose.point(); });
   calculate_bernstein_coeffs();
 }
+
+CatmullRomSpline::CatmullRomSpline(
+    std::initializer_list<pose_s> icontrol_points)
+    : CatmullRomSpline(std::vector<pose_s>{icontrol_points}) {}
 
 void CatmullRomSpline::calculate_bernstein_coeffs() {
   bernstein_coeffs.clear();
@@ -63,8 +70,8 @@ std::vector<spline_point_s> CatmullRomSpline::sample_kinematics(int count) {
     auto vel = get_vel(u);
     auto accel = get_accel(u);
 
-    sampled_points.emplace_back(pos.x, pos.y, s, vel.x, vel.y, accel.x,
-                                accel.y);
+    sampled_points.emplace_back(
+        pos.x, pos.y, s, vel.x, vel.y, accel.x, accel.y);
     u += step;
   }
 

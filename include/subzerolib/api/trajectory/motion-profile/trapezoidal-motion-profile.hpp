@@ -39,7 +39,7 @@ public:
   /// @brief prints out the motion profile's points
   void print() {
     for (auto &point : points) {
-      printf("%f, %f, %f\n", point.t, point.x, point.v);
+      printf("t: %5.2f x: %5.2f v: %5.2f\n", point.t, point.x, point.v);
     }
     fflush(stdout);
   }

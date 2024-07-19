@@ -14,7 +14,7 @@ int main() {
   // Creating a directory
   mkdir("test-output", 0777);
   std::fstream file;
-  file.open("test-output/output.txt", std::fstream::out);
+  file.open("test-output/test-plot.txt", std::fstream::out);
   file.clear();
 
   // generate the spline

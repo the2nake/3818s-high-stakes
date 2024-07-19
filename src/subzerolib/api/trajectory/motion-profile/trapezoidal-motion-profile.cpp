@@ -30,8 +30,9 @@ void TrapezoidalMotionProfile::generate(double distance) {
     profile_point_s front_head{0, 0, 0};
     front_head.x = points.back().x + resolution; // change when rev
     // kinematics
-    front_head.v = std::min(
-        max_vel, std::sqrt(points.back().v * points.back().v +
+    front_head.v =
+        std::min(max_vel,
+                 std::sqrt(points.back().v * points.back().v +
                            2 * max_accel * resolution)); // change when rev
     front_head.t = 2 * resolution / (front_head.v + points.back().v);
     points.push_back(front_head);
@@ -42,9 +43,10 @@ void TrapezoidalMotionProfile::generate(double distance) {
 
     profile_point_s back_head{0, 0, 0};
     back_head.x = points_from_back.back().x - resolution;
-    back_head.v = std::min(max_vel, std::sqrt(points_from_back.back().v *
-                                                  points_from_back.back().v +
-                                              2 * max_decel * resolution));
+    back_head.v = std::min(
+        max_vel,
+        std::sqrt(points_from_back.back().v * points_from_back.back().v +
+                  2 * max_decel * resolution));
     points_from_back.back().t =
         2 * resolution / (back_head.v + points_from_back.back().v);
     points_from_back.push_back(back_head);
@@ -58,4 +60,7 @@ void TrapezoidalMotionProfile::generate(double distance) {
                 std::make_move_iterator(points_from_back.crbegin()),
                 std::make_move_iterator(points_from_back.crend()));
   points_from_back.clear();
+  for (int i = 1; i < points.size(); ++i) {
+    points[i].t += points[i - 1].t;
+  }
 }

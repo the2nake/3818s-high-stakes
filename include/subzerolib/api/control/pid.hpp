@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <cmath>
+#include "pros/rtos.hpp"
 
 class PIDF {
 public:
@@ -56,5 +57,5 @@ private:
   std::atomic<double> prev_err = std::nan("");
   std::atomic<double> total_err = 0.0;
 
-  uint32_t last_update;
+  uint32_t last_update = pros::millis();
 };

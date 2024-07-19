@@ -1,8 +1,9 @@
 #include "subzerolib/api/filter/kalman-filter.hpp"
 #ifdef TARGET_V5
 #include "subzerolib/api/util/logging.hpp"
-#endif
+#else
 #include <iostream>
+#endif
 #include <memory>
 
 void KalmanFilter::predict(int delta_ms) {
@@ -113,8 +114,7 @@ std::shared_ptr<KalmanFilter> Builder::build() {
     subzero::log("[i]: r_init: %s", initialised(b_r) ? "true" : "false");
     subzero::log("[i]: x_init: %s", initialised(b_x) ? "true" : "false");
     subzero::log("[i]: p_init: %s", initialised(b_p) ? "true" : "false");
-#endif
-#ifndef TARGET_V5
+#else
     std::cout << "filter init failed" << std::endl;
     std::cout << "f init:" << initialised(b_f) << std::endl;
     std::cout << "g init:" << initialised(b_g) << std::endl;

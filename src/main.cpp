@@ -263,7 +263,6 @@ void go_to(std::shared_ptr<ChassisController> controller, pose_s target) {
 }
 
 void autonomous() {
-  auto auton_start_time = pros::millis();
   std::shared_ptr<HoloChassisPID> controller =
       HoloChassisPID::Builder()
           .with_chassis(chassis)
@@ -302,12 +301,14 @@ void autonomous() {
 
 void opcontrol() {
   pros::Controller master(pros::E_CONTROLLER_MASTER);
-  PIDF angle_pid(0.02, 0.0, 0.0008);
   auto pose = odom->get_pose();
   if (std::isnan(pose.h)) {
     pose.h = 0.0;
   }
+#ifdef ROTATION_CONTROL_PID
+  PIDF angle_pid(0.02, 0.0, 0.0008);
   double target_angle = pose.h;
+#endif
 
   while (saturnine::running) {
     // TODO: adjustments to increase accuracy along diagonals
@@ -315,7 +316,9 @@ void opcontrol() {
     double ctrl_x = master.get_analog(ANALOG_RIGHT_X) / 127.0;
     double ctrl_y = master.get_analog(ANALOG_RIGHT_Y) / 127.0;
     double ctrl_rx = master.get_analog(ANALOG_LEFT_X) / 127.0;
+#ifdef ROTATION_CONTROL_PID
     double ctrl_ry = master.get_analog(ANALOG_LEFT_Y) / 127.0;
+#endif
 
     pose = odom->get_pose();
     if (std::isnan(pose.h)) {
@@ -323,7 +326,7 @@ void opcontrol() {
     }
     auto vec = rotate_acw(ctrl_x, ctrl_y, pose.h);
 
-    /*
+#ifdef ROTATION_CONTROL_PID
     if (std::abs(ctrl_rx) < 0.2 && std::abs(ctrl_ry) < 0.2) {
       target_angle = pose.h;
     } else {
@@ -337,8 +340,9 @@ void opcontrol() {
     } else {
       chassis->move(vec.x, vec.y, 0.5 * angle_pid.get_output());
     }
-    */
+#else
     chassis->move(vec.x, vec.y, 0.75 * ctrl_rx);
+#endif
 
     if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
       if (odom->is_enabled()) {

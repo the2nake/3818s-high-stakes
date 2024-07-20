@@ -5,7 +5,6 @@
 
 #include "pros/colors.hpp"
 #include "pros/screen.hpp"
-#include <algorithm>
 #include <memory>
 
 namespace saturnine {
@@ -95,116 +94,12 @@ void initialize() {
 
   initialise_devices();
 
-  Eigen::Vector<double, 6> initial_state{
-      {0, 0, 0, 0, 0, 0}
-  };
-
-  Eigen::Matrix<double, 6, 6> initial_covariance;
-  initial_covariance.setZero();
-  initial_covariance.diagonal() = Eigen::Vector<double, 6>{
-      {2, 0.25, 0.25, 2, 0.25, 0.25}
-  };
-
-  const double dt = 0.01;
-  Eigen::Matrix<double, 6, 6> state_transition_matrix{
-      {1, 0, 0, dt,  0,  0},
-      {0, 1, 0,  0, dt,  0},
-      {0, 0, 1,  0,  0, dt},
-      {0, 0, 0,  1,  0,  0},
-      {0, 0, 0,  0,  1,  0},
-      {0, 0, 0,  0,  0,  1}
-  };
-  Eigen::Matrix<double, 3, 6> observation_matrix{
-      {0, 0, 0, 1, 0, 0},
-      {0, 0, 0, 0, 1, 0},
-      {0, 0, 0, 0, 0, 1},
-  };
-
-  const double s_a = 20.0; // angular acceleration stdev
-  const double s_l = 7.0;  // linear acceleration stdev
-  const double v_a = s_a * s_a;
-  const double v_l = s_l * s_l;
-
-  const double c4 = 0.25 * dt * dt * dt * dt;
-  const double c3 = 0.5 * dt * dt * dt;
-  const double c2 = dt * dt;
-
-  // TODO: separate class for filtering
-  // TODO: handle heading in filter direct from hardware
-  // TODO: give overall tracked position from imu_odometry for mode global
-  // TODO: tune filtering parameters properly
-
-  Eigen::Matrix<double, 6, 6> process_noise_covariance{
-      {c4 * v_a,      0.0,      0.0, c3 * v_a,      0.0,      0.0},
-      {     0.0, c4 * v_l,      0.0,      0.0, c3 * v_l,      0.0},
-      {     0.0,      0.0, c4 * v_l,      0.0,      0.0, c3 * v_l},
-      {c3 * v_a,      0.0,      0.0, c2 * v_a,      0.0,      0.0},
-      {     0.0, c3 * v_l,      0.0,      0.0, c2 * v_l,      0.0},
-      {     0.0,      0.0, c3 * v_l,      0.0,      0.0, c2 * v_l}
-  };
-
-  const double v_imu = std::pow(0.2, 2);
-  const double v_tracker = std::pow(0.005, 2);
-  Eigen::Matrix3d measurement_covariance{
-      {v_imu,       0.0,       0.0},
-      {  0.0, v_tracker,       0.0},
-      {  0.0,       0.0, v_tracker}
-  };
-
-  filter.reset(KalmanFilter::Builder(6, 0, 3)
-                   .with_initial_state(initial_state)
-                   .with_initial_covariance(initial_covariance)
-                   .with_measurement_covariance(measurement_covariance)
-                   .with_state_transition_matrix(state_transition_matrix)
-                   //.with_control_matrix()
-                   .with_observation_matrix(observation_matrix)
-                   .with_process_noise_covariance(process_noise_covariance)
-                   .build()
-                   .get());
-
   pros::Task graphing_task{odom_disp_loop, nullptr, "odom display task"};
 }
 
 void disabled() {}
 
 void competition_initialize() {}
-
-void autonomous() {
-  std::shared_ptr<HoloChassisPID> controller =
-      HoloChassisPID::Builder()
-          .with_chassis(chassis)
-          .with_odom(odom)
-          .with_pid(HoloChassisPID::pid_dimension_e::x, 3.6, 0, 0.42)
-          .with_pid(HoloChassisPID::pid_dimension_e::y, 3.6, 0, 0.42)
-          .with_pid(HoloChassisPID::pid_dimension_e::r, 0.015, 0.0, 0.0008)
-          .build();
-  odom->set_position(0.0, 0.0);
-  odom->set_heading(0.0);
-
-  controller->move_to_pose({0.3, 0.3, 270});
-  controller->move_to_pose({-0.6, 0.5, 315});
-
-  std::shared_ptr<ExitCondition<double>> cond{
-      new ExitCondition<double>{{0, 0.02}, 200}
-  };
-  PurePursuitController pp(controller, odom, std::move(cond));
-
-  std::vector<pose_s> ctrl = {
-      {  0.0,  0.0,   0.0},
-      {  0.4,  0.6,  45.0},
-      { -0.2,  0.6,  60.0},
-      {-0.75, 0.75, -45.0}
-  };
-  CatmullRomSpline spline(ctrl);
-  spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
-  auto spline_points = spline.sample_coordinates(200);
-  std::vector<pose_s> waypoints(spline_points.size());
-  transform(spline_points.begin(),
-            spline_points.end(),
-            waypoints.begin(),
-            [](point_s point) -> pose_s { return pose_s{point, 0.0}; });
-  // pp.follow(waypoints, 0.4);
-}
 
 void opcontrol() {
   pros::Controller master(pros::E_CONTROLLER_MASTER);

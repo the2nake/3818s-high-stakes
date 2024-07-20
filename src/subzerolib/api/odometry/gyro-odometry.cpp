@@ -20,7 +20,7 @@ void GyroOdometry::update() {
   prev_timestamp = now;
 
   double raw_h = prev_heading;
-  if (enabled) {
+  if (is_enabled()) {
     raw_h = gyro->heading();
   }
   double dh = shorter_turn(prev_heading, raw_h);
@@ -97,10 +97,13 @@ void GyroOdometry::update() {
               dy_l * std::cos(in_rad(prev_heading));
   prev_heading = raw_h;
 
-  if (enabled) {
+  if (is_enabled()) {
     pose.x += dx_g;
     pose.y += dy_g;
     pose.h = mod(pose.h + dh, 360.0);
+    vel.x = dx_g / dt;
+    vel.y = dy_g / dt;
+    vel.h = dh / dt;
   }
   unlock();
 }

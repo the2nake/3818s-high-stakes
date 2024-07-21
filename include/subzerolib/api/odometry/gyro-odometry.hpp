@@ -10,25 +10,20 @@
 
 class GyroOdometry : public Odometry {
 public:
-  enum class filter_config_e {
-    none,
-    raw,   // direct imu, encoder measurements
-    local, // changes calculated to local
-    global // calculated global movements
-  };
+  virtual ~GyroOdometry() {}
 
   /// @brief sets the heading of the odometry module
   /// @param heading the desired heading
-  void set_heading(double i_h) override;
+  virtual void set_heading(double i_h) override;
 
   /// @brief sets the position of the odometry module
   /// @param x the desired position's x coordinate
   /// @param y the desired position's y coordinate
-  void set_position(double i_x, double i_y) override;
+  virtual void set_position(double i_x, double i_y) override;
 
   /// @brief get the current pose
   /// @returns the pose measurement
-  pose_s get_pose() override {
+  virtual pose_s get_pose() override {
     lock();
     auto temp = pose;
     unlock();
@@ -37,18 +32,23 @@ public:
 
   /// @brief get the current velocity
   /// @returns the velocity measurement
-  point_s get_vel() override { return point_s{0, 0}; }
+  virtual pose_s get_vel() override {
+    lock();
+    auto temp = vel;
+    unlock();
+    return temp;
+  }
 
   /// @brief trigger an update tick
-  void update() override;
+  virtual void update() override;
 
   /// @brief enable/disable the module
   /// @param bool desired state
-  void set_enabled(bool v) override { enabled = v; }
+  virtual void set_enabled(bool v) override { enabled = v; }
 
   /// @brief check if the module is enabled
   /// @returns whether odometry is active
-  bool is_enabled() override { return enabled.load(); }
+  virtual bool is_enabled() override { return enabled.load(); }
 
 private:
   pros::Mutex mutex;
@@ -66,6 +66,7 @@ private:
   std::vector<double> prev_y_enc_vals;
 
   pose_s pose{0, 0, 0};
+  pose_s vel{0, 0, 0};
 
   GyroOdometry() {}
   void lock() {
@@ -108,4 +109,21 @@ public:
     std::vector<std::pair<std::shared_ptr<AbstractEncoder>, encoder_conf_s>>
         y_encs;
   };
+
+protected:
+  GyroOdometry(GyroOdometry &&other) {
+    lock();
+    // disable the other one
+    other.mutex.take();
+    enabled = other.enabled.load();
+    gyro = std::move(other.gyro);
+    x_encs = other.x_encs;
+    y_encs = other.y_encs;
+    prev_timestamp = other.prev_timestamp;
+    prev_heading = other.prev_heading;
+    prev_x_enc_vals = other.prev_x_enc_vals;
+    prev_y_enc_vals = other.prev_y_enc_vals;
+    pose = other.pose;
+    unlock();
+  }
 };

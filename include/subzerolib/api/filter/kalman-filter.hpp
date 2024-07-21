@@ -9,52 +9,44 @@
 
 class KalmanFilter : public Filter {
 public:
-  void predict(int delta_ms) override;
-  void predict(int delta_ms, Eigen::VectorXd control_input) override;
-  void update(int delta_ms, Eigen::VectorXd measurement) override;
+  void predict(int delta_ms = 0) override;
+  void predict(Eigen::VectorXd control_input, int delta_ms = 0) override;
+  void update(Eigen::VectorXd measurement, int delta_ms = 0) override;
 
   Eigen::VectorXd get_state() override {
 #ifdef TARGET_V5
-    if (mutex.take(5)) {
+    if (lock(5, "get_state")) {
 #endif
       Eigen::VectorXd output = state;
 #ifdef TARGET_V5
-      if (!mutex.give()) {
-        subzero::error("[e]: get_state(): kf mutex failed to return");
-      }
+      unlock("get_state");
 #endif
       return output;
 #ifdef TARGET_V5
-    } else {
-      subzero::error("[e]: get_state(): kf mutex failed to take");
-      return {};
     }
+    return {};
 #endif
   }
 
   Eigen::MatrixXd get_covariance() override {
 #ifdef TARGET_V5
-    if (mutex.take(5)) {
+    if (lock(5, "get_covariance")) {
 #endif
       Eigen::MatrixXd output = covariance;
 #ifdef TARGET_V5
-      if (!mutex.give()) {
-        subzero::error("[e]: get_covariance(): kf mutex failed to return");
-      }
+      unlock("get_covariance");
 #endif
       return output;
 #ifdef TARGET_V5
-    } else {
-      subzero::error("[e]: get_covariance(): kf mutex failed to take");
-      return {};
     }
+    return {};
 #endif
   }
 
   void initialise(Eigen::VectorXd i_state,
                   Eigen::MatrixXd i_covariance) override {
 #ifdef TARGET_V5
-    if (mutex.take(5)) {
+    if (lock(5, "initialise")) {
 #endif
       for (int i = 0; i < i_state.rows() && i < state.rows(); ++i) {
         state(i) = i_state(i);
@@ -62,25 +54,37 @@ public:
       i_covariance.conservativeResize(nx, nx);
       covariance = i_covariance;
 #ifdef TARGET_V5
-      if (!mutex.give()) {
-        subzero::error("[e]: initialise(): kf mutex failed to return");
-      }
-    } else {
-      subzero::error("[e]: initialise(): kf mutex failed to take");
+      unlock("initialise");
     }
 #endif
   }
-
-private:
-#ifdef TARGET_V5
-  pros::Mutex mutex;
-#endif
-  int n = 0;
 
   const uint nx;
   const uint nu;
   const uint nz;
 
+private:
+#ifdef TARGET_V5
+  pros::Mutex mutex;
+
+  bool lock(int dur = 5, const char *fnname = "") {
+    bool empty = std::string{fnname}.empty();
+    if (!mutex.take(dur)) {
+      subzero::error(
+          "[e]: %s%skf mutex failed to take", fnname, empty ? "" : "(): ");
+      return false;
+    }
+    return true;
+  }
+  void unlock(const char *fnname = "") {
+    bool empty = std::string{fnname}.empty();
+    if (!mutex.give()) {
+      subzero::error(
+          "[e]: %s%s kf mutex failed to return", fnname, empty ? "" : "(): ");
+    }
+  }
+#endif
+  int n = 0;
   Eigen::VectorXd state;
   Eigen::MatrixXd covariance;
 
@@ -148,4 +152,28 @@ public:
     Eigen::VectorXd b_x{{std::nan("")}};
     Eigen::MatrixXd b_p{{std::nan("")}};
   };
+
+protected:
+  KalmanFilter(KalmanFilter &&other)
+      : KalmanFilter(other.nx,
+                     other.nu,
+                     other.nz,
+                     other.state_transition_matrix,
+                     other.control_matrix,
+                     other.observation_matrix,
+                     other.process_noise_covariance,
+                     other.measurement_covariance) {
+#ifdef TARGET_V5
+    lock();
+    // disable the other one
+    other.lock(5, "KalmanFilter");
+#endif
+    state = other.state;
+    covariance = other.covariance;
+    next_state = other.next_state;
+    next_covariance = other.next_covariance;
+#ifdef TARGET_V5
+    unlock();
+#endif
+  }
 };

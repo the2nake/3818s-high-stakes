@@ -1,8 +1,6 @@
 #include "subzerolib/api/filter/kalman-filter.hpp"
 #ifdef TARGET_V5
 #include "subzerolib/api/util/logging.hpp"
-#include <cerrno>
-#include <iostream>
 #else
 #include <iostream>
 #endif
@@ -26,7 +24,7 @@ void KalmanFilter::predict(int delta_ms) {
 #endif
 }
 
-void KalmanFilter::predict(int delta_ms, Eigen::VectorXd control_input) {
+void KalmanFilter::predict(Eigen::VectorXd control_input, int delta_ms) {
   if (control_input.rows() != nu) {
     return;
   }
@@ -48,7 +46,7 @@ void KalmanFilter::predict(int delta_ms, Eigen::VectorXd control_input) {
 #endif
 }
 
-void KalmanFilter::update(int delta_ms, Eigen::VectorXd measurement) {
+void KalmanFilter::update(Eigen::VectorXd measurement, int delta_ms) {
   if (measurement.rows() != nz) {
     return;
   }

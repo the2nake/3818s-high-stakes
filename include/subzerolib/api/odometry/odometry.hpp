@@ -1,6 +1,5 @@
 #pragma once
 
-#include "subzerolib/api/geometry/point.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
 
 #include "pros/rtos.hpp"
@@ -8,7 +7,7 @@
 class Odometry {
 public:
   /// @brief deconstructs the odometry object and stops any running update task
-  ~Odometry() {
+  virtual ~Odometry() {
     if (update_task != nullptr) {
       stop_updating();
       pros::delay(20);
@@ -39,7 +38,7 @@ public:
 
   /// @brief get the current velocity
   /// @returns the velocity measurement
-  virtual point_s get_vel() = 0;
+  virtual pose_s get_vel() = 0;
 
   /// @brief trigger an update tick
   virtual void update() = 0;

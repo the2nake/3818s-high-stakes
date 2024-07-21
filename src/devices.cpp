@@ -3,6 +3,7 @@
 #include "ports.h"
 #include "subzerolib/api/chassis/star-chassis.hpp"
 #include "subzerolib/api/odometry/gyro-odometry.hpp"
+#include "subzerolib/api/odometry/kf-odometry.hpp"
 #include "subzerolib/api/sensors/abstract-mean-gyro.hpp"
 #include "subzerolib/api/util/logging.hpp"
 
@@ -60,11 +61,92 @@ void initialise_devices() {
           .with_rot_pref(0.3)
           .build();
 
-  odom = GyroOdometry::Builder()
-             .with_gyro(mean_imu)
-             .with_x_enc(odom_x, {-0.045, 0.160 / 360.0})
-             .with_y_enc(odom_y, {0.09, 0.160 / 360.0})
-             .build();
+  const double dt = 0.01;
 
+  // TODO: tune process noise
+  const double v_ah = std::pow(5, 2);
+  const double v_al = std::pow(
+      0.5,
+      2); // high for unpredictable acceleration? control input seems better
+
+  // measurement variances
+  const double vm_xh = std::pow(0.1, 2);
+  const double vm_vh = std::pow(0.5, 2);
+  const double vm_xl = std::pow(0.01, 2);
+  const double vm_vl = std::pow(0.1, 2);
+
+  Eigen::Vector<double, 9> initial_state{
+      {0, 0, 0, 0, 0, 0, 0, 0, 0}
+  };
+  Eigen::Matrix<double, 9, 9> initial_covariance;
+  initial_covariance.setZero();
+  initial_covariance.diagonal() = Eigen::Vector<double, 9>{
+      {5, 5, 5, 5, 5, 5, 200, 200, 200}
+  };
+  const double dt2 = dt * dt * 0.5;
+  Eigen::Matrix<double, 9, 9> state_transition_matrix{
+      {1, dt, dt2, 0,  0,   0, 0,  0,   0},
+      {0,  1,  dt, 0,  0,   0, 0,  0,   0},
+      {0,  0,   1, 0,  0,   0, 0,  0,   0},
+      {0,  0,   0, 1, dt, dt2, 0,  0,   0},
+      {0,  0,   0, 0,  1,  dt, 0,  0,   0},
+      {0,  0,   0, 0,  0,   1, 0,  0,   0},
+      {0,  0,   0, 0,  0,   0, 1, dt, dt2},
+      {0,  0,   0, 0,  0,   0, 0,  1,  dt},
+      {0,  0,   0, 0,  0,   0, 0,  0,   1}
+  };
+  Eigen::Matrix<double, 6, 9> observation_matrix{
+      {1, 0, 0, 0, 0, 0, 0, 0, 0},
+      {0, 1, 0, 0, 0, 0, 0, 0, 0},
+      {0, 0, 0, 1, 0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 1, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0, 0, 1, 0, 0},
+      {0, 0, 0, 0, 0, 0, 0, 1, 0},
+  };
+  const double c4 = 0.25 * dt * dt * dt * dt;
+  const double c3 = 0.5 * dt * dt * dt;
+  const double c2 = dt * dt;
+  const double c4h = v_ah * c4;
+  const double c3h = v_ah * c3;
+  const double c2h = v_ah * c2;
+  const double c1h = v_ah * dt;
+  const double c4l = v_al * c4;
+  const double c3l = v_al * c3;
+  const double c2l = v_al * c2;
+  const double c1l = v_al * dt;
+  Eigen::Matrix<double, 9, 9> process_noise_covariance{
+      {c4l, c3l, c2l,   0,   0,   0,   0,   0,   0},
+      {c3l, c2l, c1l,   0,   0,   0,   0,   0,   0},
+      {c2l, c1l,   1,   0,   0,   0,   0,   0,   0},
+      {  0,   0,   0, c4l, c3l, c2l,   0,   0,   0},
+      {  0,   0,   0, c3l, c2l, c1l,   0,   0,   0},
+      {  0,   0,   0, c2l, c1l,   1,   0,   0,   0},
+      {  0,   0,   0,   0,   0,   0, c4h, c3h, c2h},
+      {  0,   0,   0,   0,   0,   0, c3h, c2h, c1h},
+      {  0,   0,   0,   0,   0,   0, c2h, c1h,   1}
+  };
+  Eigen::Matrix<double, 6, 6> measurement_covariance;
+  measurement_covariance.setZero();
+  measurement_covariance.diagonal() = Eigen::Vector<double, 6>{
+      {vm_xl, vm_vl, vm_xl, vm_vl, vm_xh, vm_vh}
+  };
+  // TODO: separate class for filtering
+  // TODO: handle heading in filter direct from hardware
+  // TODO: give overall tracked position from imu_odometry for mode global
+  // TODO: tune filtering parameters properly
+
+  KFOdometry::Builder builder(9, 0, 6);
+  builder.with_gyro(mean_imu)
+      .with_x_enc(odom_x, {-0.045, 0.160 / 360.0})
+      .with_y_enc(odom_y, {0.09, 0.160 / 360.0});
+  builder.with_initial_state(initial_state)
+      .with_initial_covariance(initial_covariance)
+      .with_measurement_covariance(measurement_covariance)
+      .with_state_transition_matrix(state_transition_matrix)
+      .with_observation_matrix(observation_matrix)
+      .with_process_noise_covariance(process_noise_covariance);
+  odom = builder.build();
   odom->auto_update();
+
+  // TODO: KFGyroOdometry has GyroOdometry methods under private
 }

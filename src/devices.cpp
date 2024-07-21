@@ -64,10 +64,9 @@ void initialise_devices() {
   const double dt = 0.01;
 
   // TODO: tune process noise
-  const double v_ah = std::pow(5, 2);
-  const double v_al = std::pow(
-      0.5,
-      2); // high for unpredictable acceleration? control input seems better
+  const double v_ah = std::pow(10, 2);
+  // high for unpredictable acceleration? control input seems better
+  const double v_al = std::pow(0.5, 2);
 
   // measurement variances
   const double vm_xh = std::pow(0.1, 2);
@@ -130,9 +129,7 @@ void initialise_devices() {
   measurement_covariance.diagonal() = Eigen::Vector<double, 6>{
       {vm_xl, vm_vl, vm_xl, vm_vl, vm_xh, vm_vh}
   };
-  // TODO: separate class for filtering
-  // TODO: handle heading in filter direct from hardware
-  // TODO: give overall tracked position from imu_odometry for mode global
+
   // TODO: tune filtering parameters properly
 
   KFOdometry::Builder builder(9, 0, 6);
@@ -147,6 +144,4 @@ void initialise_devices() {
       .with_process_noise_covariance(process_noise_covariance);
   odom = builder.build();
   odom->auto_update();
-
-  // TODO: KFGyroOdometry has GyroOdometry methods under private
 }

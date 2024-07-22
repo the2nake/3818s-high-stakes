@@ -35,7 +35,7 @@ std::shared_ptr<AbstractEncoder> odom_y{
     new AbstractRotationEncoder(PORT_Y_ENC, true)};
 std::shared_ptr<Odometry> odom;
 
-void initialise_devices() {
+void calibrate_imus() {
   auto imus = pros::Imu::get_all_devices();
   for (auto device : imus) {
     subzero::log("[i]: resetting imu on port %d", device.get_port());
@@ -46,9 +46,10 @@ void initialise_devices() {
       pros::delay(100);
     subzero::log("[i]: imu on port %d ready", device.get_port());
   }
-
   pros::delay(500);
+}
 
+void configure_chassis() {
   chassis =
       StarChassis::Builder()
           .with_motors(StarChassis::motor_pos_e::front_left, std::move(fl))
@@ -60,11 +61,14 @@ void initialise_devices() {
           .with_geometry(0.35, 0.37)
           .with_rot_pref(0.3)
           .build();
+}
 
+void configure_odometry() {
+  // TODO: measure filter drift
   const double dt = 0.01;
 
   // TODO: tune process noise
-  const double v_ah = std::pow(10, 2);
+  const double v_ah = std::pow(0.1, 2);
   // high for unpredictable acceleration? control input seems better
   const double v_al = std::pow(0.5, 2);
 
@@ -130,8 +134,6 @@ void initialise_devices() {
       {vm_xl, vm_vl, vm_xl, vm_vl, vm_xh, vm_vh}
   };
 
-  // TODO: tune filtering parameters properly
-
   KFOdometry::Builder builder(9, 0, 6);
   builder.with_gyro(mean_imu)
       .with_x_enc(odom_x, {-0.045, 0.160 / 360.0})
@@ -144,4 +146,12 @@ void initialise_devices() {
       .with_process_noise_covariance(process_noise_covariance);
   odom = builder.build();
   odom->auto_update();
+}
+
+void initialise_devices() {
+  calibrate_imus();
+
+  configure_chassis();
+
+  configure_odometry();
 }

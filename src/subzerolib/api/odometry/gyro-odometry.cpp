@@ -17,6 +17,9 @@ void GyroOdometry::set_position(double i_x, double i_y) {
 void GyroOdometry::update() {
   auto now = pros::millis();
   double dt = (now - prev_timestamp) * 0.001;
+  if (dt == 0.0) {
+    dt = 0.01;
+  }
   prev_timestamp = now;
 
   double raw_h = prev_heading;
@@ -24,8 +27,13 @@ void GyroOdometry::update() {
     raw_h = gyro->heading();
   }
   double dh = shorter_turn(prev_heading, raw_h);
-  if (std::isnan(dh)) {
+  if (std::isnan(raw_h)) {
     dh = 0;
+    if (std::isnan(prev_heading)) {
+      prev_heading = 0.0;
+    }
+  } else if (std::isnan(prev_heading)) {
+    prev_heading = raw_h;
   }
 
   std::vector<double> x_enc_raws(x_encs.size());

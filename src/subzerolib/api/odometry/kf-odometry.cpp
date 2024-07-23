@@ -2,16 +2,16 @@
 
 void KFOdometry::set_heading(double heading) {
   GyroOdometry::set_heading(heading);
-  Eigen::VectorXd state = KalmanFilter::get_state();
-  Eigen::VectorXd cov = KalmanFilter::get_covariance();
+  auto state = KalmanFilter::get_state();
+  auto cov = KalmanFilter::get_covariance();
   state(6) = heading;
   KalmanFilter::initialise(state, cov);
 }
 
 void KFOdometry::set_position(double x, double y) {
   GyroOdometry::set_position(x, y);
-  Eigen::VectorXd state = KalmanFilter::get_state();
-  Eigen::VectorXd cov = KalmanFilter::get_covariance();
+  auto state = KalmanFilter::get_state();
+  auto cov = KalmanFilter::get_covariance();
   state(0) = x;
   state(3) = y;
   KalmanFilter::initialise(state, cov);
@@ -30,10 +30,10 @@ pose_s KFOdometry::get_vel() {
 /// @brief trigger an update tick
 void KFOdometry::update() {
   GyroOdometry::update();
-  auto pose = GyroOdometry::get_pose();
-  auto vel = GyroOdometry::get_vel();
   if (is_enabled()) {
     KalmanFilter::predict();
+    auto pose = GyroOdometry::get_pose();
+    auto vel = GyroOdometry::get_vel();
     Eigen::Vector<double, 6> meas{pose.x, vel.x, pose.y, vel.y, pose.h, vel.h};
     KalmanFilter::update(meas);
   }

@@ -16,7 +16,7 @@ pose_s lerp(pose_s a, pose_s b, double t) {
 }
 
 pose_s operator+(pose_s a, pose_s b) {
-  return {a.x + b.x, a.y + b.y, fmod(a.h + b.h, 360.0)};
+  return {a.x + b.x, a.y + b.y, a.h + b.h};
 }
 
 pose_s operator-(pose_s a, pose_s b) {

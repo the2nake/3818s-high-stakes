@@ -13,7 +13,7 @@ struct AbstractGyro {
 
   /// @brief get the heading
   /// @returns the heading measurement
-  virtual double heading() = 0;
+  virtual double degrees() = 0;
 };
 
 class AbstractImuGyro : public AbstractGyro, public pros::Imu {
@@ -32,7 +32,7 @@ public:
 
   /// @brief get the heading
   /// @returns the heading measurement
-  double heading() override {
+  double degrees() override {
     if (is_calibrating()) {
       return 0;
     } else {
@@ -40,7 +40,7 @@ public:
         output += scale * shorter_turn(prev_heading, get_heading());
         prev_heading = get_heading();
         mutex.give();
-        return mod(output, 360.0);
+        return output;
       } else {
         return get_heading();
       }

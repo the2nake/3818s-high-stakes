@@ -3,8 +3,11 @@
 
 /// Requirements for the filter:
 ///
-/// state vector of form [x, vx, ax, y, vy, ay, h, vh, ah]
-/// measurement vector of form [x, vx, y, vy, h, vh]
+/// state vector of form [x, vx, y, vy, h, vh]
+/// measurement vector of form [vx, vy, h, vh]
+/// control vector form [ax, ay]
+///
+/// edittable class
 // TODO: why cannot cast to private base type?
 class KFOdometry : public GyroOdometry, private KalmanFilter {
 public:
@@ -37,6 +40,13 @@ public:
   /// @brief check if the module is enabled
   /// @returns whether odometry is active
   bool is_enabled() override;
+
+  pose_s get_raw_pose() { return GyroOdometry::get_pose(); }
+  pose_s get_raw_vel() { return GyroOdometry::get_vel(); }
+  Eigen::VectorXd get_state() override { return KalmanFilter::get_state(); }
+  Eigen::MatrixXd get_covariance() override {
+    return KalmanFilter::get_covariance();
+  }
 
 private:
   KFOdometry(std::shared_ptr<GyroOdometry> i_odom,

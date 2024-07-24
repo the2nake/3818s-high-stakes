@@ -1,5 +1,6 @@
 #include "subzerolib/api/filter/kalman-filter.hpp"
 #include <iostream>
+#include <thread>
 
 int main() {
   Eigen::Vector<double, 6> initial_state{
@@ -56,19 +57,26 @@ int main() {
                     .with_observation_matrix(observation_matrix)
                     .with_process_noise_covariance(process_noise_covariance)
                     .build();
-  Eigen::Matrix<double, 2, 1> meas{{301.5}, {-401.46}};
   if (filter == nullptr) {
     std::cout << "filter init failed" << std::endl;
     return 0;
   }
 
-  filter->predict(1000);
-  filter->update(1000, meas);
-
-  std::cout << "state" << std::endl;
-  std::cout << filter->get_state() << std::endl;
-  std::cout << "covariance" << std::endl;
-  std::cout << filter->get_covariance() << std::endl;
+  std::vector<double> meas_x = {
+      301.5, 298.23, 297.83, 300.42, 301.94, 299.5, 305.98, 301.25};
+  std::vector<double> meas_y = {
+      -401.46, -375.44, -346.15, -320.2, -300.08, -274.12, -253.45, -226.4};
+  for (int i = 0; i < meas_x.size() && i < meas_y.size(); ++i) {
+    filter->predict();
+    std::cout << "prediction" << std::endl;
+    std::cout << filter->get_pred_state() << std::endl;
+    std::cout << filter->get_pred_covariance() << std::endl;
+    std::cout << "updated" << std::endl;
+    filter->update(Eigen::Vector<double, 2>{meas_x[i], meas_y[i]});
+    std::cout << filter->get_state() << std::endl;
+    std::cout << filter->get_covariance() << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  }
 
   /*
   expected:

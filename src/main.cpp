@@ -5,6 +5,7 @@
 
 #include "pros/colors.hpp"
 #include "pros/screen.hpp"
+#include "subzerolib/api/odometry/gyro-odometry.hpp"
 #include <memory>
 
 namespace saturnine {
@@ -83,8 +84,25 @@ void odom_disp_loop(void *ignore) {
       }
     }
     pros::screen::set_pen(pros::Color::white);
+    subzero::print(0, "filtered pos + vel");
     subzero::print(
-        0, "(%5.2f, %5.2f) h: %3.0f", pose.x, pose.y, pose.heading());
+        1, "(%5.2f, %5.2f) h: %5.0f", pose.x, pose.y, pose.heading());
+    pose = odom->get_vel();
+    subzero::print(
+        2, "(%5.2f, %5.2f) h: %5.0f", pose.x, pose.y, pose.heading());
+    subzero::print(3, "raw pos + vel");
+    auto obj = dynamic_cast<KFOdometry *>(odom.get());
+    pose = obj->get_raw_pose();
+    subzero::print(
+        4, "(%5.2f, %5.2f) h: %5.0f", pose.x, pose.y, pose.heading());
+    pose = obj->get_raw_vel();
+    subzero::print(
+        5, "(%5.2f, %5.2f) h: %5.0f", pose.x, pose.y, pose.heading());
+    Eigen::VectorXd d = obj->get_covariance().diagonal();
+    subzero::print(6, "%f %f", d(0), d(1));
+    subzero::print(7, "%f %f", d(2), d(3));
+    subzero::print(8, "%f %f", d(4), d(5));
+
     pros::delay(10);
   }
 }

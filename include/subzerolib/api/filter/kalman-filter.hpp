@@ -43,6 +43,9 @@ public:
 #endif
   }
 
+  Eigen::MatrixXd get_pred_state() { return next_state; }
+  Eigen::MatrixXd get_pred_covariance() { return next_covariance; }
+
   void initialise(Eigen::VectorXd i_state,
                   Eigen::MatrixXd i_covariance) override {
 #ifdef TARGET_V5

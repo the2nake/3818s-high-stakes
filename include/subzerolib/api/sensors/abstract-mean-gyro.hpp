@@ -31,16 +31,16 @@ public:
 
   /// @brief get the heading
   /// @returns the heading measurement
-  virtual double heading() {
+  virtual double degrees() {
     if (gyros.size() < 1) {
       return 0.0;
     }
-    const double index = gyros[0]->heading();
+    const double index = gyros[0]->degrees();
     double result = index;
     for (auto &gyro : gyros) {
-      result += shorter_turn(index, gyro->heading()) / gyros.size();
+      result += shorter_turn(index, gyro->degrees()) / gyros.size();
     }
-    return mod(result, 360.0);
+    return result;
   }
 
 private:

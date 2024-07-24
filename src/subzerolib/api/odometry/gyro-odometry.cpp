@@ -24,7 +24,7 @@ void GyroOdometry::update() {
 
   double raw_h = prev_heading;
   if (is_enabled()) {
-    raw_h = gyro->heading();
+    raw_h = gyro->degrees();
   }
   double dh = shorter_turn(prev_heading, raw_h);
   if (std::isnan(raw_h)) {
@@ -108,7 +108,7 @@ void GyroOdometry::update() {
   if (is_enabled()) {
     pose.x += dx_g;
     pose.y += dy_g;
-    pose.h = mod(pose.h + dh, 360.0);
+    pose.h = pose.h + dh;
     vel.x = dx_g / dt;
     vel.y = dy_g / dt;
     vel.h = dh / dt;

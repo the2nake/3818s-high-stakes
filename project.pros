@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "3818s-high-stakes",
+    "project_name": "3818-high-stakes",
     "target": "v5",
     "templates": {
       "kernel": {

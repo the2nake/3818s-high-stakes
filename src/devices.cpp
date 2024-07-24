@@ -67,44 +67,43 @@ void configure_odometry() {
   const double dt = 0.01;
 
   const double v_ah = std::pow(0.5, 2);
-  const double v_al = std::pow(0.02, 2);
+  const double v_al = std::pow(0.03, 2);
 
   // measurement variances
   const double vm_xh = std::pow(0.1, 2);
   const double vm_vh = std::pow(0.5, 2);
 
-  const double vm_vl = std::pow(0.005, 2);
-  // const double vm_al = std::pow(0.12, 2);
+  const double vm_vl = std::pow(0.0025, 2);
+  const double vm_al = std::pow(0.07, 2);
 
-  Eigen::Vector<double, 6> initial_state{
-      {0, 0, 0, 0, 0, 0}
+  Eigen::Vector<double, 8> initial_state{
+      {0, 0, 0, 0, 0, 0, 0, 0}
   };
-  Eigen::Matrix<double, 6, 6> initial_covariance;
+  Eigen::Matrix<double, 8, 8> initial_covariance;
   initial_covariance.setZero();
-  initial_covariance.diagonal() = Eigen::Vector<double, 6>{
-      {0.01, 0, 0.01, 0, 0.01, 0}
+  initial_covariance.diagonal() = Eigen::Vector<double, 8>{
+      {0.01, 0, 5, 0.01, 0, 5, 0.01, 0}
   };
-  Eigen::Matrix<double, 6, 6> state_transition_matrix{
-      {1, dt, 0,  0, 0,  0},
-      {0,  1, 0,  0, 0,  0},
-      {0,  0, 1, dt, 0,  0},
-      {0,  0, 0,  1, 0,  0},
-      {0,  0, 0,  0, 1, dt},
-      {0,  0, 0,  0, 0,  1},
+  const double dt2 = 0.5 * dt * dt;
+  Eigen::Matrix<double, 8, 8> state_transition_matrix{
+      {1, dt, dt2, 0,  0,   0, 0,  0},
+      {0,  1,  dt, 0,  0,   0, 0,  0},
+      {0,  0,   1, 0,  0,   0, 0,  0},
+      {0,  0,   0, 1, dt, dt2, 0,  0},
+      {0,  0,   0, 0,  1,  dt, 0,  0},
+      {0,  0,   0, 0,  0,   1, 0,  0},
+      {0,  0,   0, 0,  0,   0, 1, dt},
+      {0,  0,   0, 0,  0,   0, 0,  1},
   };
-  Eigen::Matrix<double, 6, 2> control_matrix{
-      {0.5 * dt * dt,             0},
-      {           dt,             0},
-      {            0, 0.5 * dt * dt},
-      {            0,            dt},
-      {            0,             0},
-      {            0,             0},
-  };
-  Eigen::Matrix<double, 4, 6> observation_matrix{
-      {0, 1, 0, 0, 0, 0},
-      {0, 0, 0, 1, 0, 0},
-      {0, 0, 0, 0, 1, 0},
-      {0, 0, 0, 0, 0, 1},
+  Eigen::Matrix<double, 8, 8> observation_matrix{
+      {0, 1, 0, 0, 0, 0, 0, 0},
+      {0, 0, 1, 0, 0, 0, 0, 0},
+      {0, 0, 1, 0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 1, 0, 0, 0},
+      {0, 0, 0, 0, 0, 1, 0, 0},
+      {0, 0, 0, 0, 0, 1, 0, 0},
+      {0, 0, 0, 0, 0, 0, 1, 0},
+      {0, 0, 0, 0, 0, 0, 0, 1},
   };
   const double c4 = 0.25 * dt * dt * dt * dt;
   const double c3 = 0.5 * dt * dt * dt;
@@ -117,21 +116,23 @@ void configure_odometry() {
   const double c3l = v_al * c3;
   const double c2l = v_al * c2;
   const double c1l = v_al * dt;
-  Eigen::Matrix<double, 6, 6> process_noise_covariance{
-      {c4l, c3l,   0,   0,   0,   0},
-      {c3l, c2l,   0,   0,   0,   0},
-      {  0,   0, c4l, c3l,   0,   0},
-      {  0,   0, c3l, c2l,   0,   0},
-      {  0,   0,   0,   0, c4h, c3h},
-      {  0,   0,   0,   0, c3h, c2h}
+  Eigen::Matrix<double, 8, 8> process_noise_covariance{
+      {c4l, c3l,  c2l,   0,   0,    0,   0,   0},
+      {c3l, c2l,  c1l,   0,   0,    0,   0,   0},
+      {c2l, c1l, v_al,   0,   0,    0,   0,   0},
+      {  0,   0,    0, c4l, c3l,  c2l,   0,   0},
+      {  0,   0,    0, c3l, c2l,  c1l,   0,   0},
+      {  0,   0,    0, c2l, c1l, v_al,   0,   0},
+      {  0,   0,    0,   0,   0,    0, c4h, c3h},
+      {  0,   0,    0,   0,   0,    0, c3h, c2h}
   };
-  Eigen::Matrix<double, 4, 4> measurement_covariance;
+  Eigen::Matrix<double, 8, 8> measurement_covariance;
   measurement_covariance.setZero();
-  measurement_covariance.diagonal() = Eigen::Vector<double, 4>{
-      {vm_vl, vm_vl, vm_xh, vm_vh}
+  measurement_covariance.diagonal() = Eigen::Vector<double, 8>{
+      {vm_vl, vm_al, vm_al, vm_vl, vm_al, vm_al, vm_xh, vm_vh}
   };
 
-  KFOdometry::Builder builder(6, 2, 4);
+  KFOdometry::Builder builder(8, 0, 8);
   builder.with_gyro(mean_imu)
       .with_x_enc(odom_x, {-0.045, 0.160 / 360.0})
       .with_y_enc(odom_y, {0.09, 0.160 / 360.0});
@@ -139,7 +140,7 @@ void configure_odometry() {
       .with_initial_covariance(initial_covariance)
       .with_measurement_covariance(measurement_covariance)
       .with_state_transition_matrix(state_transition_matrix)
-      .with_control_matrix(control_matrix)
+      //.with_control_matrix(control_matrix)
       .with_observation_matrix(observation_matrix)
       .with_process_noise_covariance(process_noise_covariance);
   odom = builder.build();

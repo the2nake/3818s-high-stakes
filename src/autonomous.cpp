@@ -1,8 +1,6 @@
 #include "main.h"
 #include "devices.hpp"
 
-#include "subzerolib/api.hpp"
-
 void autonomous() {
   std::shared_ptr<HoloChassisPID> controller =
       HoloChassisPID::Builder()

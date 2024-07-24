@@ -5,7 +5,6 @@
 
 #include "pros/colors.hpp"
 #include "pros/screen.hpp"
-#include "subzerolib/api/odometry/gyro-odometry.hpp"
 #include <memory>
 
 namespace saturnine {

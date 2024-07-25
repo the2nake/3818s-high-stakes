@@ -67,7 +67,7 @@ void configure_odometry() {
   const double dt = 0.01;
 
   const double v_ah = std::pow(0.5, 2);
-  const double v_al = std::pow(0.03, 2);
+  const double v_al = std::pow(0.028, 2);
 
   // measurement variances
   const double vm_xh = std::pow(0.1, 2);

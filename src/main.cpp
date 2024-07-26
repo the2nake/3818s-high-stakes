@@ -29,6 +29,7 @@ void odom_disp_loop(void *ignore) {
 
   const double max_x = 0.5;
   const double max_y = 0.5;
+  const double padding = 12;
 
   while (saturnine::running) {
     auto pose = odom->get_pose();
@@ -38,18 +39,20 @@ void odom_disp_loop(void *ignore) {
     }
 
     pros::screen::set_pen(pros::Color::black);
-    pros::screen::fill_rect(
-        graphx1 - 12, graphy1 - 12, graphx2 + 12, graphy2 + 12);
+    pros::screen::fill_rect(graphx1 - padding,
+                            graphy1 - padding,
+                            graphx2 + padding,
+                            graphy2 + padding);
     pros::screen::set_pen(pros::Color::gray);
     pros::screen::draw_line(graphx1, graphymid, graphx2,
                             graphymid); // x axis
     pros::screen::draw_line(graphxmid, graphy1, graphxmid,
                             graphy2); // y axis
     pros::screen::set_pen(pros::Color::light_gray);
-    pros::screen::draw_rect(graphx1 - 12,
-                            graphy1 - 12,
-                            graphx2 + 12,
-                            graphy2 + 12); // frame
+    pros::screen::draw_rect(graphx1 - padding,
+                            graphy1 - padding,
+                            graphx2 + padding,
+                            graphy2 + padding); // frame
 
     for (int i = 0; i < past_points.size(); ++i) {
       if (i >= past_points.size() * 0.75) {
@@ -97,10 +100,10 @@ void odom_disp_loop(void *ignore) {
     pose = obj->get_raw_vel();
     subzero::print(
         5, "(%6.3f, %6.3f) h: %5.0f", pose.x, pose.y, pose.heading());
-    //Eigen::VectorXd d = obj->get_covariance().diagonal();
-    //subzero::print(6, "%f %f", d(0), d(1));
-    //subzero::print(7, "%f %f", d(2), d(3));
-    //subzero::print(8, "%f %f", d(4), d(5));
+    // Eigen::VectorXd d = obj->get_covariance().diagonal();
+    // subzero::print(6, "%f %f", d(0), d(1));
+    // subzero::print(7, "%f %f", d(2), d(3));
+    // subzero::print(8, "%f %f", d(4), d(5));
 
     pros::delay(10);
   }

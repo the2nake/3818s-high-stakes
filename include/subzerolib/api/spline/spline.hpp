@@ -27,6 +27,10 @@ struct spline_point_s {
   double ax;
   double ay;
   double a() const { return std::hypot(ax, ay); }
+
+  point_s point() const {
+      return {x, y};
+  }
 };
 
 class Spline {

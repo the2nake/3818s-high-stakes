@@ -1,5 +1,5 @@
 #include "subzerolib/api/spline/catmull-rom.hpp"
-#include "subzerolib/api/spline/cubic-spline.hpp"
+#include "subzerolib/api/spline/spline.hpp"
 #include <algorithm>
 
 CatmullRomSpline::CatmullRomSpline(std::vector<point_s> icontrol_points)
@@ -64,8 +64,7 @@ std::vector<spline_point_s> CatmullRomSpline::sample_kinematics(int count) {
     auto pos = get_pos(u);
     double s = 0.0;
     if (i > 0) {
-      point_s prev_pos{sampled_points.back().x, sampled_points.back().y};
-      s = sampled_points.back().s + pos.dist(prev_pos);
+      s = sampled_points.back().s + pos.dist(sampled_points.back().point());
     }
     auto vel = get_vel(u);
     auto accel = get_accel(u);

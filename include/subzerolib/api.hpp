@@ -22,7 +22,7 @@
 #include "subzerolib/api/sensors/abstract-gyro.hpp"
 #include "subzerolib/api/sensors/abstract-mean-gyro.hpp"
 #include "subzerolib/api/spline/catmull-rom.hpp"
-#include "subzerolib/api/spline/cubic-spline.hpp"
+#include "subzerolib/api/spline/spline.hpp"
 #include "subzerolib/api/trajectory/motion-profile/linear-motion-profile.hpp"
 #include "subzerolib/api/trajectory/motion-profile/trapezoidal-motion-profile.hpp"
 #include "subzerolib/api/trajectory/trajectory.hpp"

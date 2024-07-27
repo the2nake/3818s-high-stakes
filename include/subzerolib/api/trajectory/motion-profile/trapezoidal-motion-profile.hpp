@@ -49,6 +49,6 @@ private:
   const double max_accel;
   const double max_decel;
 
-  double resolution = 0.05; // ms
+  double resolution = 0.05; // distance
   std::vector<profile_point_s> points;
 };

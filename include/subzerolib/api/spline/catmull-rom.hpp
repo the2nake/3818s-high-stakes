@@ -2,7 +2,7 @@
 
 #include "subzerolib/api/geometry/point.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
-#include "subzerolib/api/spline/cubic-spline.hpp"
+#include "subzerolib/api/spline/spline.hpp"
 
 #include <vector>
 

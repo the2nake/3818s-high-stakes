@@ -87,19 +87,15 @@ void odom_disp_loop(void *ignore) {
     }
     pros::screen::set_pen(pros::Color::white);
     subzero::print(0, "filtered pos + vel");
-    subzero::print(
-        1, "(%6.3f, %6.3f) h: %5.0f", pose.x, pose.y, pose.heading());
+    subzero::print(1, "(%6.3f, %6.3f) h: %5.0f", pose.x, pose.y, pose.h);
     pose = odom->get_vel();
-    subzero::print(
-        2, "(%6.3f, %6.3f) h: %5.0f", pose.x, pose.y, pose.heading());
+    subzero::print(2, "(%6.3f, %6.3f) h: %5.0f", pose.x, pose.y, pose.h);
     subzero::print(3, "raw pos + vel");
-    auto obj = dynamic_cast<KFOdometry *>(odom.get());
-    pose = obj->get_raw_pose();
-    subzero::print(
-        4, "(%6.3f, %6.3f) h: %5.0f", pose.x, pose.y, pose.heading());
-    pose = obj->get_raw_vel();
-    subzero::print(
-        5, "(%6.3f, %6.3f) h: %5.0f", pose.x, pose.y, pose.heading());
+    auto kfodom = dynamic_cast<KFOdometry *>(odom.get());
+    auto raw = kfodom->get_raw_pose();
+    subzero::print(4, "(%6.3f, %6.3f) h: %5.0f", raw.x, raw.y, raw.h);
+    pose = kfodom->get_raw_vel();
+    subzero::print(5, "(%6.3f, %6.3f) h: %5.0f", raw.x, raw.y, raw.h);
     // Eigen::VectorXd d = obj->get_covariance().diagonal();
     // subzero::print(6, "%f %f", d(0), d(1));
     // subzero::print(7, "%f %f", d(2), d(3));

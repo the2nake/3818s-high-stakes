@@ -11,6 +11,8 @@ namespace saturnine {
 bool running = true;
 };
 
+// #define DEBUG
+
 // TODO: test PID on the arm
 
 std::unique_ptr<Filter> filter = nullptr;
@@ -122,8 +124,9 @@ void disabled() {}
 void competition_initialize() {}
 
 void opcontrol() {
+#ifdef DEBUG
   autonomous();
-
+#endif
   pros::Controller master(pros::E_CONTROLLER_MASTER);
   auto pose = odom->get_pose();
   if (std::isnan(pose.h))

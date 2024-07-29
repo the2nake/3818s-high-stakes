@@ -161,7 +161,7 @@ void opcontrol() {
     } else {
       target_angle = 90 - in_deg(atan2(ctrl_ry, ctrl_rx));
     }
-    auto angle_err = shorter_turn(pose.h, target_angle);
+    auto angle_err = shorter_turn(pose.h, target_angle, 360.0);
     angle_pid.update(angle_err);
     if (std::abs(angle_err) > 1 &&
         std::abs(angle_pid.get_output()) > 0.3) { // anti jitter

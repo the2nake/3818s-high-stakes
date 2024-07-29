@@ -38,7 +38,7 @@ public:
     const double index = gyros[0]->degrees();
     double result = index;
     for (auto &gyro : gyros) {
-      result += shorter_turn(index, gyro->degrees()) / gyros.size();
+      result += shorter_turn(index, gyro->degrees(), 360.0) / gyros.size();
     }
     return result;
   }

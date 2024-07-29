@@ -1,20 +1,23 @@
 #include "subzerolib/api/spline/catmull-rom.hpp"
 #include "subzerolib/api/spline/spline.hpp"
+#include "subzerolib/api/trajectory/motion-profile/linear-motion-profile.hpp"
 #include "subzerolib/api/trajectory/motion-profile/trapezoidal-motion-profile.hpp"
 #include "subzerolib/api/util/math.hpp"
+
+#include <cmath>
 #include <limits>
 
-struct profile_point_s {
-  profile_point_s(double i_t = 0,
-                  double i_s = 0,
-                  double i_x = 0,
-                  double i_vx = 0,
-                  double i_y = 0,
-                  double i_vy = 0,
-                  double i_h = 0,
-                  double i_vh = 0)
+struct trajectory_point_s {
+  trajectory_point_s(double i_t = 0,
+                     double i_s = 0,
+                     double i_x = 0,
+                     double i_vx = 0,
+                     double i_y = 0,
+                     double i_vy = 0,
+                     double i_h = 0,
+                     double i_vh = 0)
       : t(i_t), s(i_s), x(i_x), vx(i_vx), y(i_y), vy(i_vy), h(i_h), vh(i_vh) {}
-  profile_point_s(spline_point_s &point)
+  trajectory_point_s(spline_point_s &point)
       : s(point.s), x(point.x), vx(point.vx), y(point.y), vy(point.vy) {}
 
   double t = 0;
@@ -44,10 +47,11 @@ int find_pose_index(std::vector<spline_point_s> &vec, pose_s pose) {
 }
 
 int main() {
-  TrapezoidalMotionProfile trap{10, 20, 20};
-  trap.generate(30);
-  trap.print();
+  // set up a linear motion profile
+  LinearMotionProfile *generator = new TrapezoidalMotionProfile{1.85, 6, 6};
+  generator->set_resolution(0.01);
 
+  // generate the curve using a catmull rom spline
   std::vector<pose_s> ctrl = {
       pose_s{  0.0,  0.0,   0.0},
       pose_s{  0.4,  0.6,  45.0},
@@ -56,12 +60,10 @@ int main() {
   };
   CatmullRomSpline spline(ctrl);
   spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
-  std::vector<spline_point_s> sampled = spline.sample_kinematics(200);
-  std::vector<profile_point_s> profile(sampled.size());
+  std::vector<spline_point_s> sampled = spline.sample_kinematics(300);
+  std::vector<trajectory_point_s> profile(sampled.size());
   for (int i = 0; i < sampled.size(); ++i) {
     profile[i] = sampled[i];
-    profile[i].vx = 0.0;
-    profile[i].vy = 0.0;
   }
   std::vector<int> ctrl_indices;
   for (auto &c : ctrl) {
@@ -71,14 +73,27 @@ int main() {
     profile[i].h = c.h;
     ctrl_indices.push_back(i);
   }
-  trap.generate(profile.back().s);
 
-  printf("ctrl_indices: ");
-  for (auto &i : ctrl_indices) {
-    printf("%d ", i);
+  // apply profile to path
+  generator->generate(profile.back().s);
+  // dynamic_cast<TrapezoidalMotionProfile *>(generator)->print();
+  for (int i = 0; i < profile.size(); ++i) {
+    LinearMotionProfile::profile_point_s motion =
+        generator->get_point_at_distance(profile[i].s);
+    profile[i].t = motion.t;
+    if (i < profile.size() - 1) {
+      double dx = profile[i + 1].x - profile[i].x;
+      double dy = profile[i + 1].y - profile[i].y;
+      double ds = hypot(dx, dy); // don't use s here
+      profile[i].vx = motion.v / ds * dx;
+      profile[i].vy = motion.v / ds * dy;
+    }
   }
-  printf("\n");
+  // the endpoint is assumed to be a control point
+  profile.back().vx = 0;
+  profile.back().vy = 0;
 
+  // lerp headings and angular velocity
   for (int i = 0; i < profile.size(); ++i) {
     if (std::find(ctrl_indices.begin(), ctrl_indices.end(), i) ==
         ctrl_indices.end()) {
@@ -96,18 +111,49 @@ int main() {
       double factor = curr_s / long_s;
       double begin_h = profile[start_index].h;
       double end_h = profile[end_index].h;
-      profile[i].h = begin_h + factor * shorter_turn(begin_h, end_h);
+      profile[i].h = begin_h + factor * shorter_turn(begin_h, end_h, 360.0);
+      /*
       auto &p = profile[i];
-      printf("i=%d s=%.3f (%.2f, %.2f) h=%.0f factor=%.3f i0=%d i1=%d\n", i, p.s, p.x, p.y, p.h, factor, start_index, end_index);
+      printf("i=%d s=%.3f (%.2f, %.2f) h=%.0f factor=%.3f i0=%d i1=%d\n",
+             i,
+             p.s,
+             p.x,
+             p.y,
+             p.h,
+             factor,
+             start_index,
+             end_index);
+             */
     } else {
+      /*
       auto &p = profile[i];
       printf("i=%d s=%.3f (%.2f, %.2f) h=%.0f\n", i, p.s, p.x, p.y, p.h);
+      */
+    }
+    // generate vh
+    if (i != profile.size() - 1) {
+      double dt = profile[i + 1].t - profile[i].t;
+      // printf("%f\n", dt);
+      profile[i].vh = shorter_turn(profile[i].h, profile[i + 1].h, 360.0) / dt;
     }
   }
+  profile.back().vh = 0;
 
-  // TODO: apply linear profile using lerp
-  // TODO: calculate angular velocities
+  for (trajectory_point_s &p : profile) {
+    printf("t=%.2f s=%.3f (%.2f, %.2f) h=%.0f vh=%.1f vx=%.2f vy=%.2f v=%.2f\n",
+           p.t,
+           p.s,
+           p.x,
+           p.y,
+           p.h,
+           p.vh,
+           p.vx,
+           p.vy,
+           std::hypot(p.vx, p.vy));
+  }
+
   // TODO: clamp with model constraints
   // TODO: clamp with kinematic constraints
+  // TODO: unit test with integration
   return 0;
 }

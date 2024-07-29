@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <vector>
 
-class TrapezoidalMotionProfile : LinearMotionProfile {
+class TrapezoidalMotionProfile : public LinearMotionProfile {
 public:
   /// @brief creates a trapezoidal motion profile
   /// @param imax_vel the maximum velocity
@@ -26,15 +26,11 @@ public:
 
   /// @brief queries a point by time
   /// @param time the time corresponding to the point
-  profile_point_s get_point_at_time(double time) override {
-    return {0, 0, 0}; // TODO: lerp
-  }
+  profile_point_s get_point_at_time(double time) override;
 
   /// @brief queries a point by distance
   /// @param distance the distance corresponding to the point
-  profile_point_s get_point_at_distance(double distance) override {
-    return {0, 0, 0}; // TODO: lerp
-  }
+  profile_point_s get_point_at_distance(double distance) override;
 
   /// @brief prints out the motion profile's points
   void print() {

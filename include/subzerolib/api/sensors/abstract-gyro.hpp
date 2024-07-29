@@ -37,7 +37,7 @@ public:
       return 0;
     } else {
       if (mutex.take(5)) {
-        output += scale * shorter_turn(prev_heading, get_heading());
+        output += scale * shorter_turn(prev_heading, get_heading(), 360.0);
         prev_heading = get_heading();
         mutex.give();
         return output;
@@ -49,7 +49,7 @@ public:
 
   void update() {
     if (mutex.take(5)) {
-      output += scale * shorter_turn(prev_heading, get_heading());
+      output += scale * shorter_turn(prev_heading, get_heading(), 360.0);
       prev_heading = get_heading();
       mutex.give();
     }

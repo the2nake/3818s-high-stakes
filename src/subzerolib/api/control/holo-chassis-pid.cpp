@@ -9,7 +9,7 @@ void HoloChassisPID::approach_pose(pose_s target, double linv) {
   auto pose = odom->get_pose();
   x_pid->update(target.x - pose.x);
   y_pid->update(target.y - pose.y);
-  r_pid->update(shorter_turn(pose.h, target.h));
+  r_pid->update(shorter_turn(pose.h, target.h, 360.0));
 
   point_s vel{x_pid->get_output(), y_pid->get_output()};
   vel = rotate_acw(vel.x, vel.y, pose.h);

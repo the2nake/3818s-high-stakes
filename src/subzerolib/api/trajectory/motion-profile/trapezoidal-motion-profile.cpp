@@ -1,4 +1,7 @@
 #include "subzerolib/api/trajectory/motion-profile/trapezoidal-motion-profile.hpp"
+
+#include "subzerolib/api/trajectory/motion-profile/linear-motion-profile.hpp"
+
 #include <cmath>
 #include <iterator>
 
@@ -63,4 +66,46 @@ void TrapezoidalMotionProfile::generate(double distance) {
   for (int i = 1; i < points.size(); ++i) {
     points[i].t += points[i - 1].t;
   }
+}
+
+LinearMotionProfile::profile_point_s
+TrapezoidalMotionProfile::get_point_at_time(double time) {
+  // change when rev
+  // assume as trajectory is sorted by time
+  if (points.size() == 0) {
+    // TODO: error msg
+    return {0, 0, 0};
+  }
+  for (int i = 0; i < points.size(); ++i) {
+    if (points[i].t > time) {
+      LinearMotionProfile::profile_point_s start = points[i - 1];
+      LinearMotionProfile::profile_point_s end = points[i];
+      double factor = (time - start.t) / (end.t - start.t);
+      return {time,
+              std::lerp(start.x, end.x, factor),
+              std::lerp(start.v, end.v, factor)};
+    }
+  }
+  return points.back();
+}
+
+LinearMotionProfile::profile_point_s
+TrapezoidalMotionProfile::get_point_at_distance(double distance) {
+  // change when rev
+  // assume as trajectory is sorted by time
+  if (points.size() == 0) {
+    // TODO: error msg
+    return {0, 0, 0};
+  }
+  for (int i = 0; i < points.size(); ++i) {
+    if (points[i].x > distance) {
+      LinearMotionProfile::profile_point_s start = points[i - 1];
+      LinearMotionProfile::profile_point_s end = points[i];
+      double factor = (distance - start.x) / (end.x - start.x);
+      return {std::lerp(start.t, end.t, factor),
+              distance,
+              std::lerp(start.v, end.v, factor)};
+    }
+  }
+  return points.back();
 }

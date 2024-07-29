@@ -130,17 +130,18 @@ int main() {
       printf("i=%d s=%.3f (%.2f, %.2f) h=%.0f\n", i, p.s, p.x, p.y, p.h);
       */
     }
-    // generate vh
-    if (i != profile.size() - 1) {
-      double dt = profile[i + 1].t - profile[i].t;
-      // printf("%f\n", dt);
-      profile[i].vh = shorter_turn(profile[i].h, profile[i + 1].h, 360.0) / dt;
-    }
   }
   profile.back().vh = 0;
 
+  // generate vh
+  for (int i = 0; i < profile.size() - 1; ++i) {
+    double dt = profile[i + 1].t - profile[i].t;
+    // printf("%f\n", dt);
+    profile[i].vh = shorter_turn(profile[i].h, profile[i + 1].h, 360.0) / dt;
+  }
+
   for (trajectory_point_s &p : profile) {
-    printf("t=%.2f s=%.3f (%.2f, %.2f) h=%.0f vh=%.1f vx=%.2f vy=%.2f v=%.2f\n",
+    printf("t=%.3f s=%.3f (%.2f, %.2f) h=%.3f vh=%.1f vx=%.2f vy=%.2f v=%.2f\n",
            p.t,
            p.s,
            p.x,

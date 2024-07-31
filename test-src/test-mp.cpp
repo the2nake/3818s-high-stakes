@@ -157,9 +157,21 @@ int main() {
   // rm = vy
   // rb = (0.5 * sqrt2) * (vx + vy)
   //
-  // if scaling v and o the same amount, you will get the appropriate limited values
-  // so, just set a "maximum value" for each generated velocity from chassis model
-  // then scale
+  // if scaling v and o the same amount, you will get the appropriate limited
+  // values so, just set a "maximum value" for each generated velocity from
+  // chassis model then scale
+  //
+  // std::vector<double> wheel_vels = Chassis::get_wheel_vels(v, h, o);
+  // for (int i = 0; i < wheel_vels.size(); ++i) {
+  //   auto &vel = wheel_vels[i];
+  //   double max_vel = Chassis::get_wheel_max_vel(i);
+  //   if (std::abs(vel) > std::abs(max_vel)) {
+  //     double scale = std::abs(max_vel) / std::abs(vel);
+  //     for (auto &v : wheel_vels) {
+  //       v = v * scale;
+  //     }
+  //   }
+  // }
 
   // TODO: clamp with model constraints
   // TODO: clamp with kinematic constraints

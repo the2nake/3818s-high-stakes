@@ -144,8 +144,22 @@ int main() {
   // lm = radius * o * (0.5 * sqrt2) * (adjustment for radii)
   // lb = radius * o
   // rf = -radius * o
-  // lm = -radius * o * (0.5 * sqrt2) * (adjustment for radii)
+  // rm = -radius * o * (0.5 * sqrt2) * (adjustment for radii)
   // rb = -radius * o
+  //
+  // linear velocity contribution formula
+  // if v = meters/second (split as vector components vx, vy after rotation to
+  // local frame)
+  // lf = (0.5 * sqrt2) * (vx + vy)
+  // lm = vy
+  // lb = (0.5 * sqrt2) * (-vx + vy)
+  // rf = (0.5 * sqrt2) * (-vx + vy)
+  // rm = vy
+  // rb = (0.5 * sqrt2) * (vx + vy)
+  //
+  // if scaling v and o the same amount, you will get the appropriate limited values
+  // so, just set a "maximum value" for each generated velocity from chassis model
+  // then scale
 
   // TODO: clamp with model constraints
   // TODO: clamp with kinematic constraints

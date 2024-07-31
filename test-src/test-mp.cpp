@@ -138,6 +138,15 @@ int main() {
            std::hypot(p.vx, p.vy));
   }
 
+  // angular velocity contribution formulae
+  // if o = radians/second cw
+  // lf = radius * o
+  // lm = radius * o * (0.5 * sqrt2) * (adjustment for radii)
+  // lb = radius * o
+  // rf = -radius * o
+  // lm = -radius * o * (0.5 * sqrt2) * (adjustment for radii)
+  // rb = -radius * o
+
   // TODO: clamp with model constraints
   // TODO: clamp with kinematic constraints
   // TODO: unit test with integration

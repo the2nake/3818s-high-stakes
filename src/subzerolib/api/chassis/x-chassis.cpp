@@ -1,5 +1,4 @@
 #include "subzerolib/api/chassis/x-chassis.hpp"
-#include "pros/motors.h"
 #include "subzerolib/api/util/controls.hpp"
 #include "subzerolib/api/util/math.hpp"
 

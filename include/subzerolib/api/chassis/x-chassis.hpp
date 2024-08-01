@@ -22,10 +22,26 @@ public:
     clamp(rot_pref, 0.0, 1.0);
   }
 
+  /// @brief generate wheel velocities for a given angular and linear velocity
+  /// target
+  ///
+  /// @param vx linear velocity (m/s) in local frame's x
+  /// @param vy linear velocity (m/s) in local frame's y
+  /// @param ang angular velocity (rad/s)
+  ///
+  /// @returns a vector of velocities (lf, lb, rf, rb)
+  std::vector<double> get_wheel_vels(double vx, double vy, double ang) override;
+
+  /// @brief get the maximum velocities of each wheel
+  /// @returns a vector in the same order as get_wheel_velocities()
+  std::vector<double> get_wheel_max() override;
+
 private:
   XChassis() {}
 
   double rot_pref = 0.5;
+  double radius = 1;
+
   std::unique_ptr<pros::AbstractMotor> front_left;
   std::unique_ptr<pros::AbstractMotor> front_right;
   std::unique_ptr<pros::AbstractMotor> back_right;
@@ -58,6 +74,8 @@ public:
       return *this;
     }
 
+    Builder &with_geometry(double iradius);
+
     /// @brief creates the x drive chassis object
     /// @returns a shared pointer to the created object
     std::shared_ptr<XChassis> build();
@@ -65,6 +83,7 @@ public:
   private:
     bool failed = false;
     double brot_pref = 0.5;
+    double bradius = 1;
     std::unique_ptr<pros::AbstractMotor> bfront_left = nullptr;
     std::unique_ptr<pros::AbstractMotor> bfront_right = nullptr;
     std::unique_ptr<pros::AbstractMotor> bback_right = nullptr;

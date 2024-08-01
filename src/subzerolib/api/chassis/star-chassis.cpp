@@ -9,15 +9,15 @@
 void StarChassis::move(double x, double y, double r) {
   clamp_distance<double>(1.0, x, y);
   insert_or_modify(vels, StarChassis::motor_pos_e::front_left, {x + y, r});
-  insert_or_modify(vels, StarChassis::motor_pos_e::front_right,
-                   {-x + y, -r});
-  insert_or_modify(vels, StarChassis::motor_pos_e::boost_left,
+  insert_or_modify(vels, StarChassis::motor_pos_e::front_right, {-x + y, -r});
+  insert_or_modify(vels,
+                   StarChassis::motor_pos_e::boost_left,
                    {y, r * boost_radius / (K_SQRT_2 * corner_radius)});
-  insert_or_modify(vels, StarChassis::motor_pos_e::boost_right,
+  insert_or_modify(vels,
+                   StarChassis::motor_pos_e::boost_right,
                    {y, -r * boost_radius / (K_SQRT_2 * corner_radius)});
   insert_or_modify(vels, StarChassis::motor_pos_e::back_left, {-x + y, r});
-  insert_or_modify(vels, StarChassis::motor_pos_e::back_right,
-                   {x + y, -r});
+  insert_or_modify(vels, StarChassis::motor_pos_e::back_right, {x + y, -r});
 
   balance_mapped_vels(vels, 1.0, rot_pref);
   move_with_map();
@@ -32,6 +32,31 @@ void StarChassis::move_with_map() {
 void StarChassis::set_rot_pref(double irot_pref) {
   rot_pref = std::abs(irot_pref);
   clamp(rot_pref, 0.0, 1.0);
+}
+
+std::vector<double>
+StarChassis::get_wheel_vels(double vx, double vy, double ang) {
+  double angular_components[] = {corner_radius * ang,
+                                 boost_radius * ang,
+                                 corner_radius * ang,
+                                 -corner_radius * ang,
+                                 -boost_radius * ang,
+                                 corner_radius * ang};
+  double linear_components[] = {(0.5 * K_SQRT_2) * (vx + vy),
+                                vy,
+                                (0.5 * K_SQRT_2) * (-vx + vy),
+                                (0.5 * K_SQRT_2) * (-vx + vy),
+                                vy,
+                                (0.5 * K_SQRT_2) * (vx + vy)};
+  std::vector<double> final_vels(6);
+  for (int i = 0; i < final_vels.size(); ++i) {
+    final_vels[i] = linear_components[i] + angular_components[i];
+  }
+  return final_vels;
+}
+
+std::vector<double> StarChassis::get_wheel_max() {
+  // TODO
 }
 
 StarChassis::Builder &
@@ -118,12 +143,12 @@ std::shared_ptr<StarChassis> StarChassis::Builder::build() {
   chassis->corner_radius = bcorner_radius;
   chassis->rot_pref = brot_pref;
   chassis->position_ptr_map = {
-      {StarChassis::motor_pos_e::front_left, chassis->front_left},
+      { StarChassis::motor_pos_e::front_left,  chassis->front_left},
       {StarChassis::motor_pos_e::front_right, chassis->front_right},
-      {StarChassis::motor_pos_e::boost_left, chassis->boost_left},
+      { StarChassis::motor_pos_e::boost_left,  chassis->boost_left},
       {StarChassis::motor_pos_e::boost_right, chassis->boost_right},
-      {StarChassis::motor_pos_e::back_left, chassis->back_left},
-      {StarChassis::motor_pos_e::back_right, chassis->back_right},
+      {  StarChassis::motor_pos_e::back_left,   chassis->back_left},
+      { StarChassis::motor_pos_e::back_right,  chassis->back_right},
   };
   return std::shared_ptr<StarChassis>{chassis};
 }

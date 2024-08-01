@@ -30,6 +30,20 @@ public:
   /// @param rot_pref a value in the range [0.0, 1.0]
   void set_rot_pref(double irot_pref = 0.5) override;
 
+  /// @brief generate wheel velocities for a given angular and linear velocity
+  /// target
+  ///
+  /// @param vx linear velocity (m/s) in local frame's x
+  /// @param vy linear velocity (m/s) in local frame's y'
+  /// @param ang angular velocity (rad/s)
+  ///
+  /// @returns a vector of velocities (lf, lm, lb, rf, rm, rb)
+  std::vector<double> get_wheel_vels(double vx, double vy, double ang) override;
+
+  /// @brief get the maximum velocities of each wheel
+  /// @returns a vector in the same order as get_wheel_velocities()
+  std::vector<double> get_wheel_max() override;
+
 private:
   StarChassis() {}
   void move_with_map();
@@ -39,8 +53,7 @@ private:
   double rot_pref;
 
   std::map<StarChassis::motor_pos_e, control_components_s> vels = {};
-  std::map<StarChassis::motor_pos_e,
-           std::unique_ptr<pros::AbstractMotor> &>
+  std::map<StarChassis::motor_pos_e, std::unique_ptr<pros::AbstractMotor> &>
       position_ptr_map = {};
   std::unique_ptr<pros::AbstractMotor> front_left = nullptr;
   std::unique_ptr<pros::AbstractMotor> front_right = nullptr;

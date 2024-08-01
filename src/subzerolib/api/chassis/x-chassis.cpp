@@ -1,4 +1,5 @@
 #include "subzerolib/api/chassis/x-chassis.hpp"
+#include "pros/motors.h"
 #include "subzerolib/api/util/controls.hpp"
 #include "subzerolib/api/util/math.hpp"
 
@@ -6,7 +7,11 @@ void XChassis::move(double x, double y, double r) {
   clamp_distance(1.0, x, y);
 
   std::vector<control_components_s> vs = {
-      {x + y, r}, {-x + y, -r}, {x + y, -r}, {-x + y, r}};
+      { x + y,  r},
+      {-x + y, -r},
+      { x + y, -r},
+      {-x + y,  r}
+  };
 
   balance_vels(vs, 1.0, rot_pref);
 
@@ -14,6 +19,24 @@ void XChassis::move(double x, double y, double r) {
   front_right->move_voltage(12000 * (vs[1].sum()));
   back_right->move_voltage(12000 * (vs[2].sum()));
   back_left->move_voltage(12000 * (vs[3].sum()));
+}
+
+std::vector<double> XChassis::get_wheel_vels(double vx, double vy, double ang) {
+  double angular_components[] = {
+      radius * ang, radius * ang, -radius * ang, -radius * ang};
+  double linear_components[] = {(0.5 * K_SQRT_2) * (vx + vy),
+                                (0.5 * K_SQRT_2) * (-vx + vy),
+                                (0.5 * K_SQRT_2) * (-vx + vy),
+                                (0.5 * K_SQRT_2) * (vx + vy)};
+  std::vector<double> final_vels(4);
+  for (int i = 0; i < final_vels.size(); ++i) {
+    final_vels[i] = linear_components[i] + angular_components[i];
+  }
+  return final_vels;
+}
+
+std::vector<double> XChassis::get_wheel_max() {
+  // TODO
 }
 
 XChassis::Builder &XChassis::Builder::with_motors(
@@ -28,10 +51,18 @@ XChassis::Builder &XChassis::Builder::with_motors(
   return *this;
 }
 
+XChassis::Builder &XChassis::Builder::with_geometry(double iradius) {
+  if (!std::isnan(iradius)) {
+    bradius = std::abs(iradius);
+  }
+  return *this;
+}
+
 std::shared_ptr<XChassis> XChassis::Builder::build() {
   std::shared_ptr<XChassis> chassis(new XChassis());
 
   chassis->rot_pref = brot_pref;
+  chassis->radius = bradius;
   chassis->front_left = std::move(bfront_left);
   chassis->front_right = std::move(bfront_right);
   chassis->back_right = std::move(bback_right);

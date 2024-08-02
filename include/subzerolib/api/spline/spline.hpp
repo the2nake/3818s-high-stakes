@@ -1,6 +1,7 @@
 #pragma once
 
 #include "subzerolib/api/geometry/point.hpp"
+#include "subzerolib/api/geometry/pose.hpp"
 
 #include <cmath>
 #include <eigen/Dense>
@@ -62,3 +63,5 @@ public:
   /// @returns a point_s with the acceleration
   virtual point_s get_accel(double u) = 0;
 };
+
+std::vector<pose_s> interpolate_heading(std::vector<point_s> path, std::vector<pose_s> ctrl_points);

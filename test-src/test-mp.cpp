@@ -61,6 +61,13 @@ int main() {
   CatmullRomSpline spline(ctrl_points);
   spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
   std::vector<spline_point_s> sampled_points = spline.sample_kinematics(300);
+  std::vector<point_s> raw_path = spline.sample_coordinates(300);
+
+  auto final = interpolate_heading(raw_path, ctrl_points);
+  for (auto p : final) {
+    printf("(%f, %f) h=%f\n", p.x, p.y, p.h);
+  }
+
   std::vector<trajectory_point_s> generated_profile(sampled_points.size());
   for (int i = 0; i < sampled_points.size(); ++i) {
     generated_profile[i] = sampled_points[i];

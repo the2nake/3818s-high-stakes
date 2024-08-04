@@ -51,6 +51,7 @@ private:
   double boost_radius;
   double corner_radius;
   double rot_pref;
+  double lin_vel;
 
   std::map<StarChassis::motor_pos_e, control_components_s> vels = {};
   std::map<StarChassis::motor_pos_e, std::unique_ptr<pros::AbstractMotor> &>
@@ -100,6 +101,8 @@ public:
     /// @returns a reference to the builder object
     Builder &with_rot_pref(double irot_pref = 0.5);
 
+    Builder &with_vel(double ilin_vel);
+
     /// @brief creates the star drive chassis object
     /// @returns a shared pointer to the created object
     std::shared_ptr<StarChassis> build();
@@ -107,9 +110,11 @@ public:
   private:
     bool try_copy(std::unique_ptr<pros::AbstractMotor> &target,
                   std::unique_ptr<pros::AbstractMotor> &origin);
-    double bboost_radius;
-    double bcorner_radius;
-    double brot_pref;
+    double bboost_radius = 1;
+    double bcorner_radius = 1;
+    double brot_pref = 0.5;
+    double blin_vel = 1;
+
     std::unique_ptr<pros::AbstractMotor> bfront_left = nullptr;
     std::unique_ptr<pros::AbstractMotor> bfront_right = nullptr;
     std::unique_ptr<pros::AbstractMotor> bback_left = nullptr;

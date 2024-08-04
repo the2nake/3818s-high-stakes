@@ -41,6 +41,7 @@ private:
 
   double rot_pref = 0.5;
   double radius = 1;
+  double lin_vel = 1;
 
   std::unique_ptr<pros::AbstractMotor> front_left;
   std::unique_ptr<pros::AbstractMotor> front_right;
@@ -76,6 +77,8 @@ public:
 
     Builder &with_geometry(double iradius);
 
+    Builder &with_vel(double ilin_vel);
+
     /// @brief creates the x drive chassis object
     /// @returns a shared pointer to the created object
     std::shared_ptr<XChassis> build();
@@ -84,6 +87,7 @@ public:
     bool failed = false;
     double brot_pref = 0.5;
     double bradius = 1;
+    double blin_vel = 1;
     std::unique_ptr<pros::AbstractMotor> bfront_left = nullptr;
     std::unique_ptr<pros::AbstractMotor> bfront_right = nullptr;
     std::unique_ptr<pros::AbstractMotor> bback_right = nullptr;

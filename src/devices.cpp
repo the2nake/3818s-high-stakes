@@ -60,6 +60,7 @@ void configure_chassis() {
           .with_motors(StarChassis::motor_pos_e::back_right, std::move(br))
           .with_geometry(0.35, 0.37)
           .with_rot_pref(0.3)
+          .with_vel(1.73)
           .build();
 }
 

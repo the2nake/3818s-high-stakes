@@ -48,7 +48,7 @@ int find_pose_index(std::vector<spline_point_s> &vec, pose_s pose) {
 
 int main() {
   // set up a linear motion profile
-  LinearMotionProfile *generator = new TrapezoidalMotionProfile{1.85, 6, 6};
+  LinearMotionProfile *generator = new TrapezoidalMotionProfile{1.73, 6, 6};
   generator->set_resolution(0.01);
 
   // generate the curve using a catmull rom spline

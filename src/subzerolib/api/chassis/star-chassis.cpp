@@ -58,7 +58,12 @@ StarChassis::get_wheel_vels(double vx, double vy, double ang) {
 }
 
 std::vector<double> StarChassis::get_wheel_max() {
-  // TODO
+  return {0.5 * K_SQRT_2 * lin_vel,
+          lin_vel,
+          0.5 * K_SQRT_2 * lin_vel,
+          0.5 * K_SQRT_2 * lin_vel,
+          lin_vel,
+          0.5 * K_SQRT_2 * lin_vel};
 }
 
 StarChassis::Builder &
@@ -127,6 +132,13 @@ StarChassis::Builder &StarChassis::Builder::with_rot_pref(double irot_pref) {
   return *this;
 }
 
+StarChassis::Builder &StarChassis::Builder::with_vel(double ilin_vel) {
+  if (!std::isnan(ilin_vel)) {
+    this->blin_vel = std::abs(ilin_vel);
+  }
+  return *this;
+}
+
 std::shared_ptr<StarChassis> StarChassis::Builder::build() {
   auto chassis = new StarChassis();
   std::vector<bool> results;
@@ -144,6 +156,8 @@ std::shared_ptr<StarChassis> StarChassis::Builder::build() {
   chassis->boost_radius = bboost_radius;
   chassis->corner_radius = bcorner_radius;
   chassis->rot_pref = brot_pref;
+  chassis->lin_vel = blin_vel;
+
   chassis->position_ptr_map = {
       { StarChassis::motor_pos_e::front_left,  chassis->front_left},
       {StarChassis::motor_pos_e::front_right, chassis->front_right},

@@ -35,7 +35,11 @@ std::vector<double> XChassis::get_wheel_vels(double vx, double vy, double ang) {
 }
 
 std::vector<double> XChassis::get_wheel_max() {
-  // TODO
+  // order is lf, lb, rf, rb
+  return {0.5 * K_SQRT_2 * lin_vel,
+          0.5 * K_SQRT_2 * lin_vel,
+          0.5 * K_SQRT_2 * lin_vel,
+          0.5 * K_SQRT_2 * lin_vel};
 }
 
 XChassis::Builder &XChassis::Builder::with_motors(
@@ -57,11 +61,20 @@ XChassis::Builder &XChassis::Builder::with_geometry(double iradius) {
   return *this;
 }
 
+XChassis::Builder &XChassis::Builder::with_vel(double ilin_vel) {
+  if (!std::isnan(ilin_vel)) {
+    blin_vel = std::abs(ilin_vel);
+  }
+  return *this;
+}
+
 std::shared_ptr<XChassis> XChassis::Builder::build() {
   std::shared_ptr<XChassis> chassis(new XChassis());
 
   chassis->rot_pref = brot_pref;
   chassis->radius = bradius;
+  chassis->lin_vel = blin_vel;
+
   chassis->front_left = std::move(bfront_left);
   chassis->front_right = std::move(bfront_right);
   chassis->back_right = std::move(bback_right);

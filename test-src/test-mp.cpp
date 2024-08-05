@@ -161,46 +161,6 @@ int main() {
   }
   generated_profile.back().vh = 0;
 
-  // printf("before limits\n");
-  // // show the profile
-  // for (trajectory_point_s &p : generated_profile) {
-  //   printf("t=%.3f s=%.3f (%.2f, %.2f) h=%.3f vh=%.1f vx=%.2f vy=%.2f
-  //   v=%.2f\n",
-  //          p.t,
-  //          p.s,
-  //          p.x,
-  //          p.y,
-  //          p.h,
-  //          p.vh,
-  //          p.vx,
-  //          p.vy,
-  //          std::hypot(p.vx, p.vy));
-  // }
-  // printf("after limits\n");
-
-  // angular velocity contribution formulae
-  // if o = radians/second cw
-  // lf = radius * o
-  // lm = radius * o * (0.5 * sqrt2) * (adjustment for radii)
-  // lb = radius * o
-  // rf = -radius * o
-  // rm = -radius * o * (0.5 * sqrt2) * (adjustment for radii)
-  // rb = -radius * o
-  //
-  // linear velocity contribution formula
-  // if v = meters/second (split as vector components vx, vy after rotation to
-  // local frame)
-  // lf = (0.5 * sqrt2) * (vx + vy)
-  // lm = vy
-  // lb = (0.5 * sqrt2) * (-vx + vy)
-  // rf = (0.5 * sqrt2) * (-vx + vy)
-  // rm = vy
-  // rb = (0.5 * sqrt2) * (vx + vy)
-  //
-  // if scaling v and o the same amount, you will get the appropriate limited
-  // values so, just set a "maximum value" for each generated velocity from
-  // chassis model then scale
-  //
   StarChassisKinematics kinematics(1.73, 0.35, 0.37);
   std::vector<double> max_vels = kinematics.get_wheel_max();
   std::vector<double> wheel_vels(6);

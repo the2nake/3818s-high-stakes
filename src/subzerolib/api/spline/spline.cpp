@@ -2,7 +2,7 @@
 
 int find_pose_index(std::vector<point_s> &vec, pose_s pose) {
   double min_d = std::numeric_limits<double>::max();
-  double index = 0.0;
+  int index = 0;
   for (int i = 0; i < vec.size(); ++i) {
     double dist = pose.dist(vec[i]);
     if (dist < min_d) {
@@ -12,13 +12,14 @@ int find_pose_index(std::vector<point_s> &vec, pose_s pose) {
   }
   double dx = pose.x - vec[index].x;
   double dy = pose.y - vec[index].y;
-  bool same_dir = false;
   if (index != vec.size() - 1) {
     double sample_dx = vec[index + 1].x - vec[index].x;
     double sample_dy = vec[index + 1].y - vec[index].y;
-    same_dir = sample_dx * dx + sample_dy * dy > 0;
+    bool same_dir = sample_dx * dx + sample_dy * dy > 0;
+    if (same_dir)
+      index += 1;
   }
-  return index + int(same_dir);
+  return index;
 }
 
 std::vector<pose_s> interpolate_heading(std::vector<point_s> path,

@@ -7,6 +7,45 @@
 #include <cmath>
 #include <limits>
 
+class StarChassisKinematics {
+public:
+  StarChassisKinematics(double i_max_vel, double i_boost, double i_corner)
+      : max_vel(std::abs(i_max_vel)), boost_radius(std::abs(i_boost)),
+        corner_radius(std::abs(i_corner)) {}
+  std::vector<double> get_wheel_max() {
+    return {0.5 * K_SQRT_2 * max_vel,
+            max_vel,
+            0.5 * K_SQRT_2 * max_vel,
+            0.5 * K_SQRT_2 * max_vel,
+            max_vel,
+            0.5 * K_SQRT_2 * max_vel};
+  }
+  std::vector<double> get_wheel_vels(double vx, double vy, double v_ang) {
+    double angular_components[] = {corner_radius * v_ang,
+                                   boost_radius * v_ang,
+                                   corner_radius * v_ang,
+                                   -corner_radius * v_ang,
+                                   -boost_radius * v_ang,
+                                   corner_radius * v_ang};
+    double linear_components[] = {(0.5 * K_SQRT_2) * (vx + vy),
+                                  vy,
+                                  (0.5 * K_SQRT_2) * (-vx + vy),
+                                  (0.5 * K_SQRT_2) * (-vx + vy),
+                                  vy,
+                                  (0.5 * K_SQRT_2) * (vx + vy)};
+    std::vector<double> final_vels(6);
+    for (int i = 0; i < final_vels.size(); ++i) {
+      final_vels[i] = linear_components[i] + angular_components[i];
+    }
+    return final_vels;
+  }
+
+private:
+  double max_vel = 1;
+  double boost_radius = 1;
+  double corner_radius = 1;
+};
+
 struct trajectory_point_s {
   trajectory_point_s(double i_t = 0,
                      double i_s = 0,
@@ -32,23 +71,20 @@ struct trajectory_point_s {
 
 int find_pose_index(std::vector<spline_point_s> &vec, pose_s pose) {
   double min_d = std::numeric_limits<double>::max();
-  double index = 0.0;
+  int return_index = 0;
   for (int i = 0; i < vec.size(); ++i) {
     double dist = pose.dist(vec[i].point());
     if (dist < min_d) {
-      index = i;
+      return_index = i;
       min_d = dist;
     }
   }
-  double dx = pose.x - vec[index].x;
-  double dy = pose.y - vec[index].y;
-  bool same_dir = vec[index].vx * dx + dy * vec[index].vy > 0;
-  return index + int(same_dir);
+  return return_index;
 }
 
 int main() {
   // set up a linear motion profile
-  LinearMotionProfile *generator = new TrapezoidalMotionProfile{1.73, 6, 6};
+  LinearMotionProfile *generator = new TrapezoidalMotionProfile{1.73, 4, 4};
   generator->set_resolution(0.01);
 
   // generate the curve using a catmull rom spline
@@ -60,13 +96,7 @@ int main() {
   };
   CatmullRomSpline spline(ctrl_points);
   spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
-  std::vector<spline_point_s> sampled_points = spline.sample_kinematics(300);
-  std::vector<point_s> raw_path = spline.sample_coordinates(300);
-
-  auto final = interpolate_heading(raw_path, ctrl_points);
-  for (auto p : final) {
-    printf("(%f, %f) h=%f\n", p.x, p.y, p.h);
-  }
+  std::vector<spline_point_s> sampled_points = spline.sample_kinematics(150);
 
   std::vector<trajectory_point_s> generated_profile(sampled_points.size());
   for (int i = 0; i < sampled_points.size(); ++i) {
@@ -120,7 +150,6 @@ int main() {
       generated_profile[i].h = h0 + factor * shorter_turn(h0, h1, 360.0);
     }
   }
-  generated_profile.back().vh = 0;
 
   // generate vh
   for (int i = 0; i < generated_profile.size() - 1; ++i) {
@@ -130,20 +159,24 @@ int main() {
                                            360.0) /
                               dt;
   }
+  generated_profile.back().vh = 0;
 
-  // show the profile
-  for (trajectory_point_s &p : generated_profile) {
-    printf("t=%.3f s=%.3f (%.2f, %.2f) h=%.3f vh=%.1f vx=%.2f vy=%.2f v=%.2f\n",
-           p.t,
-           p.s,
-           p.x,
-           p.y,
-           p.h,
-           p.vh,
-           p.vx,
-           p.vy,
-           std::hypot(p.vx, p.vy));
-  }
+  // printf("before limits\n");
+  // // show the profile
+  // for (trajectory_point_s &p : generated_profile) {
+  //   printf("t=%.3f s=%.3f (%.2f, %.2f) h=%.3f vh=%.1f vx=%.2f vy=%.2f
+  //   v=%.2f\n",
+  //          p.t,
+  //          p.s,
+  //          p.x,
+  //          p.y,
+  //          p.h,
+  //          p.vh,
+  //          p.vx,
+  //          p.vy,
+  //          std::hypot(p.vx, p.vy));
+  // }
+  // printf("after limits\n");
 
   // angular velocity contribution formulae
   // if o = radians/second cw
@@ -168,20 +201,59 @@ int main() {
   // values so, just set a "maximum value" for each generated velocity from
   // chassis model then scale
   //
-  // std::vector<double> wheel_vels = Chassis::get_wheel_vels(v, h, o);
-  // for (int i = 0; i < wheel_vels.size(); ++i) {
-  //   auto &vel = wheel_vels[i];
-  //   double max_vel = Chassis::get_wheel_max_vel(i);
-  //   if (std::abs(vel) > std::abs(max_vel)) {
-  //     double scale = std::abs(max_vel) / std::abs(vel);
-  //     for (auto &v : wheel_vels) {
-  //       v = v * scale;
-  //     }
-  //   }
-  // }
+  StarChassisKinematics kinematics(1.73, 0.35, 0.37);
+  std::vector<double> max_vels = kinematics.get_wheel_max();
+  std::vector<double> wheel_vels(6);
+  std::vector<double> dts(generated_profile.size());
+  dts[0] = 0.0;
 
-  // TODO: clamp with model constraints
-  // TODO: clamp with kinematic constraints
+  for (int i = 1; i < generated_profile.size(); ++i) {
+    point_s local_v = rotate_acw(generated_profile[i].vx,
+                                 generated_profile[i].vy,
+                                 generated_profile[i].h);
+    wheel_vels = kinematics.get_wheel_vels(
+        local_v.x, local_v.y, in_rad(generated_profile[i].vh));
+    // for (auto &v : wheel_vels) {
+    //   printf("%f\n", v);
+    // }
+    double vel_scale = 1.0;
+    for (int i = 0; i < wheel_vels.size(); ++i) {
+      double mag = std::abs(wheel_vels[i]);
+      double max = std::abs(max_vels[i]);
+      if (mag > max) {
+        double scale = max / mag;
+        vel_scale *= scale;
+        for (auto &v : wheel_vels) {
+          v *= scale;
+        }
+      }
+    }
+    double dt = generated_profile[i].t - generated_profile[i - 1].t;
+    dts[i] = dt / vel_scale;
+    generated_profile[i].vx *= vel_scale;
+    generated_profile[i].vy *= vel_scale;
+    generated_profile[i].vh *= vel_scale;
+  }
+
+  for (int i = 1; i < generated_profile.size(); ++i) {
+    generated_profile[i].t = generated_profile[i - 1].t + dts[i];
+  }
+
+  // show the profile
+  for (trajectory_point_s &p : generated_profile) {
+    printf("t=%.3f s=%.3f (%.2f, %.2f) h=%.3f vh=%.1f vx=%.2f vy=%.2f v=%.2f\n",
+           p.t,
+           p.s,
+           p.x,
+           p.y,
+           p.h,
+           p.vh,
+           p.vx,
+           p.vy,
+           std::hypot(p.vx, p.vy));
+  }
+
+  // TODO: clamp with vh acceleration
   // TODO: unit test with integration
   return 0;
 }

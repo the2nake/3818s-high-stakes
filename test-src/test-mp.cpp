@@ -90,6 +90,7 @@ int find_pose_index(std::vector<spline_point_s> &vec, pose_s pose) {
 
 int main() {
   // set up a linear motion profile
+  StarChassisKinematics kinematics(1.73, 0.35, 0.37);
   LinearMotionProfile *generator = new TrapezoidalMotionProfile{1.73, 4, 4};
   generator->set_resolution(0.01);
 
@@ -102,7 +103,7 @@ int main() {
   };
   CatmullRomSpline spline(ctrl_points);
   spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
-  std::vector<spline_point_s> sampled_points = spline.sample_kinematics(150);
+  std::vector<spline_point_s> sampled_points = spline.sample_kinematics(400);
 
   std::vector<trajectory_point_s> generated_profile(sampled_points.size());
   for (int i = 0; i < sampled_points.size(); ++i) {
@@ -119,7 +120,6 @@ int main() {
 
   // apply profile to path
   generator->generate(generated_profile.back().s);
-  // dynamic_cast<TrapezoidalMotionProfile *>(generator)->print();
   for (int i = 0; i < generated_profile.size(); ++i) {
     LinearMotionProfile::profile_point_s motion =
         generator->get_point_at_distance(generated_profile[i].s);
@@ -167,11 +167,11 @@ int main() {
   }
   generated_profile.back().vh = 0;
 
-  StarChassisKinematics kinematics(1.73, 0.35, 0.37);
+  // limit based on model-given velocities
   std::vector<double> max_vels = kinematics.get_wheel_max();
+  // used to reformulate time points
   std::vector<double> dts(generated_profile.size());
   dts[0] = 0.0;
-
   for (int i = 1; i < generated_profile.size(); ++i) {
     point_s local_v = rotate_acw(generated_profile[i].vx,
                                  generated_profile[i].vy,
@@ -183,11 +183,11 @@ int main() {
       double mag = std::abs(wheel_vels[i]);
       double max = std::abs(max_vels[i]);
       if (mag > max) {
-        double scale = 0.999 * max / mag;
+        double scale = max / mag;
         for (int j = 0; j < wheel_vels.size(); ++j) {
           wheel_vels[j] *= scale;
         }
-        vel_scale *= scale;
+        vel_scale *= 0.99999 * scale;
       }
     }
     double dt = generated_profile[i].t - generated_profile[i - 1].t;
@@ -215,6 +215,7 @@ int main() {
            std::hypot(p.vx, p.vy));
   }
 
+  // check for unmet model constraints
   std::vector<double> maxs = kinematics.get_wheel_max();
   for (trajectory_point_s &p : generated_profile) {
     auto loc = rotate_acw(p.vx, p.vy, p.h);
@@ -230,6 +231,16 @@ int main() {
   }
 
   // TODO: clamp with vh acceleration
-  // TODO: unit test with integration
+  double x = 0;
+  double y = 0;
+  double h = 0;
+  double time = 0;
+  for (auto &p : generated_profile) {
+    x += p.vx * (p.t - time);
+    y += p.vy * (p.t - time);
+    h += p.vh * (p.t - time);
+    time = p.t;
+  }
+  printf("integrated position: %f %f %f", x, y, h);
   return 0;
 }

@@ -7,6 +7,12 @@
 #include <cmath>
 #include <limits>
 
+void show_vector(std::vector<double> vector) {
+  for (auto &i : vector) {
+    printf("%f\n", i);
+  }
+}
+
 class StarChassisKinematics {
 public:
   StarChassisKinematics(double i_max_vel, double i_boost, double i_corner)
@@ -163,7 +169,6 @@ int main() {
 
   StarChassisKinematics kinematics(1.73, 0.35, 0.37);
   std::vector<double> max_vels = kinematics.get_wheel_max();
-  std::vector<double> wheel_vels(6);
   std::vector<double> dts(generated_profile.size());
   dts[0] = 0.0;
 
@@ -171,21 +176,18 @@ int main() {
     point_s local_v = rotate_acw(generated_profile[i].vx,
                                  generated_profile[i].vy,
                                  generated_profile[i].h);
-    wheel_vels = kinematics.get_wheel_vels(
+    auto wheel_vels = kinematics.get_wheel_vels(
         local_v.x, local_v.y, in_rad(generated_profile[i].vh));
-    // for (auto &v : wheel_vels) {
-    //   printf("%f\n", v);
-    // }
     double vel_scale = 1.0;
     for (int i = 0; i < wheel_vels.size(); ++i) {
       double mag = std::abs(wheel_vels[i]);
       double max = std::abs(max_vels[i]);
       if (mag > max) {
-        double scale = max / mag;
-        vel_scale *= scale;
-        for (auto &v : wheel_vels) {
-          v *= scale;
+        double scale = 0.999 * max / mag;
+        for (int j = 0; j < wheel_vels.size(); ++j) {
+          wheel_vels[j] *= scale;
         }
+        vel_scale *= scale;
       }
     }
     double dt = generated_profile[i].t - generated_profile[i - 1].t;
@@ -211,6 +213,20 @@ int main() {
            p.vx,
            p.vy,
            std::hypot(p.vx, p.vy));
+  }
+
+  std::vector<double> maxs = kinematics.get_wheel_max();
+  for (trajectory_point_s &p : generated_profile) {
+    auto loc = rotate_acw(p.vx, p.vy, p.h);
+    auto vels = kinematics.get_wheel_vels(loc.x, loc.y, in_rad(p.vh));
+    bool broken = false;
+    for (int i = 0; i < vels.size(); ++i) {
+      if (std::abs(vels[i]) > std::abs(maxs[i])) {
+        printf("invalid generated profile\n");
+        broken = true;
+        break;
+      }
+    }
   }
 
   // TODO: clamp with vh acceleration

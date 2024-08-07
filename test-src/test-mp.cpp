@@ -105,104 +105,105 @@ int main() {
   spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
   std::vector<spline_point_s> sampled_points = spline.sample_kinematics(400);
 
-  std::vector<trajectory_point_s> generated_profile(sampled_points.size());
+  std::vector<trajectory_point_s> trajectory(sampled_points.size());
   for (int i = 0; i < sampled_points.size(); ++i) {
-    generated_profile[i] = sampled_points[i];
+    trajectory[i] = sampled_points[i];
   }
   std::vector<int> ctrl_indices;
   for (auto &c : ctrl_points) {
     int i = find_pose_index(sampled_points, c);
-    generated_profile[i].x = c.x;
-    generated_profile[i].y = c.y;
-    generated_profile[i].h = c.h;
+    trajectory[i].x = c.x;
+    trajectory[i].y = c.y;
+    trajectory[i].h = c.h;
     ctrl_indices.push_back(i);
   }
 
   // apply profile to path
-  generator->generate(generated_profile.back().s);
-  for (int i = 0; i < generated_profile.size(); ++i) {
+  generator->generate(trajectory.back().s);
+  for (int i = 0; i < trajectory.size(); ++i) {
     LinearMotionProfile::profile_point_s motion =
-        generator->get_point_at_distance(generated_profile[i].s);
-    generated_profile[i].t = motion.t;
-    if (i < generated_profile.size() - 1) {
-      double dx = generated_profile[i + 1].x - generated_profile[i].x;
-      double dy = generated_profile[i + 1].y - generated_profile[i].y;
+        generator->get_point_at_distance(trajectory[i].s);
+    trajectory[i].t = motion.t;
+    if (i < trajectory.size() - 1) {
+      double dx = trajectory[i + 1].x - trajectory[i].x;
+      double dy = trajectory[i + 1].y - trajectory[i].y;
       double ds = hypot(dx, dy); // don't use s here
-      generated_profile[i].vx = motion.v / ds * dx;
-      generated_profile[i].vy = motion.v / ds * dy;
+      trajectory[i].vx = motion.v / ds * dx;
+      trajectory[i].vy = motion.v / ds * dy;
     }
   }
-  generated_profile.back().vx = 0;
-  generated_profile.back().vy = 0;
+  trajectory.back().vx = 0;
+  trajectory.back().vy = 0;
 
   // lerp headings and angular velocity
-  for (int i = 0; i < generated_profile.size(); ++i) {
+  for (int i = 0; i < trajectory.size(); ++i) {
     if (std::find(ctrl_indices.begin(), ctrl_indices.end(), i) ==
         ctrl_indices.end()) {
-      int start_index = 0;
-      int end_index = 0;
+      int i0 = 0;
+      int i1 = 0;
       for (int j = 1; j < ctrl_indices.size(); ++j) {
         if (ctrl_indices[j] > i) {
-          start_index = ctrl_indices[j - 1];
-          end_index = ctrl_indices[j];
+          i0 = ctrl_indices[j - 1];
+          i1 = ctrl_indices[j];
           break;
         }
       }
-      double factor =
-          (generated_profile[i].s - generated_profile[start_index].s) /
-          (generated_profile[end_index].s - generated_profile[start_index].s);
-      double h0 = generated_profile[start_index].h;
-      double h1 = generated_profile[end_index].h;
-      generated_profile[i].h = h0 + factor * shorter_turn(h0, h1, 360.0);
+      double factor = (trajectory[i].s - trajectory[i0].s) /
+                      (trajectory[i1].s - trajectory[i0].s);
+      double h0 = trajectory[i0].h;
+      double h1 = trajectory[i1].h;
+      trajectory[i].h = h0 + factor * shorter_turn(h0, h1, 360.0);
     }
   }
 
   // generate vh
-  for (int i = 0; i < generated_profile.size() - 1; ++i) {
-    double dt = generated_profile[i + 1].t - generated_profile[i].t;
-    generated_profile[i].vh = shorter_turn(generated_profile[i].h,
-                                           generated_profile[i + 1].h,
+  for (int i = 0; i < trajectory.size() - 1; ++i) {
+    double dt = trajectory[i + 1].t - trajectory[i].t;
+    trajectory[i].vh = shorter_turn(trajectory[i].h,
+                                           trajectory[i + 1].h,
                                            360.0) /
                               dt;
   }
-  generated_profile.back().vh = 0;
+  trajectory.back().vh = 0;
 
   // limit based on model-given velocities
   std::vector<double> max_vels = kinematics.get_wheel_max();
   // used to reformulate time points
-  std::vector<double> dts(generated_profile.size());
-  dts[0] = 0.0;
-  for (int i = 1; i < generated_profile.size(); ++i) {
-    point_s local_v = rotate_acw(generated_profile[i].vx,
-                                 generated_profile[i].vy,
-                                 generated_profile[i].h);
-    auto wheel_vels = kinematics.get_wheel_vels(
-        local_v.x, local_v.y, in_rad(generated_profile[i].vh));
+  std::vector<double> dts(trajectory.size());
+  dts.front() = 0.0;
+  for (int i = 1; i < trajectory.size(); ++i) {
+    auto &traj_p = trajectory[i];
+    point_s local_v = rotate_acw(traj_p.vx, traj_p.vy, traj_p.h);
+    auto wheel_vels =
+        kinematics.get_wheel_vels(local_v.x, local_v.y, in_rad(traj_p.vh));
+
     double vel_scale = 1.0;
-    for (int i = 0; i < wheel_vels.size(); ++i) {
-      double mag = std::abs(wheel_vels[i]);
-      double max = std::abs(max_vels[i]);
+    for (int j = 0; j < wheel_vels.size(); ++j) {
+      double mag = std::abs(wheel_vels[j]);
+      double max = std::abs(max_vels[j]);
+
       if (mag > max) {
         double scale = max / mag;
-        for (int j = 0; j < wheel_vels.size(); ++j) {
-          wheel_vels[j] *= scale;
+        for (auto &v : wheel_vels) {
+          v *= scale;
         }
-        vel_scale *= 0.99999 * scale;
+        vel_scale *= 0.999999 * scale;
       }
     }
-    double dt = generated_profile[i].t - generated_profile[i - 1].t;
+
+    double dt = trajectory[i].t - trajectory[i - 1].t;
     dts[i] = dt / vel_scale;
-    generated_profile[i].vx *= vel_scale;
-    generated_profile[i].vy *= vel_scale;
-    generated_profile[i].vh *= vel_scale;
+    traj_p.vx *= vel_scale;
+    traj_p.vy *= vel_scale;
+    traj_p.vh *= vel_scale;
   }
 
-  for (int i = 1; i < generated_profile.size(); ++i) {
-    generated_profile[i].t = generated_profile[i - 1].t + dts[i];
+  for (int i = 1; i < trajectory.size(); ++i) {
+    trajectory[i].t = trajectory[i - 1].t + dts[i];
   }
 
   // show the profile
-  for (trajectory_point_s &p : generated_profile) {
+  for (trajectory_point_s &p : trajectory) {
     printf("t=%.3f s=%.3f (%.2f, %.2f) h=%.3f vh=%.1f vx=%.2f vy=%.2f v=%.2f\n",
            p.t,
            p.s,
@@ -217,7 +218,7 @@ int main() {
 
   // check for unmet model constraints
   std::vector<double> maxs = kinematics.get_wheel_max();
-  for (trajectory_point_s &p : generated_profile) {
+  for (trajectory_point_s &p : trajectory) {
     auto loc = rotate_acw(p.vx, p.vy, p.h);
     auto vels = kinematics.get_wheel_vels(loc.x, loc.y, in_rad(p.vh));
     bool broken = false;
@@ -235,7 +236,7 @@ int main() {
   double y = 0;
   double h = 0;
   double time = 0;
-  for (auto &p : generated_profile) {
+  for (auto &p : trajectory) {
     x += p.vx * (p.t - time);
     y += p.vy * (p.t - time);
     h += p.vh * (p.t - time);

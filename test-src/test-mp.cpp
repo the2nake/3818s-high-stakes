@@ -159,10 +159,8 @@ int main() {
   // generate vh
   for (int i = 0; i < trajectory.size() - 1; ++i) {
     double dt = trajectory[i + 1].t - trajectory[i].t;
-    trajectory[i].vh = shorter_turn(trajectory[i].h,
-                                           trajectory[i + 1].h,
-                                           360.0) /
-                              dt;
+    trajectory[i].vh =
+        shorter_turn(trajectory[i].h, trajectory[i + 1].h, 360.0) / dt;
   }
   trajectory.back().vh = 0;
 
@@ -170,6 +168,7 @@ int main() {
   std::vector<double> max_vels = kinematics.get_wheel_max();
   // used to reformulate time points
   std::vector<double> dts(trajectory.size());
+
   dts.front() = 0.0;
   for (int i = 1; i < trajectory.size(); ++i) {
     auto &traj_p = trajectory[i];
@@ -204,7 +203,8 @@ int main() {
 
   // show the profile
   for (trajectory_point_s &p : trajectory) {
-    printf("t=%.3f s=%.3f (%.2f, %.2f) h=%.3f vh=%.1f vx=%.2f vy=%.2f v=%.2f\n",
+    printf("t=%6.3f s=%6.3f (%5.2f,%5.2f) h=%6.1f vh=%4.0f vx=%5.2f vy=%5.2f "
+           "v=%5.2f\n",
            p.t,
            p.s,
            p.x,
@@ -224,11 +224,16 @@ int main() {
     bool broken = false;
     for (int i = 0; i < vels.size(); ++i) {
       if (std::abs(vels[i]) > std::abs(maxs[i])) {
-        printf("invalid generated profile\n");
+        printf("\033[31m[err]\033[0m: invalid generated profile\n");
+        printf("vx=%f vy=%f vh=%f\n", p.vx, p.vy, p.vh);
+        printf("wheel velocities:\n");
+        show_vector(vels);
         broken = true;
         break;
       }
     }
+    if (broken)
+      break;
   }
 
   // TODO: clamp with vh acceleration
@@ -242,6 +247,9 @@ int main() {
     h += p.vh * (p.t - time);
     time = p.t;
   }
-  printf("integrated position: %f %f %f", x, y, h);
+  printf("\033[34m[inf]\033[0m: integrated position error: %.2f %.2f %.2f\n",
+         trajectory.back().x - x,
+         trajectory.back().y - y,
+         shorter_turn(h, trajectory.back().h));
   return 0;
 }

@@ -1,38 +1,10 @@
 #pragma once
 
-#include "subzerolib/api/geometry/point.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
+#include "subzerolib/api/geometry/spline-point.hpp"
 
-#include <cmath>
 #include <eigen/Dense>
 #include <vector>
-
-struct spline_point_s {
-  spline_point_s(double ix = 0,
-                 double iy = 0,
-                 double is = 0,
-                 double ivx = 0,
-                 double ivy = 0,
-                 double iax = 0,
-                 double iay = 0)
-      : x(ix), y(iy), s(is), vx(ivx), vy(ivy), ax(iax), ay(iay) {}
-  double x;
-  double y;
-
-  double s; // distance
-
-  double vx;
-  double vy;
-  double v() const { return std::hypot(vx, vy); }
-
-  double ax;
-  double ay;
-  double a() const { return std::hypot(ax, ay); }
-
-  point_s point() const {
-      return {x, y};
-  }
-};
 
 class Spline {
 public:
@@ -64,4 +36,5 @@ public:
   virtual point_s get_accel(double u) = 0;
 };
 
-std::vector<pose_s> interpolate_heading(std::vector<point_s> path, std::vector<pose_s> ctrl_points);
+std::vector<pose_s> interpolate_heading(std::vector<point_s> path,
+                                        std::vector<pose_s> ctrl_points);

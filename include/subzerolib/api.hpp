@@ -13,6 +13,8 @@
 #include "subzerolib/api/geometry/point.hpp"
 #include "subzerolib/api/geometry/pose.hpp"
 #include "subzerolib/api/geometry/segment.hpp"
+#include "subzerolib/api/geometry/spline-point.hpp"
+#include "subzerolib/api/geometry/trajectory-point.hpp"
 #include "subzerolib/api/logic/exit-condition.hpp"
 #include "subzerolib/api/logic/state-machine.hpp"
 #include "subzerolib/api/odometry/kf-odometry.hpp"

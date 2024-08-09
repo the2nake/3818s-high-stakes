@@ -119,7 +119,7 @@ int main() {
   trajectory.back().vx = 0;
   trajectory.back().vy = 0;
 
-  // lerp headings and angular velocity
+  // lerp headings
   for (int i = 0; i < trajectory.size(); ++i) {
     bool not_ctrl_point =
         std::find(ctrl_indices.begin(), ctrl_indices.end(), i) ==
@@ -146,7 +146,7 @@ int main() {
     auto &next = trajectory[i + 1];
 
     double dt = next.t - curr.t;
-    trajectory[i].vh = shorter_turn(next.h, next.h, 360.0) / dt;
+    trajectory[i].vh = shorter_turn(curr.h, next.h, 360.0) / dt;
   }
   trajectory.back().vh = 0;
 
@@ -216,7 +216,7 @@ int main() {
     bool broken = false;
     for (int i = 0; i < vels.size(); ++i) {
       if (std::abs(vels[i]) > std::abs(maxs[i])) {
-        printf("\033[31m[err]\033[0m: invalid generated profile\n");
+        printf("\033[31m[e]\033[0m: invalid generated profile\n");
         printf("vx=%f vy=%f vh=%f\n", p.vx, p.vy, p.vh);
         printf("wheel velocities:\n");
         show_vector(vels);
@@ -239,7 +239,7 @@ int main() {
     h += p.vh * (p.t - time);
     time = p.t;
   }
-  printf("\033[34m[inf]\033[0m: integrated position error: %.2f %.2f %.2f\n",
+  printf("\033[34m[i]\033[0m: integrated position error: %.2f %.2f %.2f\n",
          trajectory.back().x - x,
          trajectory.back().y - y,
          shorter_turn(h, trajectory.back().h));

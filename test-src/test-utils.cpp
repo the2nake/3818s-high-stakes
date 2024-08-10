@@ -1,7 +1,10 @@
 #include "subzerolib/api/util/controls.hpp"
 #include "subzerolib/api/util/math.hpp"
+#include "subzerolib/api/util/search.hpp"
+
 #include <algorithm>
 #include <stdio.h>
+#include <vector>
 
 void test(bool pass, const char *name) {
   if (pass) {
@@ -19,7 +22,8 @@ void test_vel_balance_with_tank() {
   double pref = 0.3;
   balance_vels(vels, 1.0, pref);
   test(std::abs(std::max_element(
-                    vels.begin(), vels.end(),
+                    vels.begin(),
+                    vels.end(),
                     [](control_components_s a, control_components_s b) -> bool {
                       return std::abs(a.sum()) < std::abs(b.sum());
                     })
@@ -50,7 +54,8 @@ void test_map_vel_balance_with_tank() {
   balance_mapped_vels<tank_motors_e>(vels, 1.0, pref);
   test(std::abs(
            std::max_element(
-               vels.begin(), vels.end(),
+               vels.begin(),
+               vels.end(),
                [](std::pair<tank_motors_e, control_components_s> a,
                   std::pair<tank_motors_e, control_components_s> b) -> bool {
                  return std::abs(a.second.sum()) < std::abs(b.second.sum());
@@ -74,7 +79,31 @@ void test_map_vel_balance_with_tank() {
        "tank velocity balancing with std::map - preference to linear ratio");
 }
 
+void test_binary_search() {
+  std::vector<double> numbers = {-1.0, 1.1, 2.3, 4.3, 9.5};
+  test(3 == binary_search(numbers, 4),
+       "normal binary search - odd length vector");
+  test(0 == binary_search(numbers, -1.1),
+       "normal binary search - odd length vector 2");
+  numbers = {-1.0, -0.5, 0.1, 0.2, 0.3, 0.4, 4.5};
+  test(4 == binary_search(numbers, 0.3),
+       "normal binary search - odd length vector 3");
+}
+void test_binary_search_even_length() {
+  std::vector<double> numbers = {-1.0, 1.1, 2.3, 3.4, 4.3, 9.5};
+  test(1 == binary_search(numbers, -0.9),
+       "normal binary search - even length vector");
+  test(1 == binary_search(numbers, -0.0),
+       "normal binary search - even length vector 2");
+  test(2 == binary_search(numbers, 2.3),
+       "normal binary search - even length vector 3");
+  test(5 == binary_search(numbers, 10.0),
+       "normal binary search - even length vector 4");
+}
+
 int main() {
   test_vel_balance_with_tank();
   test_map_vel_balance_with_tank();
+  test_binary_search();
+  test_binary_search_even_length();
 }

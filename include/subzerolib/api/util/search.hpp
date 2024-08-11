@@ -4,10 +4,6 @@
 #include <functional>
 #include <vector>
 
-#include "stdio.h"
-
-// TODO: unit test
-
 // returns where x should go in the sorted vector
 template <typename StorageType, typename CompareType>
 int binary_search(

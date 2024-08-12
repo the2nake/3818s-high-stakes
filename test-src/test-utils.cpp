@@ -88,22 +88,43 @@ void test_binary_search() {
   numbers = {-1.0, -0.5, 0.1, 0.2, 0.3, 0.4, 4.5};
   test(4 == binary_search(numbers, 0.3),
        "normal binary search - odd length vector 3");
-}
-void test_binary_search_even_length() {
-  std::vector<double> numbers = {-1.0, 1.1, 2.3, 3.4, 4.3, 9.5};
+  numbers = {-1.0, 1.1, 2.3, 3.4, 4.3, 9.5};
   test(1 == binary_search(numbers, -0.9),
        "normal binary search - even length vector");
   test(1 == binary_search(numbers, -0.0),
        "normal binary search - even length vector 2");
   test(2 == binary_search(numbers, 2.3),
        "normal binary search - even length vector 3");
-  test(5 == binary_search(numbers, 10.0),
+  test(6 == binary_search(numbers, 10.0),
        "normal binary search - even length vector 4");
+}
+
+void test_binary_search_with_lamda() {
+  std::vector<std::pair<double, int>> nums = {
+      std::pair<double, int>{2.3, 2},
+      std::pair<double, int>{4.2, 4},
+      std::pair<double, int>{5.6, 5}
+  };
+  test(1 == binary_search<std::pair<double, int>, double>(
+                nums,
+                4.1,
+                [](std::pair<double, int> in) -> double { return in.first; }),
+       "binary search with lambda converter");
+  test(0 == binary_search<std::pair<double, int>, double>(
+                nums,
+                -1,
+                [](std::pair<double, int> in) -> double { return in.first; }),
+       "binary search with lambda converter 2");
+  test(3 == binary_search<std::pair<double, int>, double>(
+                nums,
+                6.1,
+                [](std::pair<double, int> in) -> double { return in.first; }),
+       "binary search with lambda converter 3");
 }
 
 int main() {
   test_vel_balance_with_tank();
   test_map_vel_balance_with_tank();
   test_binary_search();
-  test_binary_search_even_length();
+  test_binary_search_with_lamda();
 }

@@ -5,12 +5,12 @@
 #include <vector>
 
 // returns where x should go in the sorted vector
-template <typename StorageType, typename CompareType>
+template <typename storage_t, typename compare_t>
 int binary_search(
-    std::vector<StorageType> &vec,
-    CompareType x,
-    std::function<CompareType(StorageType)> converter =
-        [](StorageType s) -> CompareType { return s; }) {
+    std::vector<storage_t> &vec,
+    compare_t x,
+    std::function<compare_t(storage_t)> converter =
+        [](storage_t s) -> compare_t { return s; }) {
 
   if (vec.size() == 0)
     return 0;
@@ -19,14 +19,14 @@ int binary_search(
   int i_max = vec.size() - 1;
   if (converter(vec.front()) >= x)
     return 0;
-  if (converter(vec[i_max]) <= x)
-    return i_max;
+  if (converter(vec[i_max]) < x)
+    return i_max + 1;
 
   while (i_min <= i_max) {
     int i_mid = std::floor((i_min + i_max) / 2.0);
-    CompareType min_val = converter(vec[i_min]);
-    CompareType mid_val = converter(vec[i_mid]);
-    CompareType max_val = converter(vec[i_max]);
+    compare_t min_val = converter(vec[i_min]);
+    compare_t mid_val = converter(vec[i_mid]);
+    compare_t max_val = converter(vec[i_max]);
 
     if (mid_val == x) {
       return i_mid;
@@ -35,9 +35,9 @@ int binary_search(
     if (min_val == x) {
       return i_min;
     } else if (i_min == i_mid - 1 && x <= mid_val) {
-      return mid_val;
+      return i_mid;
     } else if (i_mid == i_max - 1 && x > mid_val && x <= max_val) {
-      return max_val;
+      return i_max;
     }
 
     if (mid_val > x) {

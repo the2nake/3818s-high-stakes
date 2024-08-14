@@ -1,12 +1,15 @@
 #include "subzerolib/api/spline/catmull-rom.hpp"
 #include "subzerolib/api/spline/spline.hpp"
-#include "subzerolib/api/trajectory/trajectory.hpp"
 #include "subzerolib/api/trajectory/motion-profile/linear-motion-profile.hpp"
 #include "subzerolib/api/trajectory/motion-profile/trapezoidal-motion-profile.hpp"
+#include "subzerolib/api/trajectory/spline-trajectory.hpp"
+#include "subzerolib/api/trajectory/trajectory.hpp"
 #include "subzerolib/api/util/math.hpp"
 
 #include <cmath>
 #include <limits>
+
+// TODO: test SplineTrajectory
 
 void show_vector(std::vector<double> vector) {
   for (auto &i : vector) {
@@ -14,12 +17,15 @@ void show_vector(std::vector<double> vector) {
   }
 }
 
-class StarChassisKinematics {
+class StarChassisKinematics : public Chassis {
 public:
   StarChassisKinematics(double i_max_vel, double i_boost, double i_corner)
       : max_vel(std::abs(i_max_vel)), boost_radius(std::abs(i_boost)),
         corner_radius(std::abs(i_corner)) {}
-  std::vector<double> get_wheel_max() {
+  virtual void move(double x, double y, double r) override {}
+  virtual void set_rot_pref(double irot_pref = 0.5) override {}
+
+  std::vector<double> get_wheel_max() override {
     return {0.5 * K_SQRT_2 * max_vel,
             max_vel,
             0.5 * K_SQRT_2 * max_vel,
@@ -27,7 +33,8 @@ public:
             max_vel,
             0.5 * K_SQRT_2 * max_vel};
   }
-  std::vector<double> get_wheel_vels(double vx, double vy, double v_ang) {
+  std::vector<double>
+  get_wheel_vels(double vx, double vy, double v_ang) override {
     double angular_components[] = {corner_radius * v_ang,
                                    boost_radius * v_ang,
                                    corner_radius * v_ang,
@@ -67,6 +74,7 @@ int find_pose_index(std::vector<spline_point_s> &vec, pose_s pose) {
 }
 
 int main() {
+  /*
   // set up a linear motion profile
   StarChassisKinematics kinematics{1.73, 0.35, 0.37};
   auto lin_profile = new TrapezoidalMotionProfile{1.73, 4, 4};
@@ -87,8 +95,8 @@ int main() {
   for (int i = 0; i < sampled_points.size(); ++i) {
     trajectory[i] = sampled_points[i];
   }
-  std::vector<int> ctrl_indices;
 
+  std::vector<int> ctrl_indices;
   for (auto &ctrl_point : ctrl_points) {
     int i = find_pose_index(sampled_points, ctrl_point);
     auto &traj_ctrl = trajectory[i];
@@ -141,6 +149,7 @@ int main() {
   }
 
   // generate vh
+  trajectory.back().vh = 0;
   for (int i = 0; i < trajectory.size() - 1; ++i) {
     auto &curr = trajectory[i];
     auto &next = trajectory[i + 1];
@@ -148,7 +157,6 @@ int main() {
     double dt = next.t - curr.t;
     trajectory[i].vh = shorter_turn(curr.h, next.h, 360.0) / dt;
   }
-  trajectory.back().vh = 0;
 
   // limit based on model-given velocities
   std::vector<double> max_vels = kinematics.get_wheel_max();
@@ -243,5 +251,35 @@ int main() {
          trajectory.back().x - x,
          trajectory.back().y - y,
          shorter_turn(h, trajectory.back().h));
+         */
+
+  // set up a linear motion profile
+  auto lin_profile = new TrapezoidalMotionProfile{1.73, 4, 4};
+  lin_profile->set_resolution(0.01);
+
+  // generate the curve using a catmull rom spline
+  std::vector<pose_s> ctrl = {
+      pose_s{  0.0,  0.0,   0.0},
+      pose_s{  0.4,  0.6,  45.0},
+      pose_s{ -0.2,  0.6,  60.0},
+      pose_s{-0.75, 0.75, -45.0}
+  };
+  CatmullRomSpline spline(ctrl);
+  spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
+
+  // kinematics
+  StarChassisKinematics chassis{1.73, 0.35, 0.37};
+
+  auto gen =
+      SplineTrajectory::Builder(SplineTrajectory::heading_mode_e::pose, 400)
+          .with_spline(&spline, ctrl)
+          .with_motion_profile(lin_profile)
+          .with_chassis(&chassis)
+          .build();
+
+  gen->print();
+
+  // TODO: add angular acceleration component
+
   return 0;
 }

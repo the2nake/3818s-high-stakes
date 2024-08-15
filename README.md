@@ -2,22 +2,48 @@
 
 ## Description
 
-The codebase for a certain team of 3818, consisting of 4 members. The `main` branch should always be functional.
+The codebase for a certain team of 3818, currently consisting of 4 members. The `main` branch should always be functional.
 
 ## Features
 
+### Teleop
+
 - Control code for asterisk and X drivetrain types
-- Linear and angular balancing for opcontrol "arcarde" style movement
-- Basic logging functionality
+
+### Motion Algorithms
+
+- Easy-to-use PID classes
+- Generic odometry-based PID motion for holonomic drivetrains
+- Non-overlapping Pure Pursuit implementation
+
+  - with tracked position interpolation to prevent point skipping
+
 - Path generation using uniform Catmull-Rom spline
+  - centripetal + chordal coming soon
+- Heading interpolation for splines
+  - lerp from control points
 - Trapezoidal linear motion profile generation
-- Generic PID implementation for holonomic drivetrains
-- Custom odometry implementation for higher tracking accuracy
-- Sensor fusion with 2 IMUs with the KFOdometry class
-- Pure pursuit implementation
-- Extensible state machine implementation
+  - time or distance parameterization
+- 2D Motion Profiling for holonomic drives
+  - supports any linear profile
+
+### Sensors
+
 - Abstractions for gyroscopes and rotation encoders
 - Filtered gyroscope class using modular arithmetic averages
+- Custom 2-tracker odometry algorithm for higher tracking accuracy
+- Sensor fusion with 2 IMUs with the KFOdometry class
+
+### Math and Logic
+
+- Extensible state machine implementation
+- Reliable ExitCondition class
+- Linear and angular balancing for teleop "arcade" style movement
+
+### Utils
+
+- Logging with colour support
+- Generic `AutoUpdater` for updating odometry, PID, exit conditions, etc.
 - A variety of miscellaneous functions such as `shorter_turn` and `clamp_distance`
 
 ## Dependencies

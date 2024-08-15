@@ -2,7 +2,7 @@
 
 ## Description
 
-A very work-in-progress codebase. `main` branch will stay nonfunctional until at least the end of the first week of July, at which time every test will be completed. The code will be cleaned up into a working version as soon as possible, then development will resume in a separate branch.
+The codebase for a certain team of 3818, consisting of 4 members. The `main` branch should always be functional.
 
 ## Features
 
@@ -13,9 +13,11 @@ A very work-in-progress codebase. `main` branch will stay nonfunctional until at
 - Trapezoidal linear motion profile generation
 - Generic PID implementation for holonomic drivetrains
 - Custom odometry implementation for higher tracking accuracy
+- Sensor fusion with 2 IMUs with the KFOdometry class
 - Pure pursuit implementation
 - Extensible state machine implementation
 - Abstractions for gyroscopes and rotation encoders
+- Filtered gyroscope class using modular arithmetic averages
 - A variety of miscellaneous functions such as `shorter_turn` and `clamp_distance`
 
 ## Dependencies

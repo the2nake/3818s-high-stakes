@@ -67,5 +67,16 @@ public:
 
     std::vector<pose_s> b_control_points;
     std::vector<trajectory_point_s> trajectory;
+
+    void sample_spline();
+    std::vector<spline_point_s> spline_points;
+
+    void get_control_indices();
+    std::vector<int> ctrl_indices;
+
+    void apply_motion_profile();
+    void generate_heading();
+    void generate_vh();
+    void apply_model_constraints();
   };
 };

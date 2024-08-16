@@ -78,17 +78,15 @@ SplineTrajectory::Builder::with_chassis(Chassis *i_chassis) {
   return *this;
 }
 
-// TODO: refactor, split
-std::shared_ptr<SplineTrajectory> SplineTrajectory::Builder::build() {
-  // sample the spline
-  auto spline_points = b_spline->sample_kinematics(sample_count);
+void SplineTrajectory::Builder::sample_spline() {
+  spline_points = b_spline->sample_kinematics(sample_count);
   trajectory.resize(spline_points.size());
   for (int i = 0; i < spline_points.size(); ++i) {
     trajectory[i] = spline_points[i];
   }
+}
 
-  // get control indices
-  std::vector<int> ctrl_indices;
+void SplineTrajectory::Builder::get_control_indices() {
   for (auto &ctrl_point : b_control_points) {
     int i = find_pose_index(ctrl_point);
     auto &traj_ctrl = trajectory[i];
@@ -97,8 +95,9 @@ std::shared_ptr<SplineTrajectory> SplineTrajectory::Builder::build() {
     traj_ctrl.h = ctrl_point.h;
     ctrl_indices.push_back(i);
   }
+}
 
-  // apply motion profile
+void SplineTrajectory::Builder::apply_motion_profile() {
   trajectory.back().vx = 0;
   trajectory.back().vy = 0;
   b_profile->generate(trajectory.back().s);
@@ -118,40 +117,39 @@ std::shared_ptr<SplineTrajectory> SplineTrajectory::Builder::build() {
       curr.vy = lin_point.v / ds * dy;
     }
   }
+}
 
-  // generate headings
-  switch (b_mode) {
-  case heading_mode_e::path:
+void SplineTrajectory::Builder::generate_heading() {
+  if (b_mode == heading_mode_e::path) {
     for (int i = 0; i < trajectory.size() - 1; ++i) {
       auto &curr = trajectory[i];
       auto &next = trajectory[i + 1];
       curr.h = 90.0 - in_deg(std::atan2(next.y - curr.y, next.x - curr.x));
     }
-    break;
-  case heading_mode_e::pose:
-    for (int i = 0; i < trajectory.size(); ++i) {
-      bool not_ctrl_point =
-          std::find(ctrl_indices.begin(), ctrl_indices.end(), i) ==
-          ctrl_indices.end();
-      if (not_ctrl_point) {
-        int i0 = 0, i1 = 0;
-        for (int j = 1; j < ctrl_indices.size(); ++j) {
-          if (ctrl_indices[j] > i) {
-            i0 = ctrl_indices[j - 1];
-            i1 = ctrl_indices[j];
-            break;
-          }
-        }
-        double s_pct = (trajectory[i].s - trajectory[i0].s) /
-                       (trajectory[i1].s - trajectory[i0].s);
-        double h0 = trajectory[i0].h, h1 = trajectory[i1].h;
-        trajectory[i].h = h0 + s_pct * shorter_turn(h0, h1, 360.0);
-      }
-    }
-    break;
+    return;
   }
+  for (int i = 0; i < trajectory.size(); ++i) {
+    bool not_ctrl_point =
+        std::find(ctrl_indices.begin(), ctrl_indices.end(), i) ==
+        ctrl_indices.end();
+    if (not_ctrl_point) {
+      int i0 = 0, i1 = 0;
+      for (int j = 1; j < ctrl_indices.size(); ++j) {
+        if (ctrl_indices[j] > i) {
+          i0 = ctrl_indices[j - 1];
+          i1 = ctrl_indices[j];
+          break;
+        }
+      }
+      double s_pct = (trajectory[i].s - trajectory[i0].s) /
+                     (trajectory[i1].s - trajectory[i0].s);
+      double h0 = trajectory[i0].h, h1 = trajectory[i1].h;
+      trajectory[i].h = h0 + s_pct * shorter_turn(h0, h1, 360.0);
+    }
+  }
+}
 
-  // generate vh
+void SplineTrajectory::Builder::generate_vh() {
   trajectory.back().vh = 0;
   for (int i = 0; i < trajectory.size() - 1; ++i) {
     auto &curr = trajectory[i];
@@ -160,8 +158,9 @@ std::shared_ptr<SplineTrajectory> SplineTrajectory::Builder::build() {
     double dt = next.t - curr.t;
     trajectory[i].vh = shorter_turn(curr.h, next.h, 360.0) / dt;
   }
+}
 
-  // limit based on model-given velocities
+void SplineTrajectory::Builder::apply_model_constraints() {
   std::vector<double> max_vels = b_chassis->get_wheel_max();
   // used to reformulate time points
   std::vector<double> dts(trajectory.size());
@@ -202,6 +201,17 @@ std::shared_ptr<SplineTrajectory> SplineTrajectory::Builder::build() {
   for (int i = 1; i < trajectory.size(); ++i) {
     trajectory[i].t = trajectory[i - 1].t + dts[i];
   }
+}
+
+std::shared_ptr<SplineTrajectory> SplineTrajectory::Builder::build() {
+  sample_spline();
+  get_control_indices();
+
+  apply_motion_profile();
+  generate_heading();
+  generate_vh();
+
+  apply_model_constraints();
 
   std::shared_ptr<SplineTrajectory> ptr{new SplineTrajectory()};
   ptr->vec = trajectory;

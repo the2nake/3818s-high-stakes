@@ -61,11 +61,11 @@ public:
   private:
     int find_pose_index(pose_s pose);
 
-    Spline *b_spline = nullptr;
-    LinearMotionProfile *b_profile = nullptr;
-    Chassis *b_chassis = nullptr;
+    Spline *spline = nullptr;
+    LinearMotionProfile *profile = nullptr;
+    Chassis *chassis = nullptr;
 
-    std::vector<pose_s> b_control_points;
+    std::vector<pose_s> control_points;
     std::vector<trajectory_point_s> trajectory;
 
     void sample_spline();

@@ -51,10 +51,10 @@ int SplineTrajectory::Builder::find_pose_index(pose_s pose) {
 
 SplineTrajectory::Builder &
 SplineTrajectory::Builder::with_spline(Spline *i_spline,
-                                       std::vector<pose_s> control_points) {
+                                       std::vector<pose_s> i_control_points) {
   if (i_spline != nullptr) {
-    b_spline = i_spline;
-    b_control_points = std::move(control_points);
+    spline = i_spline;
+    control_points = std::move(i_control_points);
   }
 
   return *this;
@@ -63,7 +63,7 @@ SplineTrajectory::Builder::with_spline(Spline *i_spline,
 SplineTrajectory::Builder &
 SplineTrajectory::Builder::with_motion_profile(LinearMotionProfile *i_profile) {
   if (i_profile != nullptr) {
-    b_profile = i_profile;
+    profile = i_profile;
   }
 
   return *this;
@@ -72,14 +72,14 @@ SplineTrajectory::Builder::with_motion_profile(LinearMotionProfile *i_profile) {
 SplineTrajectory::Builder &
 SplineTrajectory::Builder::with_chassis(Chassis *i_chassis) {
   if (i_chassis != nullptr) {
-    b_chassis = i_chassis;
+    chassis = i_chassis;
   }
 
   return *this;
 }
 
 void SplineTrajectory::Builder::sample_spline() {
-  spline_points = b_spline->sample_kinematics(sample_count);
+  spline_points = spline->sample_kinematics(sample_count);
   trajectory.resize(spline_points.size());
   for (int i = 0; i < spline_points.size(); ++i) {
     trajectory[i] = spline_points[i];
@@ -87,7 +87,7 @@ void SplineTrajectory::Builder::sample_spline() {
 }
 
 void SplineTrajectory::Builder::get_control_indices() {
-  for (auto &ctrl_point : b_control_points) {
+  for (auto &ctrl_point : control_points) {
     int i = find_pose_index(ctrl_point);
     auto &traj_ctrl = trajectory[i];
     traj_ctrl.x = ctrl_point.x;
@@ -100,9 +100,9 @@ void SplineTrajectory::Builder::get_control_indices() {
 void SplineTrajectory::Builder::apply_motion_profile() {
   trajectory.back().vx = 0;
   trajectory.back().vy = 0;
-  b_profile->generate(trajectory.back().s);
+  profile->generate(trajectory.back().s);
   for (int i = 0; i < trajectory.size(); ++i) {
-    auto lin_point = b_profile->get_point_at_distance(trajectory[i].s);
+    auto lin_point = profile->get_point_at_distance(trajectory[i].s);
     trajectory[i].t = lin_point.t;
 
     if (i < trajectory.size() - 1) {
@@ -120,6 +120,7 @@ void SplineTrajectory::Builder::apply_motion_profile() {
 }
 
 void SplineTrajectory::Builder::generate_heading() {
+  // TODO: add angular acceleration constraint
   if (b_mode == heading_mode_e::path) {
     for (int i = 0; i < trajectory.size() - 1; ++i) {
       auto &curr = trajectory[i];
@@ -161,7 +162,7 @@ void SplineTrajectory::Builder::generate_vh() {
 }
 
 void SplineTrajectory::Builder::apply_model_constraints() {
-  std::vector<double> max_vels = b_chassis->get_wheel_max();
+  std::vector<double> max_vels = chassis->get_wheel_max();
   // used to reformulate time points
   std::vector<double> dts(trajectory.size());
   dts.front() = 0.0;
@@ -171,9 +172,9 @@ void SplineTrajectory::Builder::apply_model_constraints() {
     // generate wheel velocities
     point_s local_v = rotate_acw(traj_p.vx, traj_p.vy, traj_p.h);
     auto wheel_vels =
-        b_chassis->get_wheel_vels(local_v.x, local_v.y, in_rad(traj_p.vh));
+        chassis->get_wheel_vels(local_v.x, local_v.y, in_rad(traj_p.vh));
 
-    // vel_scale used to accumulate scaling ratios
+    // used to accumulate scaling ratios
     double vel_scale = 1.0;
     for (int j = 0; j < wheel_vels.size(); ++j) {
       double mag = std::abs(wheel_vels[j]);

@@ -19,33 +19,28 @@ int binary_search(
   int i_max = vec.size() - 1;
   if (converter(vec.front()) >= x)
     return 0;
+  if (converter(vec[i_max]) == x)
+    return i_max;
   if (converter(vec[i_max]) < x)
     return i_max + 1;
 
-  while (i_min <= i_max) {
-    int i_mid = std::floor((i_min + i_max) / 2.0);
-    compare_t min_val = converter(vec[i_min]);
+  int section = -1;
+
+  // find the range
+  while (i_max - i_min > 1) {
+    int i_mid = (i_min + i_max) / 2;
     compare_t mid_val = converter(vec[i_mid]);
-    compare_t max_val = converter(vec[i_max]);
+    // compare_t min_val = converter(vec[i_min]);
+    // compare_t max_val = converter(vec[i_max]);
 
-    if (mid_val == x) {
-      return i_mid;
-    }
-
-    if (min_val == x) {
-      return i_min;
-    } else if (i_min == i_mid - 1 && x <= mid_val) {
-      return i_mid;
-    } else if (i_mid == i_max - 1 && x > mid_val && x <= max_val) {
-      return i_max;
-    }
-
-    if (mid_val > x) {
-      i_max = i_mid - 1;
+    if (x <= mid_val) {
+      i_max = i_mid;
     } else {
-      i_min = i_mid + 1;
+      i_min = i_mid;
     }
   }
+
+  return i_max;
 
   // this shouldn't ever be reached
   return -1;

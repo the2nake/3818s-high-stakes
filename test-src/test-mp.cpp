@@ -139,6 +139,23 @@ int main() {
           .build();
 
   gen->print();
+  double x = 0;
+  double y = 0;
+  double h = 0;
+  double time = 0;
+  const double dt = 0.01;
+  while (time + dt <= gen->get_duration()) {
+    auto p = gen->get_at_time(time + dt);
+    x += p.vx * dt;
+    y += p.vy * dt;
+    h += p.vh * dt;
+    time += dt;
+  }
+  auto final = gen->get_at_distance(gen->get_length());
+  printf("\033[34m[i]\033[0m: integrated position error: %.2f %.2f %.2f\n",
+         final.x - x,
+         final.y - y,
+         shorter_turn(h, final.h));
 
   return 0;
 }

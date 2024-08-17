@@ -9,7 +9,6 @@
 double SplineTrajectory::get_duration() { return vec.back().t; }
 double SplineTrajectory::get_length() { return vec.back().s; }
 
-// TODO: test
 trajectory_point_s SplineTrajectory::get_at_time(double t) {
   int next_i = binary_search<trajectory_point_s, double>(
       vec, t, [](trajectory_point_s p) -> double { return p.t; });

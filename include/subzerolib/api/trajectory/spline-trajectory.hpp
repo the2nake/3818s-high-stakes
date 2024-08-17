@@ -66,13 +66,13 @@ public:
     Chassis *chassis = nullptr;
 
     std::vector<pose_s> control_points;
-    std::vector<trajectory_point_s> trajectory;
+    std::vector<trajectory_point_s> traj;
 
     void sample_spline();
     std::vector<spline_point_s> spline_points;
 
     void get_control_indices();
-    std::vector<int> ctrl_indices;
+    std::vector<int> ctrl_is;
 
     void apply_motion_profile();
     void generate_heading();

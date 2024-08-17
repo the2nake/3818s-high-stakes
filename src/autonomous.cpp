@@ -1,7 +1,14 @@
 #include "devices.hpp"
 #include "main.h"
+#include "subzerolib/api/spline/catmull-rom.hpp"
+#include "subzerolib/api/trajectory/motion-profile/linear-motion-profile.hpp"
+#include "subzerolib/api/trajectory/motion-profile/trapezoidal-motion-profile.hpp"
+#include "subzerolib/api/trajectory/spline-trajectory.hpp"
 
+/*
+#include <memory>
 #include <random>
+*/
 
 void autonomous() {
   std::shared_ptr<HoloChassisPID> controller =
@@ -35,7 +42,6 @@ void autonomous() {
   std::shared_ptr<ExitCondition<double>> cond{
       new ExitCondition<double>{{0, 0.02}, 200}
   };
-  PurePursuitController pp{controller, odom, std::move(cond)};
 
   std::vector<pose_s> ctrl = {
       pose_s{  0.0,  0.0,   0.0},
@@ -43,10 +49,24 @@ void autonomous() {
       pose_s{ -0.2,  0.6,  60.0},
       pose_s{-0.75, 0.75, -45.0}
   };
-  CatmullRomSpline spline(ctrl);
+  std::shared_ptr<CatmullRomSpline> spline{new CatmullRomSpline{ctrl}};
   spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
+
+  std::shared_ptr<TrapezoidalMotionProfile> profile{
+      new TrapezoidalMotionProfile{chassis->get_max_vel(), 5}
+  };
+
+  auto traj =
+      SplineTrajectory::Builder(SplineTrajectory::heading_mode_e::pose, 400)
+          .with_spline(spline, ctrl)
+          .with_chassis(chassis)
+          .with_motion_profile(profile)
+          .build();
+
+  /*
+  PurePursuitController pp{controller, odom, std::move(cond)};
   auto spline_points = spline.sample_coordinates(200);
-  std::vector<pose_s> waypoints(spline_points.size());
-  interpolate_heading(spline_points, ctrl);
+  std::vector<pose_s> waypoints = interpolate_heading(spline_points, ctrl);
   pp.follow(waypoints, 0.4);
+  */
 }

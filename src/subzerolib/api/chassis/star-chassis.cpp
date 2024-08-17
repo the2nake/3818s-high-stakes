@@ -36,6 +36,8 @@ void StarChassis::set_rot_pref(double irot_pref) {
   clamp(rot_pref, 0.0, 1.0);
 }
 
+double StarChassis::get_max_vel() { return lin_vel; }
+
 std::vector<double>
 StarChassis::get_wheel_vels(double vx, double vy, double ang) {
   double angular_components[] = {corner_radius * ang,

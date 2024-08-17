@@ -30,6 +30,10 @@ public:
   /// @param rot_pref a value in the range [0.0, 1.0]
   void set_rot_pref(double irot_pref = 0.5) override;
 
+  /// @brief get the maximum velocity
+  /// @returns the linear velocity
+  double get_max_vel() override;
+
   /// @brief generate wheel velocities for a given angular and linear velocity
   /// target
   ///

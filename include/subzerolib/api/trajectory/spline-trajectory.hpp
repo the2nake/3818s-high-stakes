@@ -45,13 +45,16 @@ private:
 public:
   class Builder {
   public:
-    Builder(heading_mode_e i_mode, int i_sample_count)
+    Builder(heading_mode_e i_mode = SplineTrajectory::heading_mode_e::path,
+            int i_sample_count = 200)
         : b_mode(i_mode), sample_count(i_sample_count) {}
 
-    Builder &with_spline(Spline *i_spline,
+    Builder &with_spline(std::shared_ptr<Spline> i_spline,
                          std::vector<pose_s> i_control_points);
-    Builder &with_motion_profile(LinearMotionProfile *profile);
-    Builder &with_chassis(Chassis *i_chassis);
+
+    Builder &with_motion_profile(std::shared_ptr<LinearMotionProfile> profile);
+
+    Builder &with_chassis(std::shared_ptr<Chassis> i_chassis);
 
     std::shared_ptr<SplineTrajectory> build();
 
@@ -61,9 +64,9 @@ public:
   private:
     int find_pose_index(pose_s pose);
 
-    Spline *spline = nullptr;
-    LinearMotionProfile *profile = nullptr;
-    Chassis *chassis = nullptr;
+    std::shared_ptr<Spline> spline = nullptr;
+    std::shared_ptr<LinearMotionProfile> profile = nullptr;
+    std::shared_ptr<Chassis> chassis = nullptr;
 
     std::vector<pose_s> control_points;
     std::vector<trajectory_point_s> traj;

@@ -6,9 +6,6 @@
 /// state vector of form [x, vx, y, vy, h, vh]
 /// measurement vector of form [vx, vy, h, vh]
 /// control vector form [ax, ay]
-///
-/// edittable class
-// TODO: why cannot cast to private base type?
 class KFOdometry : public GyroOdometry, private KalmanFilter {
 public:
   virtual ~KFOdometry() {}

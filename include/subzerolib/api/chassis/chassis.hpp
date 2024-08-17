@@ -15,6 +15,10 @@ public:
   /// @param rot_pref a value in the range [0.0, 1.0]
   virtual void set_rot_pref(double irot_pref = 0.5) = 0;
 
+  /// @brief get the maximum velocity
+  /// @returns the linear velocity
+  virtual double get_max_vel() = 0;
+
   /// @brief generate wheel velocities for a given angular and linear velocity
   /// target
   ///

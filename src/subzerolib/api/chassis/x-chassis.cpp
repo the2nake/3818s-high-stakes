@@ -20,6 +20,8 @@ void XChassis::move(double x, double y, double r) {
   back_left->move_voltage(12000 * (vs[3].sum()));
 }
 
+double XChassis::get_max_vel() { return lin_vel; }
+
 std::vector<double> XChassis::get_wheel_vels(double vx, double vy, double ang) {
   double angular_components[] = {
       radius * ang, radius * ang, -radius * ang, -radius * ang};

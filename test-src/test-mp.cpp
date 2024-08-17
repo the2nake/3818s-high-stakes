@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <limits>
+#include <memory>
 
 void show_vector(std::vector<double> vector) {
   for (auto &i : vector) {
@@ -20,6 +21,7 @@ public:
   virtual void move(double x, double y, double r) override {}
   virtual void set_rot_pref(double irot_pref = 0.5) override {}
 
+  double get_max_vel() override { return max_vel; }
   std::vector<double> get_wheel_max() override {
     return {0.5 * K_SQRT_2 * max_vel,
             max_vel,
@@ -107,8 +109,15 @@ int main() {
          shorter_turn(h, trajectory.back().h));
          */
 
+  // kinematics
+  std::shared_ptr<Chassis> chassis{
+      new StarChassisKinematics{1.73, 0.35, 0.37}
+  };
+
   // set up a linear motion profile
-  auto lin_profile = new TrapezoidalMotionProfile{1.73, 4, 4};
+  std::shared_ptr<TrapezoidalMotionProfile> lin_profile{
+      new TrapezoidalMotionProfile{chassis->get_max_vel(), 4, 4}
+  };
   lin_profile->set_resolution(0.01);
 
   // generate the curve using a catmull rom spline
@@ -118,22 +127,17 @@ int main() {
       pose_s{ -0.2,  0.6,  60.0},
       pose_s{-0.75, 0.75, -45.0}
   };
-  CatmullRomSpline spline(ctrl);
-  spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
-
-  // kinematics
-  StarChassisKinematics chassis{1.73, 0.35, 0.37};
+  std::shared_ptr<CatmullRomSpline> spline{new CatmullRomSpline{ctrl}};
+  spline->pad_velocity({0.5, 0.5}, {-0.25, 0.25});
 
   auto gen =
       SplineTrajectory::Builder(SplineTrajectory::heading_mode_e::pose, 400)
-          .with_spline(&spline, ctrl)
+          .with_spline(spline, ctrl)
           .with_motion_profile(lin_profile)
-          .with_chassis(&chassis)
+          .with_chassis(chassis)
           .build();
 
   gen->print();
-
-  // TODO: add angular acceleration component
 
   return 0;
 }

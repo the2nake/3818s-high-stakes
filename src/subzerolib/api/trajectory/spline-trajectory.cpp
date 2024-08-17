@@ -53,7 +53,7 @@ int SplineTrajectory::Builder::find_pose_index(pose_s pose) {
 }
 
 SplineTrajectory::Builder &
-SplineTrajectory::Builder::with_spline(Spline *i_spline,
+SplineTrajectory::Builder::with_spline(std::shared_ptr<Spline> i_spline,
                                        std::vector<pose_s> i_control_points) {
   if (i_spline != nullptr) {
     spline = i_spline;
@@ -63,8 +63,8 @@ SplineTrajectory::Builder::with_spline(Spline *i_spline,
   return *this;
 }
 
-SplineTrajectory::Builder &
-SplineTrajectory::Builder::with_motion_profile(LinearMotionProfile *i_profile) {
+SplineTrajectory::Builder &SplineTrajectory::Builder::with_motion_profile(
+    std::shared_ptr<LinearMotionProfile> i_profile) {
   if (i_profile != nullptr) {
     profile = i_profile;
   }
@@ -73,7 +73,7 @@ SplineTrajectory::Builder::with_motion_profile(LinearMotionProfile *i_profile) {
 }
 
 SplineTrajectory::Builder &
-SplineTrajectory::Builder::with_chassis(Chassis *i_chassis) {
+SplineTrajectory::Builder::with_chassis(std::shared_ptr<Chassis> i_chassis) {
   if (i_chassis != nullptr) {
     chassis = i_chassis;
   }

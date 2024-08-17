@@ -22,6 +22,10 @@ public:
     clamp(rot_pref, 0.0, 1.0);
   }
 
+  /// @brief get the maximum velocity
+  /// @returns the linear velocity
+  double get_max_vel() override;
+
   /// @brief generate wheel velocities for a given angular and linear velocity
   /// target
   ///

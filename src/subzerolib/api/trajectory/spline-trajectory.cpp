@@ -3,11 +3,13 @@
 #include "subzerolib/api/geometry/trajectory-point.hpp"
 #include "subzerolib/api/spline/spline.hpp"
 #include "subzerolib/api/trajectory/motion-profile/linear-motion-profile.hpp"
+#include "subzerolib/api/util/math.hpp"
 #include "subzerolib/api/util/search.hpp"
 
 double SplineTrajectory::get_duration() { return vec.back().t; }
 double SplineTrajectory::get_length() { return vec.back().s; }
 
+// TODO: test
 trajectory_point_s SplineTrajectory::get_at_time(double t) {
   int next_i = binary_search<trajectory_point_s, double>(
       vec, t, [](trajectory_point_s p) -> double { return p.t; });
@@ -22,6 +24,7 @@ trajectory_point_s SplineTrajectory::get_at_time(double t) {
   return lerp(vec[next_i - 1], vec[next_i], f);
 }
 
+// TODO: test
 trajectory_point_s SplineTrajectory::get_at_distance(double s) {
   int next_i = binary_search<trajectory_point_s, double>(
       vec, s, [](trajectory_point_s p) -> double { return p.s; });
@@ -120,7 +123,6 @@ void SplineTrajectory::Builder::apply_motion_profile() {
 }
 
 void SplineTrajectory::Builder::generate_heading() {
-  // TODO: add angular acceleration constraint
   if (b_mode == heading_mode_e::path) {
     for (int i = 0; i < traj.size() - 1; ++i) {
       auto &curr = traj[i];
@@ -131,6 +133,7 @@ void SplineTrajectory::Builder::generate_heading() {
   }
 
   int j = 0, i0 = 0, i1 = 0;
+  double dh = 0, dt = 0, max_a = 0.0;
   for (int i = 0; i < traj.size(); ++i) {
     bool is_ctrl =
         std::find(ctrl_is.begin(), ctrl_is.end(), i) != ctrl_is.end();
@@ -142,10 +145,18 @@ void SplineTrajectory::Builder::generate_heading() {
       }
       break;
     }
+    dh = shorter_turn(traj[i0].h, traj[i1].h, 360.0);
+    dt = traj[i1].t - traj[i0].t;
+    max_a = 4 * dh / (dt * dt);
 
-    double s_pct = (traj[i].s - traj[i0].s) / (traj[i1].s - traj[i0].s);
-    double h0 = traj[i0].h, h1 = traj[i1].h;
-    traj[i].h = h0 + s_pct * shorter_turn(h0, h1, 360.0);
+    double t_i = traj[i].t - traj[i0].t;
+    traj[i].h = traj[i0].h;
+    if (t_i < dt / 2.0) {
+      traj[i].h += max_a * t_i * t_i * 0.5;
+    } else {
+      t_i -= dt / 2.0;
+      traj[i].h += 0.5 * dh + (2 * dh * t_i / dt) - (0.5 * max_a * t_i * t_i);
+    }
   }
 }
 

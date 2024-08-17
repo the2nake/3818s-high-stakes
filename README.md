@@ -15,17 +15,17 @@ The codebase for a certain team of 3818, currently consisting of 4 members. The 
 - Easy-to-use PID classes
 - Generic odometry-based PID motion for holonomic drivetrains
 - Non-overlapping Pure Pursuit implementation
-
   - with tracked position interpolation to prevent point skipping
+- 2D Motion Profiling for holonomic drives
+  - with support for any linear profile
+  - with angular acceleration minimization
 
 - Path generation using uniform Catmull-Rom spline
   - centripetal + chordal coming soon
 - Heading interpolation for splines
   - lerp from control points
 - Trapezoidal linear motion profile generation
-  - time or distance parameterization
-- 2D Motion Profiling for holonomic drives
-  - supports any linear profile
+  - time and distance parameterization
 
 ### Sensors
 

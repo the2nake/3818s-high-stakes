@@ -7,6 +7,8 @@
 #include <limits>
 #include <memory>
 
+// TODO: plot mp
+
 void show_vector(std::vector<double> vector) {
   for (auto &i : vector) {
     printf("%f\n", i);

@@ -14,12 +14,16 @@ int main() {
   // Creating a directory
   mkdir("test-output", 0777);
   std::fstream file;
-  file.open("test-output/test-plot.txt", std::fstream::out);
+  file.open("test-output/test-pp.txt", std::fstream::out);
   file.clear();
 
   // generate the spline
-  CatmullRomSpline spline(
-      std::vector<point_s>{{0.0, 0.0}, {0.4, 0.6}, {-0.2, 0.6}, {-1.0, 1.0}});
+  CatmullRomSpline spline(std::vector<point_s>{
+      { 0.0, 0.0},
+      { 0.4, 0.6},
+      {-0.2, 0.6},
+      {-1.0, 1.0}
+  });
   spline.pad_velocity({0.5, 0.5}, {-0.5, 0.5});
   std::vector<point_s> spline_points = spline.sample_coordinates(200);
 
@@ -97,7 +101,10 @@ int main() {
 
   // TODO: write unit tests for line segment
 
-  segment_s segment{{-1, -1}, {1, 1}};
+  segment_s segment{
+      {-1, -1},
+      { 1,  1}
+  };
   circle_s circle{0, 0, 1};
   // should intersect at (-0.71, -0.71) and (0.71, 0.71)
   std::cout << "--- inputs ----------\n";
@@ -115,7 +122,10 @@ int main() {
   print(circle.intersections(segment));
 
   circle.centre = point_s(0.5, 1);
-  segment = segment_s{{-2, 0.75}, {0.25, 0.5}};
+  segment = segment_s{
+      {  -2, 0.75},
+      {0.25,  0.5}
+  };
   // should intersect at 1 point
   std::cout << "--- inputs ----------\n";
   print(segment);
@@ -125,10 +135,3 @@ int main() {
 
   return 0;
 }
-
-// working through x drive motion limits
-// ω_max = (wheel_max) / radius radians per second
-// v_max = (wheel_max) * (sin(move_h - robor_h) + cos(move_h - robor_h))
-// allowance after ω
-// v_max = (wheel_max - ω * radius) * (sin(move_h - robor_h) + cos(move_h -
-// robor_h))

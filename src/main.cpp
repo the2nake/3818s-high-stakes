@@ -35,7 +35,7 @@ void odom_disp_loop(void *ignore) {
 
   while (saturnine::running) {
     auto pose = odom->get_pose();
-    past_points.push_back(pose.point());
+    past_points.push_back(pose);
     if (past_points.size() > 200) {
       past_points.erase(past_points.begin());
     }

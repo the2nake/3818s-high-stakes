@@ -48,16 +48,6 @@ auto shorter_turn(T h0, T hf, T circle_size = 360.0) -> decltype(hf - h0) {
   }
 }
 
-/// @brief linearly interpolates between two values
-/// @param a first value
-/// @param b second value
-/// @param t the interpolation factor (0 <= t <= 1)
-/// @returns interpolated value between a and b
-template <typename T, typename T2>
-auto lerp(T a, T b, T2 t) -> decltype(a * t) {
-  return a + (b - a) * t;
-}
-
 /// @brief clamps a value between two ranges
 /// @tparam T the type of the values
 /// @param val reference to the value
@@ -95,6 +85,7 @@ template <typename T> void clamp_distance(T max_dist, T &x, T &y) {
 /// @param x the x coordinate
 /// @param y the y coordinate
 /// @param deg the angle to rotate in degrees
+/// @returns the rotated coordinates
 template <typename T> point_s rotate_acw(T x, T y, T deg) {
   double rad = in_rad(-deg);
   return {x * cos(rad) + y * sin(rad), y * cos(rad) - x * sin(rad)};

@@ -50,7 +50,7 @@ void PurePursuitController::follow(std::vector<pose_s> iwaypoints,
       auto check_pose = lerp(prev_pose, curr_pose, i * 1.0 / resolution);
       seek_circle = circle_s(check_pose, lookahead);
       while (waypoints.size() > 1 &&
-             seek_circle.contains(waypoints[1].point())) {
+             seek_circle.contains(waypoints[1])) {
         waypoints.erase(waypoints.begin());
       }
     }
@@ -86,7 +86,7 @@ void PurePursuitController::select_carrot(pose_s pose, double lookahead,
   if (waypoints.size() == 1) {
     carrot = waypoints[0];
   } else {
-    segment_s segment{waypoints[0].point(), waypoints[1].point()};
+    segment_s segment{waypoints[0], waypoints[1]};
     circle_s seek_circle = circle_s(pose, lookahead);
     auto intersections = seek_circle.intersections(segment);
     if (intersections.size() == 0) {

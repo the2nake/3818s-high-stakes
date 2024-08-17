@@ -3,15 +3,9 @@
 #include "subzerolib/api/util/math.hpp"
 #include <cmath>
 
-double pose_s::dist(const point_s &other) const { return point().dist(other); }
-double pose_s::dist(const pose_s &other) const {
-  return std::hypot(x - other.x, y - other.y);
-}
-
-pose_s lerp(pose_s a, pose_s b, double t) {
-  // clamp(factor, 0.0, 1.0)
-  auto point = lerp(a.point(), b.point(), t);
-  double heading = lerp(a.heading(), b.heading(), t);
+template <> pose_s lerp<pose_s, double>(pose_s a, pose_s b, double t) {
+  auto point = lerp<point_s>(a, b, t);
+  double heading = a.h + shorter_turn(a.h, b.h) * t;
   return pose_s{point, heading};
 }
 

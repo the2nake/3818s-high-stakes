@@ -16,7 +16,7 @@ CatmullRomSpline::CatmullRomSpline(std::vector<pose_s> icontrol_points) {
   transform(icontrol_points.begin(),
             icontrol_points.end(),
             control_points.begin(),
-            [](pose_s pose) -> point_s { return pose.point(); });
+            [](pose_s pose) -> point_s { return pose; });
   calculate_bernstein_coeffs();
 }
 
@@ -64,7 +64,7 @@ std::vector<spline_point_s> CatmullRomSpline::sample_kinematics(int count) {
     auto pos = get_pos(u);
     double s = 0.0;
     if (i > 0) {
-      s = sampled_points.back().s + pos.dist(sampled_points.back().point());
+      s = sampled_points.back().s + pos.dist(sampled_points.back());
     }
     auto vel = get_vel(u);
     auto accel = get_accel(u);

@@ -4,7 +4,6 @@
 
 // TODO: write distance detection for pure pursuit
 // TODO: new adaptive-pure-pursuit class?
-// TODO: move structs to geometry
 
 class Trajectory {
 public:

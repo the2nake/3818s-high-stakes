@@ -61,7 +61,7 @@ int find_pose_index(std::vector<spline_point_s> &vec, pose_s pose) {
   double min_d = std::numeric_limits<double>::max();
   int return_index = 0;
   for (int i = 0; i < vec.size(); ++i) {
-    double dist = pose.dist(vec[i].point());
+    double dist = pose.dist(vec[i]);
     if (dist < min_d) {
       return_index = i;
       min_d = dist;
@@ -92,7 +92,6 @@ int main() {
       break;
   }
 
-  // TODO: clamp with vh acceleration
   double x = 0;
   double y = 0;
   double h = 0;

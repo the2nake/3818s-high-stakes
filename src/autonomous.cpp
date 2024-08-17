@@ -50,7 +50,7 @@ void autonomous() {
       pose_s{-0.75, 0.75, -45.0}
   };
   std::shared_ptr<CatmullRomSpline> spline{new CatmullRomSpline{ctrl}};
-  spline.pad_velocity({0.5, 0.5}, {-0.25, 0.25});
+  spline->pad_velocity({0.5, 0.5}, {-0.25, 0.25});
 
   std::shared_ptr<TrapezoidalMotionProfile> profile{
       new TrapezoidalMotionProfile{chassis->get_max_vel(), 5}

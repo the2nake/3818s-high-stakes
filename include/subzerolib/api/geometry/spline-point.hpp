@@ -4,7 +4,7 @@
 
 #include <cmath>
 
-struct spline_point_s {
+struct spline_point_s : public point_s {
   spline_point_s(double ix = 0,
                  double iy = 0,
                  double is = 0,
@@ -12,10 +12,7 @@ struct spline_point_s {
                  double ivy = 0,
                  double iax = 0,
                  double iay = 0)
-      : x(ix), y(iy), s(is), vx(ivx), vy(ivy), ax(iax), ay(iay) {}
-  double x;
-  double y;
-
+      : point_s(ix, iy), s(is), vx(ivx), vy(ivy), ax(iax), ay(iay) {}
   double s; // distance
 
   double vx;
@@ -25,6 +22,4 @@ struct spline_point_s {
   double ax;
   double ay;
   double a() const { return std::hypot(ax, ay); }
-
-  point_s point() const { return {x, y}; }
 };

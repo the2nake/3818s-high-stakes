@@ -1,5 +1,7 @@
 #pragma once
 
+#include "subzerolib/api/util/lerp.hpp"
+
 #include <cmath>
 
 struct point_s {
@@ -20,4 +22,5 @@ point_s operator-(point_s a, point_s b);
 point_s operator*(double scale, point_s a);
 point_s operator*(point_s a, double scale);
 point_s operator/(point_s a, double invscale);
-point_s lerp(point_s a, point_s b, double t);
+
+template <> point_s lerp<point_s, double>(point_s a, point_s b, double t);

@@ -3,8 +3,6 @@
 #include "subzerolib/api/geometry/point.hpp"
 #include "subzerolib/api/geometry/spline-point.hpp"
 
-// TODO: move all points to a subclass of point_s
-
 struct trajectory_point_s : public point_s {
   trajectory_point_s(double i_t = 0,
                      double i_s = 0,
@@ -27,4 +25,7 @@ struct trajectory_point_s : public point_s {
   double vh = 0;
 };
 
-trajectory_point_s lerp(trajectory_point_s &a, trajectory_point_s &b, double t);
+template <>
+trajectory_point_s lerp<trajectory_point_s, double>(trajectory_point_s a,
+                                                    trajectory_point_s b,
+                                                    double t);

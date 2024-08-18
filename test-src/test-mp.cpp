@@ -93,21 +93,6 @@ int main() {
     if (broken)
       break;
   }
-
-  double x = 0;
-  double y = 0;
-  double h = 0;
-  double time = 0;
-  for (auto &p : trajectory) {
-    x += p.vx * (p.t - time);
-    y += p.vy * (p.t - time);
-    h += p.vh * (p.t - time);
-    time = p.t;
-  }
-  printf("\033[34m[i]\033[0m: integrated position error: %.2f %.2f %.2f\n",
-         trajectory.back().x - x,
-         trajectory.back().y - y,
-         shorter_turn(h, trajectory.back().h));
          */
 
   // kinematics

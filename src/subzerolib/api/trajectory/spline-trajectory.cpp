@@ -17,13 +17,12 @@ trajectory_point_s SplineTrajectory::get_at_time(double t) {
   if (next_i >= vec.size())
     return vec.back();
   double f = (t - vec[next_i - 1].t) / (vec[next_i].t - vec[next_i - 1].t);
-  if (std::isnan(f) || f > 1.001 || f < -0.001) {
+  if (std::isnan(f)) {
     return vec[next_i];
   }
   return lerp(vec[next_i - 1], vec[next_i], f);
 }
 
-// TODO: test
 trajectory_point_s SplineTrajectory::get_at_distance(double s) {
   int next_i = binary_search<trajectory_point_s, double>(
       vec, s, [](trajectory_point_s p) -> double { return p.s; });
@@ -32,7 +31,7 @@ trajectory_point_s SplineTrajectory::get_at_distance(double s) {
   if (next_i >= vec.size())
     return vec.back();
   double f = (s - vec[next_i - 1].s) / (vec[next_i].s - vec[next_i - 1].s);
-  if (std::isnan(f) || f > 1.001 || f < -0.001) {
+  if (std::isnan(f)) {
     return vec[next_i];
   }
   return lerp(vec[next_i - 1], vec[next_i], f);

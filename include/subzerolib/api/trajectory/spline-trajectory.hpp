@@ -79,7 +79,6 @@ public:
 
     void apply_motion_profile();
     void generate_heading();
-    void generate_vh();
     void apply_model_constraints();
   };
 };

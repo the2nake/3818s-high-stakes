@@ -155,17 +155,11 @@ void SplineTrajectory::Builder::generate_heading() {
       t_i -= dt / 2.0;
       traj[i].h += 0.5 * dh + (2 * dh * t_i / dt) - (0.5 * max_a * t_i * t_i);
     }
-  }
-}
 
-void SplineTrajectory::Builder::generate_vh() {
-  traj.back().vh = 0;
-  for (int i = 0; i < traj.size() - 1; ++i) {
-    auto &curr = traj[i];
-    auto &next = traj[i + 1];
-
-    double dt = next.t - curr.t;
-    traj[i].vh = shorter_turn(curr.h, next.h, 360.0) / dt;
+    if (i >= 1) {
+      traj[i - 1].vh = shorter_turn(traj[i - 1].h, traj[i].h, 360.0) /
+                       (traj[i].t - traj[i - 1].t);
+    }
   }
 }
 
@@ -213,8 +207,10 @@ std::shared_ptr<SplineTrajectory> SplineTrajectory::Builder::build() {
   get_control_indices();
 
   apply_motion_profile();
+
+  // TODO: reinforce constraints for acceleration in x and y together
+
   generate_heading();
-  generate_vh();
 
   apply_model_constraints();
 

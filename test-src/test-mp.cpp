@@ -136,6 +136,7 @@ int main() {
   const double dt = 0.01;
   std::vector<trajectory_point_s> points;
   while (time + dt <= gen->get_duration()) {
+    // BUG: get at time has issues with heading
     auto p = gen->get_at_time(time + dt);
     x += p.vx * dt;
     y += p.vy * dt;

@@ -1,11 +1,15 @@
+#include "subzerolib/api/geometry/trajectory-point.hpp"
 #include "subzerolib/api/spline/catmull-rom.hpp"
 #include "subzerolib/api/trajectory/motion-profile/trapezoidal-motion-profile.hpp"
 #include "subzerolib/api/trajectory/spline-trajectory.hpp"
 #include "subzerolib/api/util/math.hpp"
 
 #include <cmath>
+#include <fstream>
 #include <limits>
 #include <memory>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 // TODO: plot mp
 
@@ -124,23 +128,57 @@ int main() {
           .build();
 
   gen->print();
+
   double x = 0;
   double y = 0;
   double h = 0;
   double time = 0;
   const double dt = 0.01;
+  std::vector<trajectory_point_s> points;
   while (time + dt <= gen->get_duration()) {
     auto p = gen->get_at_time(time + dt);
     x += p.vx * dt;
     y += p.vy * dt;
     h += p.vh * dt;
     time += dt;
+    points.push_back(p);
   }
+
   auto final = gen->get_at_distance(gen->get_length());
   printf("\033[34m[i]\033[0m: integrated position error: %.2f %.2f %.2f\n",
          final.x - x,
          final.y - y,
          shorter_turn(h, final.h));
 
+  // output the sampled points into a file
+  mkdir("test-output", 0777);
+  std::fstream file;
+  file.open("test-output/test-mp.txt", std::fstream::out);
+  file.clear();
+
+  for (auto &p : points) {
+    file << "x " << p.t << " " << p.x << std::endl;
+  }
+  for (auto &p : points) {
+    file << "vx " << p.t << " " << p.vx << std::endl;
+  }
+  for (auto &p : points) {
+    file << "y " << p.t << " " << p.y << std::endl;
+  }
+  for (auto &p : points) {
+    file << "vy " << p.t << " " << p.vy << std::endl;
+  }
+  for (auto &p : points) {
+    file << "s " << p.t << " " << p.s << std::endl;
+  }
+  for (auto &p : points) {
+    file << "v " << p.t << " " << std::hypot(p.vx, p.vy) << std::endl;
+  }
+  for (auto &p : points) {
+    file << "h " << p.t << " " << p.h << std::endl;
+  }
+  for (auto &p : points) {
+    file << "vh " << p.t << " " << p.vh << std::endl;
+  }
   return 0;
 }

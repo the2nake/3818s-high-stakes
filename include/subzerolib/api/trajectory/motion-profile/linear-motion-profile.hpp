@@ -26,6 +26,10 @@ public:
   /// @param distance the distance corresponding to the point
   virtual profile_point_s get_point_at_distance(double distance) = 0;
 
+  virtual double get_max_vel() = 0;
+  virtual double get_max_accel() = 0;
+  virtual double get_max_decel() = 0;
+
 protected:
   LinearMotionProfile() {}
 };

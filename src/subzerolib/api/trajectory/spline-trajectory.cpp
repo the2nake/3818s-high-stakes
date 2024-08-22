@@ -1,10 +1,13 @@
 #include "subzerolib/api/trajectory/spline-trajectory.hpp"
 
+#include "subzerolib/api/geometry/circle.hpp"
+#include "subzerolib/api/geometry/segment.hpp"
 #include "subzerolib/api/geometry/trajectory-point.hpp"
 #include "subzerolib/api/spline/spline.hpp"
 #include "subzerolib/api/trajectory/motion-profile/linear-motion-profile.hpp"
 #include "subzerolib/api/util/math.hpp"
 #include "subzerolib/api/util/search.hpp"
+#include <limits>
 
 double SplineTrajectory::get_duration() { return vec.back().t; }
 double SplineTrajectory::get_length() { return vec.back().s; }
@@ -120,6 +123,97 @@ void SplineTrajectory::Builder::apply_motion_profile() {
   }
 }
 
+std::pair<double, double> get_a(double v0, double v, double dt, double accel) {
+  return {(-v0 + sqrt(v0 * v0 + 4 * accel * dt * v)) / (2 * accel * dt),
+          (-v0 - sqrt(v0 * v0 + 4 * accel * dt * v)) / (2 * accel * dt)};
+}
+
+// TODO:
+void SplineTrajectory::Builder::constrain_2d_accel() {
+  // rely on time paramterization
+  // for each 2d accel that's wrong,
+  //   transform everything to dt space
+  //   replace time and velocities such that the delta is correct
+  //     for some factor a, dt -> a * dt, v = v / a
+  //     if accel = dv / dt, how to get a factor?
+  //     (a [vx vy] - [v0x v0y]) / dt = m_accel
+  double m_accel = profile->get_max_accel();
+
+  std::vector<double> dts(traj.size());
+  dts[0] = 0;
+  for (int i = 1; i < dts.size(); ++i) {
+    dts[i] = traj[i].t - traj[i - 1].t;
+  }
+
+  // naive method, inefficient
+  for (int i = 1; i < traj.size(); ++i) {
+    double accel = std::hypot((traj[i].vx - traj[i - 1].vx) / (dts[i]),
+                              (traj[i].vy - traj[i - 1].vy) / (dts[i]));
+
+    // draw a circle around the vector
+    // scale the vx and vy to hit that circle
+    if (accel > m_accel) {
+      point_s center{traj[i - 1].vx, traj[i - 1].vy};
+      circle_s possible{center, m_accel * dts[i]};
+      segment_s vel_line{
+          {-2 * traj[i].vx, -2 * traj[i].vy},
+          { 2 * traj[i].vx,  2 * traj[i].vy}
+      };
+      auto intersections = possible.intersections(vel_line);
+      point_s new_vel;
+      double max_dist = std::numeric_limits<double>::min();
+      for (auto &inter : intersections) {
+        auto dist = inter.dist({0, 0});
+        if (dist > max_dist) {
+          max_dist = dist;
+          new_vel = inter;
+        }
+      }
+      double scale =
+          segment_s{
+              {0, 0},
+              new_vel
+      }
+              .length() /
+          vel_line.length();
+      traj[i].vx *= scale;
+      traj[i].vy *= scale;
+      traj[i].vh *= scale;
+      dts[i + 1] /= scale;
+    }
+  }
+
+  for (int i = 1; i < traj.size(); ++i) {
+    traj[i].t = dts[i] + traj[i - 1].t;
+  }
+}
+
+bool SplineTrajectory::Builder::is_accel_broken(int i) {
+  double m_accel = profile->get_max_accel();
+  double m_decel = profile->get_max_decel();
+  if (i >= 0 && i < traj.size()) {
+    double accel = get_accel(i);
+    return accel > m_accel || accel < -m_decel;
+  }
+  bool output = false;
+  for (int i = 1; i < traj.size(); ++i) {
+    if (is_accel_broken(i)) {
+      printf("[%d] %6.2f\n", i, get_accel(i));
+      output = true;
+    }
+  }
+  return output;
+}
+
+double SplineTrajectory::Builder::get_accel(int i) {
+  clamp<int>(i, 1, traj.size() - 1);
+  auto point = traj[i];
+  auto prev = traj[i - 1];
+  double accel_x = (point.vx - prev.vx) / (point.t - prev.t);
+  double accel_y = (point.vx - prev.vx) / (point.t - prev.t);
+  return std::hypot(accel_x, accel_y);
+}
+
 void SplineTrajectory::Builder::generate_heading() {
   if (b_mode == heading_mode_e::path) {
     for (int i = 0; i < traj.size() - 1; ++i) {
@@ -208,11 +302,14 @@ std::shared_ptr<SplineTrajectory> SplineTrajectory::Builder::build() {
 
   apply_motion_profile();
 
-  // TODO: reinforce constraints for acceleration in x and y together
+  // constrain_2d_accel();
 
   generate_heading();
 
   apply_model_constraints();
+
+  constrain_2d_accel();
+  is_accel_broken();
 
   std::shared_ptr<SplineTrajectory> ptr{new SplineTrajectory()};
   ptr->vec = traj;

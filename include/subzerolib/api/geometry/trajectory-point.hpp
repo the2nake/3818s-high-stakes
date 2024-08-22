@@ -3,6 +3,8 @@
 #include "subzerolib/api/geometry/point.hpp"
 #include "subzerolib/api/geometry/spline-point.hpp"
 
+#include <string>
+
 struct trajectory_point_s : public point_s {
   trajectory_point_s(double i_t = 0,
                      double i_s = 0,
@@ -23,7 +25,13 @@ struct trajectory_point_s : public point_s {
   double vy = 0;
   double h = 0;
   double vh = 0;
+
+  double v() const;
+
+  std::string to_string() const;
 };
+
+bool operator==(trajectory_point_s &a, trajectory_point_s &b);
 
 template <>
 trajectory_point_s lerp<trajectory_point_s, double>(trajectory_point_s a,

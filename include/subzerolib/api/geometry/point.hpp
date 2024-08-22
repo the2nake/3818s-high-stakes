@@ -3,6 +3,7 @@
 #include "subzerolib/api/util/lerp.hpp"
 
 #include <cmath>
+#include <string>
 
 struct point_s {
   point_s(double ix = 0, double iy = 0) : x(ix), y(iy) {}
@@ -15,6 +16,8 @@ struct point_s {
   }
 
   double dist(const point_s &b) const;
+
+  std::string to_string() const;
 };
 
 point_s operator+(point_s a, point_s b);

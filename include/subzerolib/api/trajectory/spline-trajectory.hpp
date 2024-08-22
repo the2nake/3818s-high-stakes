@@ -78,7 +78,11 @@ public:
     std::vector<int> ctrl_is;
 
     void apply_motion_profile();
+    void constrain_2d_accel();
     void generate_heading();
     void apply_model_constraints();
+
+    bool is_accel_broken(int i = -1);
+    double get_accel(int i = 1);
   };
 };

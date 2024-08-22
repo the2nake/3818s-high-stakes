@@ -32,6 +32,10 @@ public:
   /// @param distance the distance corresponding to the point
   profile_point_s get_point_at_distance(double distance) override;
 
+  double get_max_vel() override { return max_vel; }
+  double get_max_accel() override { return max_accel; }
+  double get_max_decel() override { return max_decel; }
+
   /// @brief prints out the motion profile's points
   void print() {
     for (auto &point : points) {

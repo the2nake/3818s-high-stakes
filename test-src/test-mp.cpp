@@ -11,8 +11,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-// TODO: plot mp
-
 void show_vector(std::vector<double> vector) {
   for (auto &i : vector) {
     printf("%f\n", i);

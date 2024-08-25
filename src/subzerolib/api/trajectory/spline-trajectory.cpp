@@ -152,34 +152,14 @@ void SplineTrajectory::Builder::constrain_2d_accel() {
 
     // draw a circle around the vector
     // scale the vx and vy to hit that circle
-    if (accel > m_accel) {
-      point_s center{traj[i - 1].vx, traj[i - 1].vy};
-      circle_s possible{center, m_accel * dts[i]};
-      segment_s vel_line{
-          {-2 * traj[i].vx, -2 * traj[i].vy},
-          { 2 * traj[i].vx,  2 * traj[i].vy}
-      };
-      auto intersections = possible.intersections(vel_line);
-      point_s new_vel;
-      double max_dist = std::numeric_limits<double>::min();
-      for (auto &inter : intersections) {
-        auto dist = inter.dist({0, 0});
-        if (dist > max_dist) {
-          max_dist = dist;
-          new_vel = inter;
-        }
-      }
-      double scale =
-          segment_s{
-              {0, 0},
-              new_vel
-      }
-              .length() /
-          vel_line.length();
+    while (accel > m_accel) {
+      double scale = 0.95;
       traj[i].vx *= scale;
       traj[i].vy *= scale;
       traj[i].vh *= scale;
       dts[i + 1] /= scale;
+      std::hypot((traj[i].vx - traj[i - 1].vx) / (dts[i]),
+                 (traj[i].vy - traj[i - 1].vy) / (dts[i]));
     }
   }
 
@@ -210,7 +190,7 @@ double SplineTrajectory::Builder::get_accel(int i) {
   auto point = traj[i];
   auto prev = traj[i - 1];
   double accel_x = (point.vx - prev.vx) / (point.t - prev.t);
-  double accel_y = (point.vx - prev.vx) / (point.t - prev.t);
+  double accel_y = (point.vy - prev.vy) / (point.t - prev.t);
   return std::hypot(accel_x, accel_y);
 }
 
@@ -308,7 +288,7 @@ std::shared_ptr<SplineTrajectory> SplineTrajectory::Builder::build() {
 
   apply_model_constraints();
 
-  constrain_2d_accel();
+  // constrain_2d_accel();
   is_accel_broken();
 
   std::shared_ptr<SplineTrajectory> ptr{new SplineTrajectory()};

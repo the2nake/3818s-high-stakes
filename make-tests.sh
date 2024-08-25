@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# TODO: create CMake configuration
+
 GEOMETRY_CPP=src/subzerolib/api/geometry/*.cpp
 
 g++ -std=c++20 test-src/test-utils.cpp src/subzerolib/api/util/controls.cpp src/subzerolib/api/util/math.cpp -isystemvendor/include -Iinclude -DEIGEN_DONT_VECTORIZE -o test-output/test-utils.bin

@@ -109,12 +109,21 @@ int main() {
   lin_profile->set_resolution(0.01);
 
   // generate the curve using a catmull rom spline
+  // std::vector<pose_s> ctrl = {
+  //     pose_s{  0.0,  0.0,   0.0},
+  //     pose_s{  0.4,  0.6,  45.0},
+  //     pose_s{ -0.2,  0.6,  60.0},
+  //     pose_s{-0.75, 0.75, -45.0}
+  // };
+  //
+
   std::vector<pose_s> ctrl = {
       pose_s{  0.0,  0.0,   0.0},
-      pose_s{  0.4,  0.6,  45.0},
-      pose_s{ -0.2,  0.6,  60.0},
+      pose_s{  0.5,  0.5,  45.0},
+      pose_s{ -0.5,  1.0,  60.0},
       pose_s{-0.75, 0.75, -45.0}
   };
+
   std::shared_ptr<CatmullRomSpline> spline{new CatmullRomSpline{ctrl}};
   spline->pad_velocity({0.5, 0.5}, {-0.25, 0.25});
 

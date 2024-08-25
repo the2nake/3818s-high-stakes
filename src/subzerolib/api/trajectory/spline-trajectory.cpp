@@ -128,16 +128,11 @@ double get_a(double x, double v0, double vf) {
 }
 
 void SplineTrajectory::Builder::constrain_2d_accel() {
+  // BUG: doesn't max out velocity
   // calculate velocity ranges for each point
   //   use acceleration kinematic formula with distance parameterization
   const double m_vel = profile->get_max_vel();
   const double m_accel = profile->get_max_accel();
-
-  std::vector<double> dts(traj.size());
-  dts[0] = 0;
-  for (int i = 1; i < traj.size(); ++i) {
-    dts[i] = traj[i].t - traj[i - 1].t;
-  }
 
   std::vector<double> max_vs(traj.size());
   max_vs[0] = traj[0].v();
@@ -178,11 +173,10 @@ void SplineTrajectory::Builder::constrain_2d_accel() {
     double v_scale = max_vs[i] / traj[i].v();
     traj[i].vx *= v_scale;
     traj[i].vy *= v_scale;
-    dts[i + 1] /= v_scale;
   }
 
   for (int i = 1; i < traj.size(); ++i) {
-    traj[i].t = traj[i - 1].t + dts[i];
+    traj[i].t = traj[i - 1].t + (traj[i].s - traj[i - 1].s) / traj[i].v();
   }
 
   for (int i = 0; i < max_vs.size(); ++i) {
@@ -302,7 +296,7 @@ std::shared_ptr<SplineTrajectory> SplineTrajectory::Builder::build() {
   sample_spline();
   get_control_indices();
 
-  apply_motion_profile();
+  // apply_motion_profile();
   constrain_2d_accel();
 
   generate_heading();

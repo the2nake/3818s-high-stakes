@@ -104,9 +104,9 @@ int main() {
 
   // set up a linear motion profile
   std::shared_ptr<TrapezoidalMotionProfile> lin_profile{
-      new TrapezoidalMotionProfile{chassis->get_max_vel(), 4, 4}
+      new TrapezoidalMotionProfile{chassis->get_max_vel(), 6, 6}
   };
-  lin_profile->set_resolution(0.01);
+  lin_profile->set_resolution(0.005);
 
   // generate the curve using a catmull rom spline
   // std::vector<pose_s> ctrl = {

@@ -128,30 +128,14 @@ double get_a(double x, double v0, double vf) {
 }
 
 void SplineTrajectory::Builder::constrain_2d_accel() {
-  // BUG: doesn't max out velocity
   // calculate velocity ranges for each point
   //   use acceleration kinematic formula with distance parameterization
   const double m_vel = profile->get_max_vel();
   const double m_accel = profile->get_max_accel();
 
   std::vector<double> max_vs(traj.size());
-  max_vs[0] = traj[0].v();
-  max_vs.back() = traj.back().v();
-
-  // set maximum velocities
-  for (int i = 1; i < max_vs.size() - 1; ++i) {
-    double accel_x =
-        get_a(traj[i].x - traj[i - 1].x, traj[i].vx, traj[i - 1].vx);
-    double accel_y =
-        get_a(traj[i].y - traj[i - 1].y, traj[i].vy, traj[i - 1].vy);
-    double accel = std::hypot(accel_x, accel_y);
-    if (accel > m_accel) {
-      max_vs[i] = traj[i].v() * sqrt(m_accel / accel);
-      max_vs[i - 1] = traj[i - 1].v() * sqrt(m_accel / accel);
-    } else {
-      max_vs[i] = traj[i].v();
-    }
-  }
+  max_vs[0] = 0;
+  max_vs.back() = 0;
 
   // forward pass
   for (int i = 1; i < max_vs.size() - 1; ++i) {
@@ -159,20 +143,28 @@ void SplineTrajectory::Builder::constrain_2d_accel() {
       max_vs[i] = m_vel;
     }
 
-    // double prev_vx = (max_vs[i - 1] / traj[i - 1].v()) * traj[i - 1].vx;
-    // double prev_vy = (max_vs[i - 1] / traj[i - 1].v()) * traj[i - 1].vy;
-    // double curr_vx = (max_vs[i] / traj[i].v()) * traj[i].vx;
-    // double curr_vy = (max_vs[i] / traj[i].v()) * traj[i].vy;
-    // double dx = traj[i].x - traj[i - 1].x;
-    // double dy = traj[i].y - traj[i - 1].y;
-    // double new_accel =
-    //     std::hypot(get_a(dx, prev_vx, curr_vx), get_a(dy, prev_vy, curr_vy));
-    // if (new_accel > m_accel) {
-    // }
+    // m_accel ^ 2 = accel_x ^ 2 + accel_y ^ 2
+    // m_accel ^ 2 = (vfx*vfx - v0x*v0x)^2 / 4sx^2 + (vfy*vfy - v0y*v0y)^2 /
+    // 4sy^2 4 * m_accel * m_accel * sx * sx * sy * sy = sy^2(vfx*vfx -
+    // v0x*v0x)^2 + sx^2(vfy*vfy - v0y*v0y)^2
+    double accel = std::hypot(
+        get_a(traj[i].x - traj[i - 1].x, traj[i - 1].vx, traj[i].vx),
+        get_a(traj[i].y - traj[i - 1].y, traj[i - 1].vy, traj[i].vy));
 
-    double v_scale = max_vs[i] / traj[i].v();
-    traj[i].vx *= v_scale;
-    traj[i].vy *= v_scale;
+    // BUG: not maxing out on acceleration in prior steps causes infinite hang
+    while (accel > m_accel) {
+      double v_scale = 0.95;
+      traj[i].vx *= v_scale;
+      traj[i].vy *= v_scale;
+      accel = std::hypot(
+          get_a(traj[i].x - traj[i - 1].x, traj[i - 1].vx, traj[i].vx),
+          get_a(traj[i].y - traj[i - 1].y, traj[i - 1].vy, traj[i].vy));
+      printf("[%d] a=%f\n", i, accel);
+    }
+
+    // double v_scale = max_vs[i] / traj[i].v();
+    // traj[i].vx *= v_scale;
+    // traj[i].vy *= v_scale;
   }
 
   for (int i = 1; i < traj.size(); ++i) {
@@ -194,7 +186,7 @@ bool SplineTrajectory::Builder::is_accel_broken(int i) {
   bool output = false;
   for (int i = 1; i < traj.size(); ++i) {
     if (is_accel_broken(i)) {
-      printf("[%d] %6.2f\n", i, get_accel(i));
+      printf("[%d] broken: a=%6.2f\n", i, get_accel(i));
       output = true;
     }
   }
@@ -296,8 +288,8 @@ std::shared_ptr<SplineTrajectory> SplineTrajectory::Builder::build() {
   sample_spline();
   get_control_indices();
 
-  // apply_motion_profile();
-  constrain_2d_accel();
+  apply_motion_profile();
+  // constrain_2d_accel();
 
   generate_heading();
 

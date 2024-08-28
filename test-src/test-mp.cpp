@@ -75,28 +75,6 @@ int find_pose_index(std::vector<spline_point_s> &vec, pose_s pose) {
 }
 
 int main() {
-  /*
-  // check for unmet model constraints
-  std::vector<double> maxs = kinematics.get_wheel_max();
-  for (trajectory_point_s &p : trajectory) {
-    auto loc = rotate_acw(p.vx, p.vy, p.h);
-    auto vels = kinematics.get_wheel_vels(loc.x, loc.y, in_rad(p.vh));
-    bool broken = false;
-    for (int i = 0; i < vels.size(); ++i) {
-      if (std::abs(vels[i]) > std::abs(maxs[i])) {
-        printf("\033[31m[e]\033[0m: invalid generated profile\n");
-        printf("vx=%f vy=%f vh=%f\n", p.vx, p.vy, p.vh);
-        printf("wheel velocities:\n");
-        show_vector(vels);
-        broken = true;
-        break;
-      }
-    }
-    if (broken)
-      break;
-  }
-         */
-
   // kinematics
   std::shared_ptr<Chassis> chassis{
       new StarChassisKinematics{1.73, 0.35, 0.37}

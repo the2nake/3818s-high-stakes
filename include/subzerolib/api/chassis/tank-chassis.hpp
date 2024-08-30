@@ -8,16 +8,9 @@
 #include <map>
 #include <memory>
 
-class StarChassis : public Chassis {
+class TankChassis : public Chassis {
 public:
-  enum class motor_pos_e {
-    front_left,
-    front_right,
-    boost_left,
-    boost_right,
-    back_left,
-    back_right
-  };
+  enum class motor_pos_e { left, right };
 
   /// @brief move in relative reference frame
   ///
@@ -28,7 +21,7 @@ public:
 
   /// @brief specify a preference for combining linear and angular components
   /// @param rot_pref a value in the range [0.0, 1.0]
-  void set_rot_pref(double irot_pref = 0.5) override;
+  void set_rot_pref(double i_rot_pref = 0.5) override;
 
   /// @brief get the maximum velocity
   /// @returns the linear velocity
@@ -37,11 +30,11 @@ public:
   /// @brief generate wheel velocities for a given angular and linear velocity
   /// target
   ///
-  /// @param vx linear velocity (m/s) in local frame's x
+  /// @param vx (unused)
   /// @param vy linear velocity (m/s) in local frame's y
   /// @param ang angular velocity (rad/s)
   ///
-  /// @returns a vector of velocities (lf, lm, lb, rf, rm, rb)
+  /// @returns a pair of velocities (left, right)
   std::vector<double> get_wheel_vels(double vx, double vy, double ang) override;
 
   /// @brief get the maximum velocities of each wheel
@@ -49,23 +42,18 @@ public:
   std::vector<double> get_wheel_max() override;
 
 private:
-  StarChassis() {}
+  TankChassis() {}
   void move_with_map();
 
-  double boost_radius;
-  double corner_radius;
+  double track_width;
   double rot_pref;
   double lin_vel;
 
-  std::map<StarChassis::motor_pos_e, control_components_s> vels = {};
-  std::map<StarChassis::motor_pos_e, std::unique_ptr<pros::AbstractMotor> &>
+  std::map<TankChassis::motor_pos_e, control_components_s> vels = {};
+  std::map<TankChassis::motor_pos_e, std::unique_ptr<pros::AbstractMotor> &>
       position_ptr_map = {};
-  std::unique_ptr<pros::AbstractMotor> front_left = nullptr;
-  std::unique_ptr<pros::AbstractMotor> front_right = nullptr;
-  std::unique_ptr<pros::AbstractMotor> back_left = nullptr;
-  std::unique_ptr<pros::AbstractMotor> back_right = nullptr;
-  std::unique_ptr<pros::AbstractMotor> boost_left = nullptr;
-  std::unique_ptr<pros::AbstractMotor> boost_right = nullptr;
+  std::unique_ptr<pros::AbstractMotor> left = nullptr;
+  std::unique_ptr<pros::AbstractMotor> right = nullptr;
 
 public:
   class Builder {
@@ -109,21 +97,15 @@ public:
 
     /// @brief creates the star drive chassis object
     /// @returns a shared pointer to the created object
-    std::shared_ptr<StarChassis> build();
+    std::shared_ptr<TankChassis> build();
 
   private:
-    bool try_copy(std::unique_ptr<pros::AbstractMotor> &target,
-                  std::unique_ptr<pros::AbstractMotor> &origin);
-    double bboost_radius = 1;
-    double bcorner_radius = 1;
-    double brot_pref = 0.5;
-    double blin_vel = 1;
+    double b_track_width = 0.25;
 
-    std::unique_ptr<pros::AbstractMotor> bfront_left = nullptr;
-    std::unique_ptr<pros::AbstractMotor> bfront_right = nullptr;
-    std::unique_ptr<pros::AbstractMotor> bback_left = nullptr;
-    std::unique_ptr<pros::AbstractMotor> bback_right = nullptr;
-    std::unique_ptr<pros::AbstractMotor> bboost_left = nullptr;
-    std::unique_ptr<pros::AbstractMotor> bboost_right = nullptr;
+    double b_rot_pref = 0.5;
+    double b_lin_vel = 1;
+
+    std::unique_ptr<pros::AbstractMotor> b_left = nullptr;
+    std::unique_ptr<pros::AbstractMotor> b_right = nullptr;
   };
 };

@@ -14,7 +14,7 @@ public:
 
   /// @brief move in relative reference frame
   ///
-  /// @param x lateral component
+  /// @param x lateral component (unused)
   /// @param y vertical component
   /// @param r rotational component
   void move(double x, double y, double r) override;

@@ -12,20 +12,16 @@ class TankChassis : public Chassis {
 public:
   enum class motor_pos_e { left, right };
 
+  /// @brief specify a preference for combining linear and angular components
+  /// @param rot_pref a value in the range [0.0, 1.0]
+  void set_rot_pref(double i_rot_pref = 0.5) override;
+
   /// @brief move in relative reference frame
   ///
   /// @param x lateral component (unused)
   /// @param y vertical component
   /// @param r rotational component
   void move(double x, double y, double r) override;
-
-  /// @brief specify a preference for combining linear and angular components
-  /// @param rot_pref a value in the range [0.0, 1.0]
-  void set_rot_pref(double i_rot_pref = 0.5) override;
-
-  /// @brief get the maximum velocity
-  /// @returns the linear velocity
-  double get_max_vel() override;
 
   /// @brief generate wheel velocities for a given angular and linear velocity
   /// target
@@ -36,6 +32,10 @@ public:
   ///
   /// @returns a pair of velocities (left, right)
   std::vector<double> get_wheel_vels(double vx, double vy, double ang) override;
+
+  /// @brief get the maximum velocity
+  /// @returns the linear velocity
+  double get_max_vel() override;
 
   /// @brief get the maximum velocities of each wheel
   /// @returns a vector in the same order as get_wheel_velocities()
@@ -58,7 +58,7 @@ private:
 public:
   class Builder {
   public:
-    /// @brief specify a motor for the chassis
+    /// @brief specify a Motor for the chassis
     ///
     /// the chassis motor should be reversed such that positive voltage moves
     /// the drive forward
@@ -66,10 +66,9 @@ public:
     /// @param position the motor position
     /// @param motor a unique pointer to the motor
     /// @returns a reference to the builder object
-    Builder &with_motors(motor_pos_e position,
+    Builder &with_motor(motor_pos_e position,
                          std::unique_ptr<pros::Motor> motor);
-
-    /// @brief specify a motor for the chassis
+    /// @brief specify an AbstractMotor for the chassis
     ///
     /// the chassis motor should be reversed such that positive voltage moves
     /// the drive forward
@@ -77,25 +76,23 @@ public:
     /// @param position the motor position
     /// @param motor a unique pointer to the motor
     /// @returns a reference to the builder object
-    Builder &with_motors(motor_pos_e position,
+    Builder &with_motor(motor_pos_e position,
                          std::unique_ptr<pros::AbstractMotor> motor);
 
-    /// @brief specify star drive geometry
-    /// @param iboost_radius the radius from the centre to the middle of the
-    /// boost wheels
-    /// @param icorner_radius the radius from the centre to the middle of the
-    /// corner wheels
+    /// @brief specify drive geometry
+    /// @param i_track_width distance between the centers of the two wheels
+    /// across each other
     /// @returns a reference to the builder object
-    Builder &with_geometry(double iboost_radius, double icorner_radius);
+    Builder &with_geometry(double i_track_width);
 
     /// @brief specify a preference for combining linear and angular components
-    /// @param irot_pref a value in the range [0.0, 1.0]
+    /// @param i_rot_pref a value in the range [0.0, 1.0]
     /// @returns a reference to the builder object
-    Builder &with_rot_pref(double irot_pref = 0.5);
+    Builder &with_rot_pref(double i_rot_pred = 0.5);
 
-    Builder &with_vel(double ilin_vel);
+    Builder &with_vel(double i_lin_vel);
 
-    /// @brief creates the star drive chassis object
+    /// @brief creates the tank drive chassis object
     /// @returns a shared pointer to the created object
     std::shared_ptr<TankChassis> build();
 

@@ -10,6 +10,8 @@
 #include "pros/motors.hpp"
 #include <memory>
 
+#include "subzerolib/api/chassis/tank-chassis.hpp"
+
 std::unique_ptr<pros::Motor> fl{new pros::Motor(
     -DRIVE_FL_PORT, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg)};
 std::unique_ptr<pros::Motor> fr{new pros::Motor(
@@ -52,12 +54,12 @@ void calibrate_imus() {
 void configure_chassis() {
   chassis =
       StarChassis::Builder()
-          .with_motors(StarChassis::motor_pos_e::front_left, std::move(fl))
-          .with_motors(StarChassis::motor_pos_e::front_right, std::move(fr))
-          .with_motors(StarChassis::motor_pos_e::boost_left, std::move(ml))
-          .with_motors(StarChassis::motor_pos_e::boost_right, std::move(mr))
-          .with_motors(StarChassis::motor_pos_e::back_left, std::move(bl))
-          .with_motors(StarChassis::motor_pos_e::back_right, std::move(br))
+          .with_motor(StarChassis::motor_pos_e::front_left, std::move(fl))
+          .with_motor(StarChassis::motor_pos_e::front_right, std::move(fr))
+          .with_motor(StarChassis::motor_pos_e::boost_left, std::move(ml))
+          .with_motor(StarChassis::motor_pos_e::boost_right, std::move(mr))
+          .with_motor(StarChassis::motor_pos_e::back_left, std::move(bl))
+          .with_motor(StarChassis::motor_pos_e::back_right, std::move(br))
           .with_geometry(0.35, 0.37)
           .with_rot_pref(0.3)
           .with_vel(1.73)
@@ -146,6 +148,13 @@ void configure_odometry() {
       .with_process_noise_covariance(process_noise_covariance);
   odom = builder.build();
   odom->auto_update();
+
+  auto chassis = TankChassis::Builder()//.with_motor().with_motor()
+                     .with_geometry(0.5)
+                     .with_rot_pref(0.5)
+                     .with_vel(1.76)
+                     .build();
+  printf("%.2f %.2f\n", chassis->get_wheel_vels(1.0, 2.0, 1.0)[0], chassis->get_wheel_vels(1.0, 2.0, 1.0)[1]);
 }
 
 void initialise_devices() {

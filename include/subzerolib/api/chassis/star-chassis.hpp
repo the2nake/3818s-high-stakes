@@ -78,7 +78,7 @@ public:
     /// @param position the motor position
     /// @param motor a unique pointer to the motor
     /// @returns a reference to the builder object
-    Builder &with_motors(motor_pos_e position,
+    Builder &with_motor(motor_pos_e position,
                          std::unique_ptr<pros::Motor> motor);
 
     /// @brief specify a motor for the chassis
@@ -89,7 +89,7 @@ public:
     /// @param position the motor position
     /// @param motor a unique pointer to the motor
     /// @returns a reference to the builder object
-    Builder &with_motors(motor_pos_e position,
+    Builder &with_motor(motor_pos_e position,
                          std::unique_ptr<pros::AbstractMotor> motor);
 
     /// @brief specify star drive geometry

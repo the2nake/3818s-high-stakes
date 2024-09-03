@@ -118,14 +118,14 @@ void configure_odometry() {
   const double c2l = v_al * c2;
   const double c1l = v_al * dt;
   Eigen::Matrix<double, 8, 8> process_noise_covariance{
-      {c4l, c3l,  c2l,   0,   0,    0,   0,   0},
-      {c3l, c2l,  c1l,   0,   0,    0,   0,   0},
-      {c2l, c1l, v_al,   0,   0,    0,   0,   0},
-      {  0,   0,    0, c4l, c3l,  c2l,   0,   0},
-      {  0,   0,    0, c3l, c2l,  c1l,   0,   0},
-      {  0,   0,    0, c2l, c1l, v_al,   0,   0},
-      {  0,   0,    0,   0,   0,    0, c4h, c3h},
-      {  0,   0,    0,   0,   0,    0, c3h, c2h}
+      {      c4l, c3l, c2l / 2.0,         0,   0,         0,   0,   0},
+      {      c3l, c2l,       c1l,         0,   0,         0,   0,   0},
+      {c2l / 2.0, c1l,      v_al,         0,   0,         0,   0,   0},
+      {        0,   0,         0,       c4l, c3l, c2l / 2.0,   0,   0},
+      {        0,   0,         0,       c3l, c2l,       c1l,   0,   0},
+      {        0,   0,         0, c2l / 2.0, c1l,      v_al,   0,   0},
+      {        0,   0,         0,         0,   0,         0, c4h, c3h},
+      {        0,   0,         0,         0,   0,         0, c3h, c2h}
   };
   Eigen::Matrix<double, 8, 8> measurement_covariance;
   measurement_covariance.setZero();

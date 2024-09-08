@@ -88,7 +88,7 @@ public:
     /// @brief specify a preference for combining linear and angular components
     /// @param i_rot_pref a value in the range [0.0, 1.0]
     /// @returns a reference to the builder object
-    Builder &with_rot_pref(double i_rot_pred = 0.5);
+    Builder &with_rot_pref(double i_rot_pref = 0.5);
 
     Builder &with_vel(double i_lin_vel);
 

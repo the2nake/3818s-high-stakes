@@ -43,14 +43,14 @@ std::vector<double> TankChassis::get_wheel_max() { return {lin_vel, lin_vel}; }
 
 TankChassis::Builder &
 TankChassis::Builder::with_motor(motor_pos_e position,
-                                  std::unique_ptr<pros::Motor> motor) {
+                                 std::unique_ptr<pros::Motor> motor) {
   std::unique_ptr<pros::AbstractMotor> ptr(std::move(motor));
   return with_motor(position, std::move(ptr));
 }
 
 TankChassis::Builder &
 TankChassis::Builder::with_motor(motor_pos_e position,
-                                  std::unique_ptr<pros::AbstractMotor> motor) {
+                                 std::unique_ptr<pros::AbstractMotor> motor) {
   if (motor == nullptr) {
     return *this;
   }

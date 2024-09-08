@@ -13,8 +13,6 @@ bool running = true;
 
 // #define DEBUG
 
-// TODO: test PID on the arm
-
 std::unique_ptr<Filter> filter = nullptr;
 
 // TODO: refactor, add "graph_module"?
@@ -34,12 +32,16 @@ void odom_disp_loop(void *ignore) {
   const double padding = 12;
 
   while (saturnine::running) {
+    /*
     auto pose = odom->get_pose();
     past_points.push_back(pose);
     if (past_points.size() > 200) {
       past_points.erase(past_points.begin());
     }
+    */
 
+    // graph stuff
+    /*
     pros::screen::set_pen(pros::Color::black);
     pros::screen::fill_rect(graphx1 - padding,
                             graphy1 - padding,
@@ -87,6 +89,8 @@ void odom_disp_loop(void *ignore) {
         pros::screen::draw_pixel(pixel_point.x, pixel_point.y);
       }
     }
+    */
+    /*
     pros::screen::set_pen(pros::Color::white);
     subzero::print(0, "filtered pos + vel");
     subzero::print(
@@ -102,6 +106,7 @@ void odom_disp_loop(void *ignore) {
     pose = obj->get_raw_vel();
     subzero::print(
         5, "(%6.3f, %6.3f) h: %5.0f", pose.x, pose.y, pose.heading());
+    */
     // Eigen::VectorXd d = obj->get_covariance().diagonal();
     // subzero::print(6, "%f %f", d(0), d(1));
     // subzero::print(7, "%f %f", d(2), d(3));
@@ -116,7 +121,7 @@ void initialize() {
 
   initialise_devices();
 
-  pros::Task graphing_task{odom_disp_loop, nullptr, "odom display task"};
+  // pros::Task graphing_task{odom_disp_loop, nullptr, "odom display task"};
 }
 
 void disabled() {}
@@ -127,15 +132,11 @@ void opcontrol() {
 #ifdef DEBUG
   autonomous();
 #endif
+
   pros::Controller master(pros::E_CONTROLLER_MASTER);
   auto pose = odom->get_pose();
   if (std::isnan(pose.h))
     pose.h = 0.0;
-
-#ifdef ROTATION_CONTROL_PID
-  PIDF angle_pid(0.02, 0.0, 0.0008);
-  double target_angle = pose.h;
-#endif
 
   std::uint32_t prev_update = pros::millis();
   std::uint32_t *prev_update_ptr = &prev_update;
@@ -143,46 +144,29 @@ void opcontrol() {
   while (saturnine::running) {
     // TODO: adjustments to increase accuracy along diagonals
     // model as a polar radial percentage of a rounded circle?
-    double ctrl_x = master.get_analog(ANALOG_RIGHT_X) / 127.0;
-    double ctrl_y = master.get_analog(ANALOG_RIGHT_Y) / 127.0;
-    double ctrl_rx = master.get_analog(ANALOG_LEFT_X) / 127.0;
-#ifdef ROTATION_CONTROL_PID
-    double ctrl_ry = master.get_analog(ANALOG_LEFT_Y) / 127.0;
-#endif
+    double ctrl_rx = master.get_analog(ANALOG_RIGHT_X) / 127.0;
+    double ctrl_ry = master.get_analog(ANALOG_RIGHT_Y) / 127.0;
+    double ctrl_lx = master.get_analog(ANALOG_LEFT_X) / 127.0;
+    double ctrl_ly = master.get_analog(ANALOG_LEFT_Y) / 127.0;
 
-    pose = odom->get_pose();
-    if (std::isnan(pose.h))
-      pose.h = 0.0;
-    auto vec = rotate_acw(ctrl_x, ctrl_y, pose.h);
+    // pose = odom->get_pose();
+    // if (std::isnan(pose.h))
+    //   pose.h = 0.0;
+    // auto vec = rotate_acw(ctrl_x, ctrl_y, pose.h);
 
-#ifdef ROTATION_CONTROL_PID
-    if (std::abs(ctrl_rx) < 0.2 && std::abs(ctrl_ry) < 0.2) {
-      target_angle = pose.h;
-    } else {
-      target_angle = 90 - in_deg(atan2(ctrl_ry, ctrl_rx));
-    }
-    auto angle_err = shorter_turn(pose.h, target_angle, 360.0);
-    angle_pid.update(angle_err);
-    if (std::abs(angle_err) > 1 &&
-        std::abs(angle_pid.get_output()) > 0.3) { // anti jitter
-      chassis->move(vec.x, vec.y, angle_pid.get_output());
-    } else {
-      chassis->move(vec.x, vec.y, 0.5 * angle_pid.get_output());
-    }
-#else
-    chassis->move(vec.x, vec.y, 0.75 * ctrl_rx);
-#endif
+    chassis->move(0, ctrl_ry, ctrl_rx);
 
+    /*
     if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
       if (odom->is_enabled()) {
         odom->set_enabled(false);
       } else {
         odom->set_enabled(true);
       }
-    }
+    }*/
 
-    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A))
-      odom->set_heading(0);
+    // if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A))
+    //   odom->set_heading(0);
 
     // high update rate, as imu data comes in every 10 ms
     pros::Task::delay_until(prev_update_ptr, 10);

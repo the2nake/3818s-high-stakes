@@ -1,39 +1,33 @@
 #include "devices.hpp"
 
 #include "ports.h"
-#include "subzerolib/api/chassis/star-chassis.hpp"
+#include "subzerolib/api/chassis/tank-chassis.hpp"
 #include "subzerolib/api/odometry/gyro-odometry.hpp"
 #include "subzerolib/api/odometry/kf-odometry.hpp"
 #include "subzerolib/api/sensors/abstract-mean-gyro.hpp"
 #include "subzerolib/api/util/logging.hpp"
 
-#include "pros/motors.hpp"
 #include <memory>
 
-#include "subzerolib/api/chassis/tank-chassis.hpp"
-
-std::unique_ptr<pros::Motor> fl{new pros::Motor(
-    -DRIVE_FL_PORT, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg)};
-std::unique_ptr<pros::Motor> fr{new pros::Motor(
-    DRIVE_FR_PORT, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg)};
-std::unique_ptr<pros::Motor> ml{new pros::Motor(
-    -DRIVE_ML_PORT, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg)};
-std::unique_ptr<pros::Motor> mr{new pros::Motor(
-    DRIVE_MR_PORT, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg)};
-std::unique_ptr<pros::Motor> br{new pros::Motor(
-    DRIVE_BR_PORT, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg)};
-std::unique_ptr<pros::Motor> bl{new pros::Motor(
-    -DRIVE_BL_PORT, pros::v5::MotorGears::green, pros::v5::MotorUnits::deg)};
+std::unique_ptr<pros::MotorGroup> mtr_l{
+    new pros::MotorGroup({DRIVE_L1_PORT, DRIVE_L2_PORT, -DRIVE_LT_PORT},
+                         pros::v5::MotorGears::blue,
+                         pros::v5::MotorUnits::deg)};
+std::unique_ptr<pros::MotorGroup> mtr_r{
+    new pros::MotorGroup({-DRIVE_R1_PORT, -DRIVE_R2_PORT, DRIVE_RT_PORT},
+                         pros::v5::MotorGears::blue,
+                         pros::v5::MotorUnits::deg)};
 std::shared_ptr<Chassis> chassis;
 
-std::shared_ptr<AbstractGyro> imu1{
-    new AbstractImuGyro(IMU1_PORT, (18 * 360.0) / (17 * 360.0 + 283))};
-std::shared_ptr<AbstractGyro> imu2{
-    new AbstractImuGyro(IMU2_PORT, (19 * 360.0) / (18 * 360.0 + 260))};
-std::shared_ptr<AbstractGyro> mean_imu{new AbstractMeanGyro({imu1, imu2})};
-std::shared_ptr<AbstractEncoder> odom_x{
+std::shared_ptr<AbstractGyro> imu_1{
+    new AbstractImuGyro(IMU1_PORT, (1 * 360.0) / (1 * 360.0 + 0))};
+// std::shared_ptr<AbstractGyro> imu_2{
+//     new AbstractImuGyro(IMU2_PORT, (19 * 360.0) / (18 * 360.0 + 260))};
+std::shared_ptr<AbstractGyro> mean_imu{
+    new AbstractMeanGyro({imu_1})}; // TODO: reconf for 2 imus
+std::shared_ptr<AbstractEncoder> enc_x{
     new AbstractRotationEncoder(PORT_X_ENC, true)};
-std::shared_ptr<AbstractEncoder> odom_y{
+std::shared_ptr<AbstractEncoder> enc_y{
     new AbstractRotationEncoder(PORT_Y_ENC, true)};
 std::shared_ptr<Odometry> odom;
 
@@ -52,21 +46,17 @@ void calibrate_imus() {
 }
 
 void configure_chassis() {
-  chassis =
-      StarChassis::Builder()
-          .with_motor(StarChassis::motor_pos_e::front_left, std::move(fl))
-          .with_motor(StarChassis::motor_pos_e::front_right, std::move(fr))
-          .with_motor(StarChassis::motor_pos_e::boost_left, std::move(ml))
-          .with_motor(StarChassis::motor_pos_e::boost_right, std::move(mr))
-          .with_motor(StarChassis::motor_pos_e::back_left, std::move(bl))
-          .with_motor(StarChassis::motor_pos_e::back_right, std::move(br))
-          .with_geometry(0.35, 0.37)
-          .with_rot_pref(0.3)
-          .with_vel(1.73)
-          .build();
+  chassis = TankChassis::Builder()
+                .with_motor(TankChassis::motor_pos_e::left, std::move(mtr_l))
+                .with_motor(TankChassis::motor_pos_e::right, std::move(mtr_r))
+                .with_geometry(0.25) // TODO: FIXEME
+                .with_rot_pref(0.3)
+                .with_vel(1.76)
+                .build();
 }
 
 void configure_odometry() {
+  /*
   const double dt = 0.01;
 
   const double v_ah = std::pow(0.5, 2);
@@ -136,9 +126,10 @@ void configure_odometry() {
   };
 
   KFOdometry::Builder builder(8, 0, 8);
+  // TODO: FIXME
   builder.with_gyro(mean_imu)
-      .with_x_enc(odom_x, {-0.045, 0.160 / 360.0})
-      .with_y_enc(odom_y, {0.09, 0.160 / 360.0});
+      .with_x_enc(enc_x, {-0.045, 0.160 / 360.0})
+      .with_y_enc(enc_y, {0.09, 0.160 / 360.0});
   builder.with_initial_state(initial_state)
       .with_initial_covariance(initial_covariance)
       .with_measurement_covariance(measurement_covariance)
@@ -148,13 +139,7 @@ void configure_odometry() {
       .with_process_noise_covariance(process_noise_covariance);
   odom = builder.build();
   odom->auto_update();
-
-  auto chassis = TankChassis::Builder()//.with_motor().with_motor()
-                     .with_geometry(0.5)
-                     .with_rot_pref(0.5)
-                     .with_vel(1.76)
-                     .build();
-  printf("%.2f %.2f\n", chassis->get_wheel_vels(1.0, 2.0, 1.0)[0], chassis->get_wheel_vels(1.0, 2.0, 1.0)[1]);
+  */
 }
 
 void initialise_devices() {

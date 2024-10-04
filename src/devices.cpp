@@ -2,6 +2,7 @@
 
 #include "ports.h"
 #include "subzerolib/api/chassis/tank-chassis.hpp"
+#include "subzerolib/api/control/piston.hpp"
 #include "subzerolib/api/odometry/gyro-odometry.hpp"
 #include "subzerolib/api/odometry/kf-odometry.hpp"
 #include "subzerolib/api/sensors/abstract-mean-gyro.hpp"
@@ -10,15 +11,28 @@
 #include <memory>
 
 std::unique_ptr<pros::MotorGroup> mtr_l{
-    new pros::MotorGroup({DRIVE_L1_PORT, DRIVE_L2_PORT, -DRIVE_LT_PORT},
-                         pros::v5::MotorGears::blue,
-                         pros::v5::MotorUnits::deg)};
+    new pros::MotorGroup({DRIVE_L1_PORT, DRIVE_L2_PORT, DRIVE_LT_PORT},
+                         pros::MotorGears::blue,
+                         pros::MotorUnits::deg)};
 std::unique_ptr<pros::MotorGroup> mtr_r{
-    new pros::MotorGroup({-DRIVE_R1_PORT, -DRIVE_R2_PORT, DRIVE_RT_PORT},
-                         pros::v5::MotorGears::blue,
-                         pros::v5::MotorUnits::deg)};
+    new pros::MotorGroup({DRIVE_R1_PORT, DRIVE_R2_PORT, DRIVE_RT_PORT},
+                         pros::MotorGears::blue,
+                         pros::MotorUnits::deg)};
 std::shared_ptr<Chassis> chassis;
 
+std::unique_ptr<pros::AbstractMotor> mtr_h_lift{
+    new pros::Motor(LIFT_PORT, pros::MotorGears::green, pros::MotorUnits::deg)};
+std::unique_ptr<pros::AbstractMotor> mtr_h_intake{new pros::Motor(
+    INTAKE_PORT, pros::MotorGears::green, pros::MotorUnits::deg)};
+std::unique_ptr<pros::AbstractMotor> mtr_wrist{
+    new pros::Motor(WRIST_PORT, pros::MotorGears::red, pros::MotorUnits::deg)};
+
+std::unique_ptr<pros::adi::DigitalOut> piston_clamp{
+    new pros::adi::DigitalOut(PISTON_CLAMP, false)};
+
+Piston p_clamp({std::move(piston_clamp)});
+
+/*
 std::shared_ptr<AbstractGyro> imu_1{
     new AbstractImuGyro(IMU1_PORT, (1 * 360.0) / (1 * 360.0 + 0))};
 // std::shared_ptr<AbstractGyro> imu_2{
@@ -30,6 +44,7 @@ std::shared_ptr<AbstractEncoder> enc_x{
 std::shared_ptr<AbstractEncoder> enc_y{
     new AbstractRotationEncoder(PORT_Y_ENC, true)};
 std::shared_ptr<Odometry> odom;
+*/
 
 void calibrate_imus() {
   auto imus = pros::Imu::get_all_devices();
@@ -43,6 +58,12 @@ void calibrate_imus() {
     subzero::log("[i]: imu on port %d ready", device.get_port());
   }
   pros::delay(500);
+}
+
+void configure_motors() {
+  mtr_h_intake->set_brake_mode(pros::MotorBrake::brake);
+  mtr_h_lift->set_brake_mode(pros::MotorBrake::hold);
+  mtr_wrist->set_brake_mode(pros::MotorBrake::hold);
 }
 
 void configure_chassis() {
@@ -144,6 +165,7 @@ void configure_odometry() {
 
 void initialise_devices() {
   calibrate_imus();
+  configure_motors();
   configure_chassis();
   configure_odometry();
 }

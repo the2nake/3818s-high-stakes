@@ -7,6 +7,17 @@
 #include "pros/screen.hpp"
 #include <memory>
 
+const int k_lift_score_thres = 270;
+
+const int k_lift_top_angle = 350;
+const int k_lift_mid_angle = 160;
+const int k_lift_bottom_angle = 0;
+
+const int k_wrist_ready_angle = -120;
+const int k_wrist_mid_angle = -45;
+const int k_wrist_score_trans_angle = 0;
+const int k_wrist_score_end_angle = 90;
+
 namespace saturnine {
 bool running = true;
 };
@@ -128,15 +139,68 @@ void disabled() {}
 
 void competition_initialize() {}
 
+enum class arm_pos_e { ready, mid, descore, score, invalid };
+
+bool mtr_close_to(std::unique_ptr<pros::AbstractMotor> &mtr,
+                  double deg,
+                  double thres = 5) {
+  return std::abs(mtr->get_position() - deg) < thres;
+}
+
+void score_ring(bool &scoring, arm_pos_e &pos_var) {
+  bool wrist_ready = false;
+  bool lift_ready = false;
+  switch (pos_var) {
+  case arm_pos_e::ready:
+    lift_ready = mtr_close_to(mtr_h_lift, k_lift_top_angle);
+    wrist_ready = mtr_close_to(mtr_wrist, k_wrist_ready_angle);
+    if (!wrist_ready || !lift_ready) {
+      return;
+    }
+    scoring = true;
+    pos_var = arm_pos_e::mid;
+    break;
+  case arm_pos_e::mid:
+    lift_ready = mtr_close_to(mtr_h_lift, k_lift_mid_angle);
+    wrist_ready = mtr_close_to(mtr_wrist, k_wrist_mid_angle);
+    if (!wrist_ready || !lift_ready) {
+      return;
+    }
+    scoring = true;
+    pos_var = arm_pos_e::score;
+    break;
+  case arm_pos_e::score:
+    lift_ready = mtr_close_to(mtr_h_lift, k_lift_top_angle);
+    wrist_ready = mtr_close_to(mtr_wrist, k_wrist_score_end_angle);
+    if (!wrist_ready || !lift_ready) {
+      return;
+    }
+    scoring = false;
+    pos_var = arm_pos_e::ready;
+    break;
+  case arm_pos_e::descore: // NOTE: intentionally has no break; statement
+  case arm_pos_e::invalid:
+    pos_var = arm_pos_e::ready;
+    break;
+  }
+}
+
 void opcontrol() {
 #ifdef DEBUG
   autonomous();
 #endif
 
   pros::Controller master(pros::E_CONTROLLER_MASTER);
+  /*
   auto pose = odom->get_pose();
   if (std::isnan(pose.h))
     pose.h = 0.0;
+  */
+
+  bool scoring = false;
+
+  arm_pos_e arm_pos = arm_pos_e::ready;
+  arm_pos_e old_arm_pos = arm_pos_e::invalid;
 
   std::uint32_t prev_update = pros::millis();
   std::uint32_t *prev_update_ptr = &prev_update;
@@ -156,6 +220,57 @@ void opcontrol() {
 
     chassis->move(0, ctrl_ry, ctrl_rx);
 
+    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+      mtr_h_intake->move(127);
+    } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+      mtr_h_intake->move(-127);
+    } else {
+      mtr_h_intake->brake();
+    }
+
+    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+      p_clamp.toggle();
+    }
+
+    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2) ||
+        scoring) {
+      score_ring(scoring, arm_pos);
+    }
+
+    if (arm_pos != old_arm_pos) {
+      old_arm_pos = arm_pos;
+      switch (arm_pos) {
+      case arm_pos_e::ready:
+        mtr_h_lift->move_absolute(k_lift_top_angle, 200);
+        if (mtr_h_lift->get_position() > k_lift_mid_angle) {
+          mtr_wrist->move_absolute(k_wrist_ready_angle, 100);
+        } else {
+          mtr_wrist->move_absolute(k_wrist_mid_angle, 100);
+        }
+        break;
+      case arm_pos_e::mid:
+        mtr_h_lift->move_absolute(k_lift_mid_angle, 100);
+        mtr_wrist->move_absolute(k_wrist_mid_angle, 100);
+        break;
+      case arm_pos_e::descore:
+        mtr_h_lift->move_absolute(k_lift_bottom_angle, 100);
+        mtr_wrist->move_absolute(k_wrist_score_trans_angle, 100);
+        break;
+      case arm_pos_e::score:
+        mtr_h_lift->move_absolute(k_lift_top_angle, 200);
+        if (mtr_h_lift->get_position() > k_lift_score_thres) {
+          mtr_wrist->move_absolute(k_wrist_score_end_angle, 100);
+        } else {
+          mtr_wrist->move_absolute(k_wrist_score_trans_angle, 100);
+        }
+        break;
+      case arm_pos_e::invalid:
+        arm_pos = arm_pos_e::ready;
+        old_arm_pos = arm_pos_e::invalid;
+        break;
+      }
+    }
+
     /*
     if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
       if (odom->is_enabled()) {
@@ -168,8 +283,7 @@ void opcontrol() {
     // if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A))
     //   odom->set_heading(0);
 
-    // high update rate, as imu data comes in every 10 ms
-    pros::Task::delay_until(prev_update_ptr, 10);
+    pros::Task::delay_until(prev_update_ptr, 20);
   }
 
   // garbage collection, good practice

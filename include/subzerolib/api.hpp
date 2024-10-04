@@ -7,6 +7,7 @@
 #include "subzerolib/api/control/chassis-controller.hpp"
 #include "subzerolib/api/control/holo-chassis-pid.hpp"
 #include "subzerolib/api/control/pid.hpp"
+#include "subzerolib/api/control/piston.hpp"
 #include "subzerolib/api/control/pure-pursuit.hpp"
 #include "subzerolib/api/filter/filter.hpp"
 #include "subzerolib/api/filter/kalman-filter.hpp"

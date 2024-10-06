@@ -5,6 +5,7 @@
 #include "subzerolib/api/trajectory/motion-profile/trapezoidal-motion-profile.hpp"
 #include "subzerolib/api/trajectory/spline-trajectory.hpp"
 
+/*
 void autonomous() {
   // controller->move_to_pose({0.3, 0.3, 270});
   // controller->move_to_pose({-0.6, 0.5, 315});
@@ -36,4 +37,4 @@ void autonomous() {
           .with_chassis(chassis)
           .with_motion_profile(profile)
           .build();
-}
+}*/

@@ -1,8 +1,8 @@
 #pragma once
 
-#define PORT_L1 -5
-#define PORT_L2 -6
-#define PORT_LT 7
+#define PORT_L1 -6
+#define PORT_L2 -7
+#define PORT_LT 8
 #define PORT_R1 20
 #define PORT_R2 19
 #define PORT_RT -18

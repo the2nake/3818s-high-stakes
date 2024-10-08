@@ -1,6 +1,6 @@
 #pragma once
 
-#include "subzerolib/api/chassis/chassis.hpp"
+#include "subzerolib/api/chassis/tank-chassis.hpp"
 #include "subzerolib/api/control/piston.hpp"
 #include "subzerolib/api/logic/state-machine.hpp"
 #include "subzerolib/api/odometry/odometry.hpp"
@@ -8,12 +8,12 @@
 #include "subzerolib/api/sensors/abstract-gyro.hpp"
 
 #include "pros/motor_group.hpp"
-#include <memory>
 #include <atomic>
+#include <memory>
 
 extern std::unique_ptr<pros::MotorGroup> mtr_l;
 extern std::unique_ptr<pros::MotorGroup> mtr_r;
-extern std::shared_ptr<Chassis> chassis;
+extern std::shared_ptr<TankChassis> chassis;
 
 extern std::unique_ptr<pros::AbstractMotor> mtr_h_lift;
 extern std::unique_ptr<pros::AbstractMotor> mtr_h_intake;

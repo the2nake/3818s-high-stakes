@@ -49,7 +49,7 @@ private:
   double rot_pref;
   double lin_vel;
 
-  std::map<TankChassis::motor_pos_e, control_components_s> vels = {};
+  std::map<TankChassis::motor_pos_e, control_components_s> volts = {};
   std::map<TankChassis::motor_pos_e, std::unique_ptr<pros::AbstractMotor> &>
       position_ptr_map = {};
   std::unique_ptr<pros::AbstractMotor> left = nullptr;

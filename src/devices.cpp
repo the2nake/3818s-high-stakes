@@ -11,32 +11,32 @@
 #include <memory>
 
 std::unique_ptr<pros::MotorGroup> mtr_l{
-    new pros::MotorGroup({DRIVE_L1_PORT, DRIVE_L2_PORT, DRIVE_LT_PORT},
+    new pros::MotorGroup({PORT_L1, PORT_L2, PORT_LT},
                          pros::MotorGears::blue,
                          pros::MotorUnits::deg)};
 std::unique_ptr<pros::MotorGroup> mtr_r{
-    new pros::MotorGroup({DRIVE_R1_PORT, DRIVE_R2_PORT, DRIVE_RT_PORT},
+    new pros::MotorGroup({PORT_R1, PORT_R2, PORT_RT},
                          pros::MotorGears::blue,
                          pros::MotorUnits::deg)};
-std::shared_ptr<Chassis> chassis;
+std::shared_ptr<TankChassis> chassis;
 
 std::unique_ptr<pros::AbstractMotor> mtr_h_lift{
-    new pros::Motor(LIFT_PORT, pros::MotorGears::green, pros::MotorUnits::deg)};
+    new pros::Motor(PORT_LIFT, pros::MotorGears::green, pros::MotorUnits::deg)};
 std::unique_ptr<pros::AbstractMotor> mtr_h_intake{new pros::Motor(
-    INTAKE_PORT, pros::MotorGears::green, pros::MotorUnits::deg)};
+    PORT_INTAKE, pros::MotorGears::green, pros::MotorUnits::deg)};
 std::unique_ptr<pros::AbstractMotor> mtr_wrist{
-    new pros::Motor(WRIST_PORT, pros::MotorGears::red, pros::MotorUnits::deg)};
+    new pros::Motor(PORT_WRIST, pros::MotorGears::red, pros::MotorUnits::deg)};
 
 std::unique_ptr<pros::adi::DigitalOut> piston_clamp{
-    new pros::adi::DigitalOut(PISTON_CLAMP, false)};
+    new pros::adi::DigitalOut(ADI_CLAMP, false)};
 
 Piston p_clamp({std::move(piston_clamp)});
 
 /*
 std::shared_ptr<AbstractGyro> imu_1{
-    new AbstractImuGyro(IMU1_PORT, (1 * 360.0) / (1 * 360.0 + 0))};
+    new AbstractImuGyro(IMU1, (1 * 360.0) / (1 * 360.0 + 0))};
 // std::shared_ptr<AbstractGyro> imu_2{
-//     new AbstractImuGyro(IMU2_PORT, (19 * 360.0) / (18 * 360.0 + 260))};
+//     new AbstractImuGyro(IMU2, (19 * 360.0) / (18 * 360.0 + 260))};
 std::shared_ptr<AbstractGyro> mean_imu{
     new AbstractMeanGyro({imu_1})}; // TODO: reconf for 2 imus
 std::shared_ptr<AbstractEncoder> enc_x{

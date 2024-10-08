@@ -12,6 +12,20 @@ namespace saturnine {
 bool running = true;
 };
 
+const pros::controller_digital_e_t bind_toggle_clamp =
+    pros::E_CONTROLLER_DIGITAL_L1;
+const pros::controller_digital_e_t bind_score_arm =
+    pros::E_CONTROLLER_DIGITAL_L2;
+const pros::controller_digital_e_t bind_intake_out =
+    pros::E_CONTROLLER_DIGITAL_R1;
+const pros::controller_digital_e_t bind_intake_in =
+    pros::E_CONTROLLER_DIGITAL_R2;
+
+const pros::controller_analog_e_t stick_throttle =
+    pros::E_CONTROLLER_ANALOG_LEFT_Y;
+const pros::controller_analog_e_t sticK_steer =
+    pros::E_CONTROLLER_ANALOG_RIGHT_X;
+
 // TODO: refactor, add "graph_module"?
 void odom_disp_loop(void *ignore) {
   std::vector<point_s> past_points;
@@ -212,6 +226,7 @@ void disp_vel_row(int line,
 }
 
 void disp_loop(void *ignore) {
+  // get the list of all motors
   auto devs = pros::Motor::get_all_devices();
   std::map<int, pros::Motor *> motors;
   for (auto &dev : devs) {
@@ -219,9 +234,9 @@ void disp_loop(void *ignore) {
   }
 
   while (saturnine::running) {
-    disp_vel_row(0, motors, {"m_l1", DRIVE_L1_PORT}, {"m_r1", DRIVE_R1_PORT});
-    disp_vel_row(1, motors, {"m_l2", DRIVE_L2_PORT}, {"m_r2", DRIVE_R2_PORT});
-    disp_vel_row(2, motors, {"m_lt", DRIVE_LT_PORT}, {"m_rt", DRIVE_RT_PORT});
+    disp_vel_row(0, motors, {"m_l1", PORT_L1}, {"m_r1", PORT_R1});
+    disp_vel_row(1, motors, {"m_l2", PORT_L2}, {"m_r2", PORT_R2});
+    disp_vel_row(2, motors, {"m_lt", PORT_LT}, {"m_rt", PORT_RT});
 
     subzero::print(4, "lift : %.1f", mtr_h_lift->get_position());
     subzero::print(5, "wrist: %.1f", mtr_wrist->get_position());
@@ -273,31 +288,36 @@ void opcontrol() {
   while (saturnine::running) {
     // TODO: adjustments to increase accuracy along diagonals
     // model as a polar radial percentage of a rounded circle?
+    /*
     double ctrl_rx = master.get_analog(ANALOG_RIGHT_X) / 127.0;
     double ctrl_ry = master.get_analog(ANALOG_RIGHT_Y) / 127.0;
     double ctrl_lx = master.get_analog(ANALOG_LEFT_X) / 127.0;
     double ctrl_ly = master.get_analog(ANALOG_LEFT_Y) / 127.0;
+    */
+
+    double ctrl_throttle = master.get_analog(stick_throttle) / 127.0;
+    double ctrl_steer = master.get_analog(sticK_steer) / 127.0;
 
     // pose = odom->get_pose();
     // if (std::isnan(pose.h))
     //   pose.h = 0.0;
     // auto vec = rotate_acw(ctrl_x, ctrl_y, pose.h);
 
-    chassis->move(0, ctrl_ly, 0.7 * ctrl_rx);
+    chassis->move(0, ctrl_throttle, 0.7 * ctrl_steer);
 
-    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+    if (master.get_digital(bind_intake_in)) {
       mtr_h_intake->move(127);
-    } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+    } else if (master.get_digital(bind_intake_out)) {
       mtr_h_intake->move(-127);
     } else {
       mtr_h_intake->brake();
     }
 
-    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+    if (master.get_digital_new_press(bind_toggle_clamp)) {
       p_clamp.toggle();
     }
 
-    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+    if (master.get_digital(bind_score_arm)) {
       // TODO: set ready only if ring is present
       arm::flag_score = true;
     } else if (sm_arm->get_curr_state_data().state != arm_state_e::ready) {
